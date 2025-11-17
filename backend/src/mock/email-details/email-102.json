@@ -1,0 +1,17 @@
+{
+  "id": "email-102",
+  "sender": {
+    "name": "Bạn",
+    "email": "you@example.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Đăng ký tham gia sự kiện Tech Talk",
+  "body": "<p>Xin chào,</p><p>Đây là nội dung đầy đủ của email: <strong>Đăng ký tham gia sự kiện Tech Talk</strong>.</p><p>Tôi muốn đăng ký tham gia buổi Tech Talk ngày...</p><p>Trân trọng,<br/>Bạn</p>",
+  "timestamp": "2025-11-10T10:22:00Z",
+  "attachments": []
+}

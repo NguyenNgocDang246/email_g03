@@ -1,0 +1,17 @@
+{
+  "id": "email-003",
+  "sender": {
+    "name": "Công ty CP XYZ",
+    "email": "info@xyz.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Hóa đơn tháng 11/2025 cần thanh toán",
+  "body": "<p>Xin chào,</p><p>Đây là nội dung đầy đủ của email: <strong>Hóa đơn tháng 11/2025 cần thanh toán</strong>.</p><p>Hóa đơn tháng này đã có, vui lòng xem chi tiết...</p><p>Trân trọng,<br/>Công ty CP XYZ</p>",
+  "timestamp": "2025-11-14T09:45:00Z",
+  "attachments": []
+}

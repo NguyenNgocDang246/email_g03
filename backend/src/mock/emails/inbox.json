@@ -1,0 +1,42 @@
+[
+  {
+    "id": "email-001",
+    "mailboxId": "inbox",
+    "sender": "Nguyễn Văn A",
+    "senderEmail": "nguyenvana@example.com",
+    "subject": "Lịch họp tuần này",
+    "previewText": "Chào bạn, đây là lịch họp tuần này...",
+    "timestamp": "2025-11-16T08:30:00Z",
+    "isRead": false
+  },
+  {
+    "id": "email-002",
+    "mailboxId": "inbox",
+    "sender": "Công ty ABC",
+    "senderEmail": "hr@abc.com",
+    "subject": "Thông báo kết quả phỏng vấn",
+    "previewText": "Chúng tôi vui mừng thông báo rằng...",
+    "timestamp": "2025-11-15T14:12:00Z",
+    "isRead": true
+  },
+  {
+    "id": "email-003",
+    "mailboxId": "inbox",
+    "sender": "Công ty CP XYZ",
+    "senderEmail": "info@xyz.com",
+    "subject": "Hóa đơn tháng 11/2025 cần thanh toán",
+    "previewText": "Hóa đơn tháng này đã có, vui lòng xem chi tiết...",
+    "timestamp": "2025-11-14T09:45:00Z",
+    "isRead": false
+  },
+  {
+    "id": "email-004",
+    "mailboxId": "inbox",
+    "sender": "Hệ thống",
+    "senderEmail": "no-reply@system.com",
+    "subject": "Xác nhận thay đổi mật khẩu",
+    "previewText": "Bạn đã thay đổi mật khẩu lúc 10:00 sáng...",
+    "timestamp": "2025-11-13T17:00:00Z",
+    "isRead": true
+  }
+]
