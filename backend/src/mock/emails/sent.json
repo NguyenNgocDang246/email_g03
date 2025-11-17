@@ -1,0 +1,22 @@
+[
+  {
+    "id": "email-101",
+    "mailboxId": "sent",
+    "sender": "Bạn",
+    "senderEmail": "you@example.com",
+    "subject": "Báo cáo hiệu suất tháng 10",
+    "previewText": "Dưới đây là báo cáo hiệu suất...",
+    "timestamp": "2025-11-12T08:00:00Z",
+    "isRead": true
+  },
+  {
+    "id": "email-102",
+    "mailboxId": "sent",
+    "sender": "Bạn",
+    "senderEmail": "you@example.com",
+    "subject": "Đăng ký tham gia sự kiện Tech Talk",
+    "previewText": "Tôi muốn đăng ký tham gia buổi Tech Talk ngày...",
+    "timestamp": "2025-11-10T10:22:00Z",
+    "isRead": true
+  }
+]
