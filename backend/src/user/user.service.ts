@@ -11,9 +11,11 @@ import bcryptjs from 'bcryptjs';
 import { User, UserDocument } from './user.schema';
 import { randomBytes } from 'crypto';
 import { TokenService } from 'src/token/token.service';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class UsersService {
+  private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private tokenService: TokenService,
@@ -60,6 +62,44 @@ export class UsersService {
       id: user._id,
       email: user.email,
       createdAt: user.createdAt,
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async loginWithGoogleCredential(credential: string) {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email } = payload as { email: string };
+
+    if (!email) {
+      throw new UnauthorizedException('Google token invalid');
+    }
+
+    let user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      user = await this.userModel.create({
+        email,
+        password: randomBytes(16).toString('hex'), // tránh rỗng
+        refreshToken: randomBytes(32).toString('hex'),
+      });
+    }
+
+    // Tạo refreshToken mới
+    const refreshToken = randomBytes(32).toString('hex');
+    await this.userModel.updateOne({ _id: user._id }, { refreshToken });
+
+    // Tạo access token
+    const accessToken = await this.tokenService.createToken({ id: user._id });
+
+    return {
+      id: user._id,
+      email: user.email,
       accessToken,
       refreshToken,
     };

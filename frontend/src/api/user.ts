@@ -1,5 +1,6 @@
 import API, { setAccessToken } from "./baseAPI"; // Axios instance đã gắn interceptor tự động
 import axios from "axios";
+import type { CredentialResponse } from "@react-oauth/google";
 
 export interface RegisterData {
   email: string;
@@ -34,6 +35,28 @@ export const loginUser = async (data: LoginData) => {
     localStorage.setItem("refreshToken", res.data.refreshToken);
 
     return res.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Request error");
+    }
+    throw new Error("Unexpected error");
+  }
+};
+
+export const loginWithGoogle = async (credentialResponse: CredentialResponse) => {
+  try {
+    const credential = credentialResponse.credential;
+    if (!credential) throw new Error("No Google credential");
+
+    const res = await API.post("/user/google", { credential });
+
+    // Lưu access token vào memory (baseAPI)
+    setAccessToken(res.data.data.accessToken);
+
+    // Lưu refresh token vào localStorage
+    localStorage.setItem("refreshToken", res.data.data.refreshToken);
+
+    return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Request error");
