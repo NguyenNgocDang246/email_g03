@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Mailbox } from 'src/types';
+import { PaginationDto } from './dto';
 
 @Injectable()
 export class MailboxesService {
@@ -29,15 +30,25 @@ export class MailboxesService {
     return this.mailboxes;
   }
 
-  async getEmailsInMailbox(mailboxId: string) {
-    const emails = this.emailsInMailbox.get(mailboxId);
+  async getEmailsInMailbox(mailboxId: string, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
 
-    console.log(emails);
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+
+    const emails = this.emailsInMailbox.get(mailboxId);
 
     if (!emails) {
       throw new Error('No emails found for this mailbox');
     }
 
-    return emails;
+    const paginatedEmails = emails.slice(skip, skip + take);
+
+    return {
+      data: paginatedEmails,
+      page: paginationDto.page,
+      limit: paginationDto.limit,
+      total: this.emailsInMailbox.get(mailboxId)?.length || 0,
+    };
   }
 }
