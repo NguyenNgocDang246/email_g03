@@ -2,6 +2,7 @@ import axios, { AxiosError } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 // Lưu access token trong memory
 export let accessTokenMemory: string | null = null;
+export let refreshTokenMemory: string | null = localStorage.getItem("refreshToken");
 
 // Axios instance
 const API = axios.create({
@@ -16,20 +17,19 @@ export const setAccessToken = (token: string | null) => {
 // Hàm refresh token
 const refreshAccessToken = async (): Promise<string> => {
   const refreshToken = localStorage.getItem("refreshToken");
+  const email = localStorage.getItem("email");
   if (!refreshToken) throw new Error("No refresh token");
+  if (!email) throw new Error("No email");
 
   const res = await axios.post("http://localhost:3000/token/refresh", {
     refreshToken,
+    email,
   });
 
-  const newAccessToken = res.data.accessToken;
-  const newRefreshToken = res.data.refreshToken;
+  const newAccessToken = res.data.data.accessToken;
 
   // Cập nhật access token trong memory
   accessTokenMemory = newAccessToken;
-
-  // Lưu refresh token mới
-  localStorage.setItem("refreshToken", newRefreshToken);
 
   return newAccessToken;
 };
@@ -70,5 +70,7 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+if (!accessTokenMemory) refreshAccessToken();
 
 export default API;
