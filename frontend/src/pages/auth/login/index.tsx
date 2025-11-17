@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { loginUser } from "../../../api/user";
+import { loginUser, loginWithGoogle } from "../../../api/user";
 import { setAccessToken } from "../../../api/baseAPI";
+import { GoogleLogin } from "@react-oauth/google";
 
 interface LoginFormValues {
   email: string;
@@ -45,8 +46,8 @@ export default function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6 bg-white rounded-2xl shadow-lg">
-      <h2 className="text-3xl mb-6 text-center font-bold text-blue-700">Log In</h2>
+    <div className="max-w-md mx-auto mt-16 p-6 w-[400px] bg-white rounded-2xl shadow-lg">
+      <h2 className="text-3xl mb-6 text-center font-bold text-blue-700">Welcome back</h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Email */}
@@ -92,6 +93,15 @@ export default function Login() {
           {mutation.isPending ? "Logging in..." : "Log In"}
         </button>
       </form>
+      <button className="w-full mt-4 py-2.5 rounded-lg transition disabled:opacity-70">
+        <GoogleLogin
+          onSuccess={async (cre) => {
+            await loginWithGoogle(cre);
+            navigate("/");
+          }}
+          onError={() => console.log("Google Login Error")}
+        />
+      </button>
 
       <p className="text-center text-sm text-gray-600 mt-4">
         Don't have an account?{" "}
