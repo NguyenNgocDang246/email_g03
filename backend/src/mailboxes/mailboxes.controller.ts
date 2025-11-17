@@ -18,4 +18,17 @@ export class MailboxesController {
   ) {
     return this.mailboxesService.getEmailsInMailbox(id, paginationDto);
   }
+
+  @Get(':id/emails/search')
+  searchEmailsInMailbox(
+    @Param('id') id: string,
+    @Query('query') query: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.mailboxesService.searchEmailsInMailbox(
+      id,
+      query,
+      paginationDto,
+    );
+  }
 }
