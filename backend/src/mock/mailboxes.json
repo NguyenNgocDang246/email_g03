@@ -1,0 +1,32 @@
+[
+  {
+    "id": "inbox",
+    "name": "Hộp thư đến",
+    "unreadCount": 4
+  },
+  {
+    "id": "sent",
+    "name": "Đã gửi",
+    "unreadCount": 0
+  },
+  {
+    "id": "drafts",
+    "name": "Thư nháp",
+    "unreadCount": 0
+  },
+  {
+    "id": "archive",
+    "name": "Lưu trữ",
+    "unreadCount": 0
+  },
+  {
+    "id": "spam",
+    "name": "Thư rác",
+    "unreadCount": 15
+  },
+  {
+    "id": "trash",
+    "name": "Thùng rác",
+    "unreadCount": 0
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "email-201",
+    "mailboxId": "spam",
+    "sender": "Ngân hàng Vietcom",
+    "senderEmail": "support@vietcombannk.com",
+    "subject": "Xác minh tài khoản",
+    "previewText": "Tài khoản của bạn đang gặp vấn đề...",
+    "timestamp": "2025-11-16T08:00:00Z",
+    "isRead": false
+  },
+  {
+    "id": "email-202",
+    "mailboxId": "spam",
+    "sender": "Giảm Giá 50%",
+    "senderEmail": "deal@shopping.com",
+    "subject": "Siêu Flash sale cuối tuần!",
+    "previewText": "Mua sắm đi! Giảm tới 70%...",
+    "timestamp": "2025-11-15T12:55:00Z",
+    "isRead": false
+  },
+  {
+    "id": "email-203",
+    "mailboxId": "spam",
+    "sender": "CryptoBot",
+    "senderEmail": "support@crypto-bot.com",
+    "subject": "Bạn nhận được 0.12 Bitcoin!",
+    "previewText": "Nhấn vào đây để nhận ngay...",
+    "timestamp": "2025-11-13T19:10:00Z",
+    "isRead": true
+  },
+  {
+    "id": "email-204",
+    "mailboxId": "spam",
+    "sender": "App Lạ",
+    "senderEmail": "promo@weirdapp.cc",
+    "subject": "Tặng bạn 1 tỷ nếu mở email này",
+    "previewText": "Không đùa đâu, click ngay!",
+    "timestamp": "2025-11-13T17:15:00Z",
+    "isRead": false
+  }
+]

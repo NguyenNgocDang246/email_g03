@@ -1,0 +1,17 @@
+{
+  "id": "email-004",
+  "sender": {
+    "name": "Hệ thống",
+    "email": "no-reply@system.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Xác nhận thay đổi mật khẩu",
+  "body": "<p>Xin chào,</p><p>Đây là nội dung đầy đủ của email: <strong>Xác nhận thay đổi mật khẩu</strong>.</p><p>Bạn đã thay đổi mật khẩu lúc 10:00 sáng...</p><p>Trân trọng,<br/>Hệ thống</p>",
+  "timestamp": "2025-11-13T17:00:00Z",
+  "attachments": []
+}

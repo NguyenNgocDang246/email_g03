@@ -1,0 +1,17 @@
+{
+  "id": "email-002",
+  "sender": {
+    "name": "Công ty ABC",
+    "email": "hr@abc.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Thông báo kết quả phỏng vấn",
+  "body": "<p>Xin chào,</p><p>Đây là nội dung đầy đủ của email: <strong>Thông báo kết quả phỏng vấn</strong>.</p><p>Chúng tôi vui mừng thông báo rằng...</p><p>Trân trọng,<br/>Công ty ABC</p>",
+  "timestamp": "2025-11-15T14:12:00Z",
+  "attachments": []
+}
