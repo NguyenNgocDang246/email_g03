@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Mailbox } from 'src/types';
+import { PaginationDto } from './dto';
 
 @Injectable()
 export class MailboxesService {
@@ -17,7 +18,6 @@ export class MailboxesService {
     const dataEmails = readdirSync(filePathEmails);
 
     for (const filename of dataEmails) {
-      console.log(filename);
       const data = readFileSync(join(filePathEmails, filename), 'utf-8');
       const json = JSON.parse(data);
 
@@ -29,15 +29,59 @@ export class MailboxesService {
     return this.mailboxes;
   }
 
-  async getEmailsInMailbox(mailboxId: string) {
+  async getEmailsInMailbox(mailboxId: string, paginationDto: PaginationDto) {
     const emails = this.emailsInMailbox.get(mailboxId);
 
-    console.log(emails);
-
     if (!emails) {
-      throw new Error('No emails found for this mailbox');
+      throw new NotFoundException('No emails found for this mailbox');
     }
 
-    return emails;
+    const page = paginationDto.page || 1;
+    const limit = paginationDto.limit || emails.length;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit) || emails.length;
+
+    const paginatedEmails = emails.slice(skip, skip + take);
+
+    return {
+      page: page,
+      limit: limit,
+      total: emails.length,
+      data: paginatedEmails,
+    };
+  }
+
+  async searchEmailsInMailbox(
+    mailboxId: string,
+    query: string,
+    paginationDto: PaginationDto,
+  ) {
+    const emails = this.emailsInMailbox.get(mailboxId);
+
+    if (!emails) {
+      throw new NotFoundException('No emails found for this mailbox');
+    }
+
+    const filteredEmails = emails.filter(
+      (email) =>
+        email.subject.toLowerCase().includes(query.toLowerCase()) ||
+        email.previewText.toLowerCase().includes(query.toLowerCase()),
+    );
+
+    const page = paginationDto.page || 1;
+    const limit = paginationDto.limit || filteredEmails.length;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit) || filteredEmails.length;
+
+    const paginatedEmails = filteredEmails.slice(skip, skip + take);
+
+    return {
+      page: page,
+      limit: limit,
+      total: filteredEmails.length,
+      data: paginatedEmails,
+    };
   }
 }
