@@ -2,10 +2,11 @@
 import { EmailList } from "../../components/Email/EmailList";
 import { EmailDetail } from "../../components/Email/EmailDetail";
 import { useEmailData } from "../../hooks/useEmailData";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMailBoxesEmailListInfo } from "../../api/inbox";
 import { useState, useEffect } from "react";
+import { accessTokenMemory, refreshTokenMemory } from "../../api/baseAPI";
 
 export default function InboxPage() {
   const {
@@ -20,6 +21,14 @@ export default function InboxPage() {
     handleMarkAsUnread,
     handleRefresh,
   } = useEmailData();
+  const isLogged = !!accessTokenMemory || !!refreshTokenMemory;
+  console.log(isLogged);
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!isLogged) {
+      navigate("/login");
+    }
+  });
 
   const { id: mailboxId } = useParams<{ id: string }>();
   const location = useLocation();
@@ -53,11 +62,7 @@ export default function InboxPage() {
 
   if (isLoading) return <p className="text-center mt-10">Loading...</p>;
   if (error)
-    return (
-      <p className="text-center mt-10 text-red-600">
-        Error loading list mail from mailboxes
-      </p>
-    );
+    return <p className="text-center mt-10 text-red-600">Error loading list mail from mailboxes</p>;
 
   return (
     <div className="flex h-full w-full">

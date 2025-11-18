@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LogIn, UserPlus, Home as HomeIcon, LogOut } from "lucide-react";
+import { LogIn, UserPlus, LogOut } from "lucide-react";
 import { setAccessToken, accessTokenMemory, refreshTokenMemory } from "../../api/baseAPI";
+import { Header } from "../../components/Layout/Header";
+import { GuestHeader } from "../../components/Layout/GuestHeader";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -13,73 +16,26 @@ export default function Home() {
     window.location.href = "/";
   };
 
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
-    <div className="min-h-screen flex flex-col items-center bg-linear-to-b from-blue-50 to-white">
-      {/* Navbar */}
-      <nav className="w-full bg-white shadow-sm">
-        <div className="max-w-5xl mx-auto flex justify-between items-center p-4">
-          <div className="flex items-center gap-2 text-blue-700 font-bold text-xl">
-            <HomeIcon size={22} />
-            <span>MyApp</span>
-          </div>
+    <div className="h-screen flex flex-col bg-gray-50 w-screen">
+      {!isLogged && (
+        <GuestHeader
+          onMenuToggle={() => setShowMobileMenu(!showMobileMenu)}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
+      )}
 
-          <div className="flex gap-6">
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                `text-sm font-medium transition ${
-                  isActive
-                    ? "text-blue-700 underline underline-offset-4"
-                    : "text-gray-600 hover:text-blue-600"
-                }`
-              }
-            >
-              Home
-            </NavLink>
-            {!isLogged && (
-              <>
-                <NavLink
-                  to="/signup"
-                  className={({ isActive }) =>
-                    `text-sm font-medium transition ${
-                      isActive
-                        ? "text-blue-700 underline underline-offset-4"
-                        : "text-gray-600 hover:text-blue-600"
-                    }`
-                  }
-                >
-                  Sign Up
-                </NavLink>
-
-                <NavLink
-                  to="/login"
-                  className={({ isActive }) =>
-                    `text-sm font-medium transition ${
-                      isActive
-                        ? "text-blue-700 underline underline-offset-4"
-                        : "text-gray-600 hover:text-blue-600"
-                    }`
-                  }
-                >
-                  Login
-                </NavLink>
-              </>
-            )}
-
-            {isLogged && (
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 transition"
-              >
-                <LogOut size={18} />
-                Logout
-              </button>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
+      {isLogged && (
+        <Header
+          onMenuToggle={() => setShowMobileMenu(!showMobileMenu)}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
+      )}
       <div className="flex flex-col items-center justify-center grow px-4 text-center mt-12">
         <div className="bg-white shadow-xl rounded-2xl p-10 max-w-lg w-full">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
@@ -111,10 +67,10 @@ export default function Home() {
 
           {isLogged && (
             <button
-              onClick={() => navigate("/user-info")}
+              onClick={() => navigate("/mailbox")}
               className="mt-4 w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-5 rounded-lg transition"
             >
-              Go to User Info
+              Go to Mailbox
             </button>
           )}
 
