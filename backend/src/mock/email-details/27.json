@@ -1,0 +1,18 @@
+{
+  "id": 27,
+  "mailboxId": "spam",
+  "sender": {
+    "name": "Spammer 007",
+    "email": "followme@spam.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Tăng lượt theo dõi Instagram nhanh chóng",
+  "body": "<p>Xin chào,</p><p>Tăng ngay <strong>1000 followers</strong> Instagram chỉ trong 24 giờ!</p><p><a href=\"#\">Tìm hiểu thêm</a></p>",
+  "timestamp": "2025-11-11T22:00:00Z",
+  "attachments": []
+}

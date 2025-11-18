@@ -1,0 +1,18 @@
+{
+  "id": 16,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "Tech Conference",
+      "email": "register@techconf.com"
+    }
+  ],
+  "subject": "Đăng ký tham gia hội thảo",
+  "body": "<p>Xin chào,</p><p>Tôi muốn đăng ký tham gia hội thảo trực tuyến về phát triển phần mềm.</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-10T12:00:00Z",
+  "attachments": []
+}

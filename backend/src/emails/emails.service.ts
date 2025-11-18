@@ -23,7 +23,7 @@ export class EmailsService {
   }
 
   async getEmailDetail(id: string) {
-    const emailDetail = this.cache.get(id);
+    const emailDetail = this.cache.get(Number(id));
 
     if (!emailDetail) {
       throw new NotFoundException('Email detail not found');

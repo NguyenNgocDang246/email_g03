@@ -1,0 +1,18 @@
+{
+  "id": 13,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "ABC Corp",
+      "email": "hr@abccorp.com"
+    }
+  ],
+  "subject": "Cảm ơn về buổi phỏng vấn",
+  "body": "<p>Xin chào,</p><p>Cảm ơn anh/chị đã dành thời gian phỏng vấn tôi ngày hôm qua.</p><p>Mong nhận được phản hồi sớm.</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-07T14:35:00Z",
+  "attachments": []
+}

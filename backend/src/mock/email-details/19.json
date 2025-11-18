@@ -1,0 +1,18 @@
+{
+  "id": 19,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "HR Team",
+      "email": "hr@example.com"
+    }
+  ],
+  "subject": "Cập nhật CV",
+  "body": "<p>Xin chào,</p><p>Đính kèm CV cập nhật của tôi theo yêu cầu.</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-13T14:00:00Z",
+  "attachments": []
+}

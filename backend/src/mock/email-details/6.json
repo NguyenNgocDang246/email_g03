@@ -1,0 +1,18 @@
+{
+  "id": 6,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "TopDev",
+    "email": "no-reply@topdev.vn"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Cập nhật CV của bạn",
+  "body": "<p>Xin chào,</p><p>Để tăng cơ hội tìm được việc làm, hãy cập nhật CV của bạn ngay hôm nay.</p><p><a href=\"#\">Cập nhật CV</a></p><p>Thân mến,<br/>TopDev Team</p>",
+  "timestamp": "2025-11-10T09:45:00Z",
+  "attachments": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": 12,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "XYZ Corp",
+      "email": "hr@xyzcorp.com"
+    }
+  ],
+  "subject": "Hỏi về lịch phỏng vấn",
+  "body": "<p>Xin chào,</p><p>Xin xác nhận lại thời gian phỏng vấn của tôi cho vị trí Backend Developer.</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-06T11:30:00Z",
+  "attachments": []
+}
