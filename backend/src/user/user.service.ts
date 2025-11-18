@@ -10,7 +10,7 @@ import { Model } from 'mongoose';
 import bcryptjs from 'bcryptjs';
 import { User, UserDocument } from './user.schema';
 import { randomBytes } from 'crypto';
-import { TokenService } from 'src/token/token.service';
+import { TokenService } from '../token/token.service';
 import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
