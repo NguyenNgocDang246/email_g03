@@ -5,8 +5,9 @@ export let accessTokenMemory: string | null = null;
 export let refreshTokenMemory: string | null = localStorage.getItem("refreshToken");
 
 // Axios instance
+const backendURL = import.meta.env.VITE_BACKEND_URL;
 const API = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: backendURL,
 });
 
 // Hàm set access token ban đầu (sau login)
@@ -21,7 +22,7 @@ const refreshAccessToken = async (): Promise<string> => {
   if (!refreshToken) throw new Error("No refresh token");
   if (!email) throw new Error("No email");
 
-  const res = await axios.post("http://localhost:3000/token/refresh", {
+  const res = await axios.post(`${backendURL}/token/refresh`, {
     refreshToken,
     email,
   });
