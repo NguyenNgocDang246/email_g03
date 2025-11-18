@@ -1,0 +1,18 @@
+{
+  "id": 20,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "TopDev Group",
+      "email": "community@topdev.vn"
+    }
+  ],
+  "subject": "Tham gia nhóm học tập",
+  "body": "<p>Xin chào,</p><p>Tôi muốn tham gia nhóm học tập của TopDev để nâng cao kỹ năng lập trình.</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-14T08:30:00Z",
+  "attachments": []
+}

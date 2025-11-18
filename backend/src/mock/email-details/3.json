@@ -1,0 +1,18 @@
+{
+  "id": 3,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "TopDev",
+    "email": "no-reply@topdev.vn"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Thông báo khóa học mới",
+  "body": "<p>Xin chào,</p><p>Khóa học React nâng cao sẽ bắt đầu từ tuần tới. Đây là cơ hội để nâng cao kỹ năng lập trình của bạn.</p><p><a href=\"#\">Đăng ký ngay</a></p><p>Trân trọng,<br/>TopDev Team</p>",
+  "timestamp": "2025-11-07T08:00:00Z",
+  "attachments": []
+}

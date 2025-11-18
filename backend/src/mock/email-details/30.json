@@ -1,0 +1,18 @@
+{
+  "id": 30,
+  "mailboxId": "spam",
+  "sender": {
+    "name": "Unknown Sender",
+    "email": "gift@spamgift.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Nhận quà miễn phí hôm nay",
+  "body": "<p>Xin chào,</p><p>Bạn có món quà miễn phí đang đợi. Chỉ cần click để nhận.</p>",
+  "timestamp": "2025-11-14T20:00:00Z",
+  "attachments": []
+}

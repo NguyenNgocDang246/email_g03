@@ -1,0 +1,18 @@
+{
+  "id": 9,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "Recruiter XYZ",
+    "email": "hr@xyzcorp.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Cập nhật trạng thái ứng tuyển",
+  "body": "<p>Xin chào,</p><p>Ứng tuyển của bạn cho vị trí Backend Developer đã được xem xét.</p><p>Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.</p><p>Trân trọng,<br/>Recruitment Team</p>",
+  "timestamp": "2025-11-13T16:00:00Z",
+  "attachments": []
+}

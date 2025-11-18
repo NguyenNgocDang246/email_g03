@@ -1,0 +1,18 @@
+{
+  "id": 21,
+  "mailboxId": "spam",
+  "sender": {
+    "name": "Spammer 123",
+    "email": "winner@scam.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Bạn đã trúng thưởng 1 tỷ đồng!",
+  "body": "<p>Chúc mừng bạn!</p><p>Bạn đã trúng thưởng <strong>1 tỷ đồng</strong>. Hãy nhấn vào link dưới đây để nhận thưởng.</p><p><a href=\"#\">Nhận ngay!</a></p>",
+  "timestamp": "2025-11-05T18:00:00Z",
+  "attachments": []
+}

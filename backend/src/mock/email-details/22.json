@@ -1,0 +1,18 @@
+{
+  "id": 22,
+  "mailboxId": "spam",
+  "sender": {
+    "name": "Spammer XYZ",
+    "email": "promo@spamdeal.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Giảm giá 90% chỉ hôm nay",
+  "body": "<p>Chào bạn,</p><p>Đừng bỏ lỡ cơ hội giảm giá 90% tất cả sản phẩm. <strong>Chỉ hôm nay!</strong></p><p>Mua ngay để nhận ưu đãi.</p>",
+  "timestamp": "2025-11-06T17:00:00Z",
+  "attachments": []
+}

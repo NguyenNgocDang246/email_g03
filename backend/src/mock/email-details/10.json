@@ -1,0 +1,18 @@
+{
+  "id": 10,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "TopDev",
+    "email": "no-reply@topdev.vn"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Lời mời tham gia nhóm học tập",
+  "body": "<p>Xin chào,</p><p>Hãy tham gia nhóm học tập của TopDev để nâng cao kỹ năng lập trình của bạn.</p><p><a href=\"#\">Tham gia ngay</a></p><p>Thân mến,<br/>TopDev Team</p>",
+  "timestamp": "2025-11-14T08:00:00Z",
+  "attachments": []
+}

@@ -21,7 +21,11 @@ export class MailboxesService {
       const data = readFileSync(join(filePathEmails, filename), 'utf-8');
       const json = JSON.parse(data);
 
-      this.emailsInMailbox.set(json[0].mailboxId, json);
+      if (json.length === 0) {
+        this.emailsInMailbox.set(filename.replace('.json', ''), []);
+      } else {
+        this.emailsInMailbox.set(json[0].mailboxId, json);
+      }
     }
   }
 
@@ -36,11 +40,11 @@ export class MailboxesService {
       throw new NotFoundException('No emails found for this mailbox');
     }
 
-    const page = paginationDto.page || 1;
-    const limit = paginationDto.limit || emails.length;
+    const page = Number(paginationDto.page) || 1;
+    const limit = Number(paginationDto.limit) || emails.length;
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const take = Number(limit) || emails.length;
+    const skip = (page - 1) * limit;
+    const take = limit || emails.length;
 
     const paginatedEmails = emails.slice(skip, skip + take);
 
@@ -69,11 +73,11 @@ export class MailboxesService {
         email.preview.toLowerCase().includes(query.toLowerCase()),
     );
 
-    const page = paginationDto.page || 1;
-    const limit = paginationDto.limit || filteredEmails.length;
+    const page = Number(paginationDto.page) || 1;
+    const limit = Number(paginationDto.limit) || filteredEmails.length;
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const take = Number(limit) || filteredEmails.length;
+    const skip = (page - 1) * limit;
+    const take = limit || filteredEmails.length;
 
     const paginatedEmails = filteredEmails.slice(skip, skip + take);
 

@@ -1,0 +1,18 @@
+{
+  "id": 14,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "Dự án XYZ",
+      "email": "support@projectxyz.com"
+    }
+  ],
+  "subject": "Gửi tài liệu tham khảo",
+  "body": "<p>Xin chào,</p><p>Gửi kèm tài liệu tham khảo cho dự án XYZ theo yêu cầu.</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-08T15:00:00Z",
+  "attachments": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": 28,
+  "mailboxId": "spam",
+  "sender": {
+    "name": "Fake Lottery",
+    "email": "winner@spamlottery.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Nhận ngay giải thưởng trị giá 1 triệu USD",
+  "body": "<p>Chúc mừng!</p><p>Bạn đã trúng thưởng trị giá 1 triệu USD.</p><p>Click vào link để nhận thưởng.</p>",
+  "timestamp": "2025-11-12T23:00:00Z",
+  "attachments": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": 26,
+  "mailboxId": "spam",
+  "sender": {
+    "name": "Online Shop",
+    "email": "promo@onlineshop.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Deal hot hôm nay",
+  "body": "<p>Chào bạn,</p><p>Cơ hội để nhận ưu đãi độc quyền chỉ có trong hôm nay!</p><p>Mua ngay trước khi hết ưu đãi.</p>",
+  "timestamp": "2025-11-10T18:00:00Z",
+  "attachments": []
+}

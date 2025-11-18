@@ -1,0 +1,18 @@
+{
+  "id": 8,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "TopDev",
+    "email": "no-reply@topdev.vn"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Hội thảo trực tuyến sắp tới",
+  "body": "<p>Xin chào,</p><p>Hội thảo trực tuyến về phát triển phần mềm sẽ diễn ra vào cuối tuần này. Hãy đăng ký ngay!</p><p><a href=\"#\">Đăng ký hội thảo</a></p><p>Trân trọng,<br/>TopDev Team</p>",
+  "timestamp": "2025-11-12T14:00:00Z",
+  "attachments": []
+}
