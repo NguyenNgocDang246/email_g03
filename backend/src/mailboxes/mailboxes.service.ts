@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { Mailbox } from 'src/types';
+import { Mailbox } from '../types';
 import { PaginationDto } from './dto';
 
 @Injectable()
