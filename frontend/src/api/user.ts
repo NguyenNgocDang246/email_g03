@@ -33,6 +33,7 @@ export const loginUser = async (data: LoginData) => {
 
     // Lưu refresh token vào localStorage
     localStorage.setItem("refreshToken", res.data.refreshToken);
+    localStorage.setItem("email", data.email);
 
     return res.data;
   } catch (error: unknown) {
@@ -55,6 +56,7 @@ export const loginWithGoogle = async (credentialResponse: CredentialResponse) =>
 
     // Lưu refresh token vào localStorage
     localStorage.setItem("refreshToken", res.data.data.refreshToken);
+    localStorage.setItem("email", res.data.data.email);
 
     return res.data.data;
   } catch (error: unknown) {
@@ -73,7 +75,6 @@ export interface UserInfo {
 export const getUserInfo = async (): Promise<UserInfo> => {
   try {
     const res = await API.get("/user/info");
-    console.log(res.data.data);
     return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {

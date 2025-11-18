@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -26,7 +26,7 @@ export class EmailsService {
     const emailDetail = this.cache.get(id);
 
     if (!emailDetail) {
-      throw new Error('Email detail not found');
+      throw new NotFoundException('Email detail not found');
     }
 
     return emailDetail;

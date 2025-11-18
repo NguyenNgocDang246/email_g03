@@ -1,5 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { MailboxesService } from './mailboxes.service';
+import { PaginationDto } from './dto';
 
 @Controller('mailboxes')
 export class MailboxesController {
@@ -11,7 +12,23 @@ export class MailboxesController {
   }
 
   @Get(':id/emails')
-  getEmailsInMailbox(@Param('id') id: string) {
-    return this.mailboxesService.getEmailsInMailbox(id);
+  getEmailsInMailbox(
+    @Param('id') id: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.mailboxesService.getEmailsInMailbox(id, paginationDto);
+  }
+
+  @Get(':id/emails/search')
+  searchEmailsInMailbox(
+    @Param('id') id: string,
+    @Query('query') query: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.mailboxesService.searchEmailsInMailbox(
+      id,
+      query,
+      paginationDto,
+    );
   }
 }

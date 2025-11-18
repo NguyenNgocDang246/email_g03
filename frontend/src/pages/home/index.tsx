@@ -1,14 +1,16 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogIn, UserPlus, Home as HomeIcon, LogOut } from "lucide-react";
-import { setAccessToken, accessTokenMemory as accessToken } from "../../api/baseAPI";
+import { setAccessToken, accessTokenMemory, refreshTokenMemory } from "../../api/baseAPI";
 
 export default function Home() {
   const navigate = useNavigate();
+  const isLogged = !!accessTokenMemory || !!refreshTokenMemory;
 
   const handleLogout = () => {
     setAccessToken(null);
     localStorage.removeItem("refreshToken");
-    navigate("/"); // quay về home
+    localStorage.removeItem("email");
+    window.location.href = "/";
   };
 
   return (
@@ -34,7 +36,7 @@ export default function Home() {
             >
               Home
             </NavLink>
-            {!accessToken && (
+            {!isLogged && (
               <>
                 <NavLink
                   to="/signup"
@@ -64,7 +66,7 @@ export default function Home() {
               </>
             )}
 
-            {accessToken && (
+            {isLogged && (
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 transition"
@@ -87,7 +89,7 @@ export default function Home() {
             Join our community and start exploring amazing features today.
           </p>
 
-          {!accessToken && (
+          {!isLogged && (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <NavLink
                 to="/signup"
@@ -107,7 +109,7 @@ export default function Home() {
             </div>
           )}
 
-          {accessToken && (
+          {isLogged && (
             <button
               onClick={() => navigate("/user-info")}
               className="mt-4 w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-5 rounded-lg transition"
@@ -116,7 +118,7 @@ export default function Home() {
             </button>
           )}
 
-          {accessToken && (
+          {isLogged && (
             <button
               onClick={handleLogout}
               className="mt-4 w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-5 rounded-lg transition"
