@@ -1,5 +1,6 @@
 import React from "react";
 import { Menu, Search, HelpCircle, Settings, Grid3x3 } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -12,6 +13,25 @@ export const Header: React.FC<HeaderProps> = ({
   searchQuery,
   setSearchQuery,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+
+    const params = new URLSearchParams(location.search);
+    if (value) {
+      params.set("query", value);
+    } else {
+      params.delete("query");
+    }
+
+    navigate(
+      { pathname: location.pathname, search: params.toString() },
+      { replace: true }
+    );
+  };
+
   return (
     <header className="bg-white border-b w-full border-gray-200 px-4 py-2 flex items-center justify-between gap-4 sticky top-0 z-20 ">
       <button
@@ -31,10 +51,10 @@ export const Header: React.FC<HeaderProps> = ({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search mail"
+            placeholder="Tìm kiếm mail"
             className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
       </div>

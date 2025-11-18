@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { accessTokenMemory as accessToken } from "../../api/baseAPI";
 import { getMailBoxesInfo } from "../../api/inbox";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "next/navigation";
 
 
 interface SidebarProps {
@@ -25,6 +26,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { data=[], isLoading, error } = useQuery({
     queryKey: ["mailboxesInfo"],
     queryFn: () => getMailBoxesInfo(),
+    retry:false,
+    refetchOnWindowFocus:false,
     // enabled: !!accessToken, 
   });
 
@@ -33,6 +36,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return (
       <p className="text-center mt-10 text-red-600">Error loading mailboxes info</p>
     );
+  
+
 
   return (
     <div className="w-full bg-white border-r border-gray-200 overflow-y-auto ">
@@ -45,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             key={mailbox.id}
             onClick={() => {
               setSelectedMailbox(mailbox.id);
-              navigate(`/mailbox/${mailbox.id}/emails`); 
+              navigate(`/mailbox/${mailbox.id}`); 
             }}
             className={`w-full flex items-center gap-3 px-4 py-2 rounded-r-full text-left mb-1 transition-colors ${
               selectedMailbox === mailbox.id

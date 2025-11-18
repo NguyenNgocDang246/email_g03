@@ -1,13 +1,13 @@
 import React from "react";
 import { RefreshCw, Trash2, MailOpen } from "lucide-react";
 import { EmailListItem } from "./EmailListItem";
-import type { Email } from "../../data/mockData";
+import type { MailInfo } from "../../api/inbox";
 
 interface EmailListProps {
-  emails: Email[];
-  selectedEmail: Email | null;
+  emails: MailInfo[];
+  selectedEmail: MailInfo | null;
   selectedEmails: number[];
-  onEmailSelect: (email: Email) => void;
+  onEmailSelect: (email: MailInfo) => void;
   onToggleStar: (
     emailId: number,
     e?: React.MouseEvent<HTMLButtonElement>
@@ -20,7 +20,6 @@ interface EmailListProps {
   onDelete: () => void;
   onMarkAsRead: () => void;
   onRefresh: () => void;
-  showMobileDetail: boolean;
 }
 
 export const EmailList: React.FC<EmailListProps> = ({
@@ -34,13 +33,11 @@ export const EmailList: React.FC<EmailListProps> = ({
   onDelete,
   onMarkAsRead,
   onRefresh,
-  showMobileDetail,
+
 }) => {
   return (
     <main
-      className={`${
-        showMobileDetail ? "hidden" : "block"
-      } lg:block flex-1 lg:max-w-xl bg-white border-r border-gray-200 flex flex-col w-1/3 scrollbar overflow-y-auto`}
+      className="lg:block flex-1 lg:max-w-xl bg-white border-r border-gray-200 flex flex-col w-1/3 scrollbar overflow-y-auto"
     >
       <div className="border-b border-gray-200 py-2 px-4 flex items-center gap-2 sticky top-0 bg-white z-10">
         <input
@@ -78,17 +75,23 @@ export const EmailList: React.FC<EmailListProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {emails.map((email) => (
-          <EmailListItem
-            key={email.id}
-            email={email}
-            isSelected={selectedEmail?.id === email.id}
-            isChecked={selectedEmails.includes(email.id)}
-            onSelect={onEmailSelect}
-            onToggleStar={onToggleStar}
-            onCheckboxChange={onCheckboxChange}
-          />
-        ))}
+        {emails.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-gray-400">
+            <p>Hiện tại không có mail</p>
+          </div>
+        ) : (
+          emails.map((email) => (
+            <EmailListItem
+              key={email.id}
+              email={email}
+              isSelected={selectedEmail?.id === email.id}
+              isChecked={selectedEmails.includes(email.id)}
+              onSelect={onEmailSelect}
+              onToggleStar={onToggleStar}
+              onCheckboxChange={onCheckboxChange}
+            />
+          ))
+        )}
       </div>
     </main>
   );

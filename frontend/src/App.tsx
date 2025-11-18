@@ -14,7 +14,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/user-info" element={<UserInfo />} />
      {/* redirect /inbox sang /mailbox/inbox */}
-      <Route path="/inbox" element={<Navigate to="/mailbox/inbox" replace />} />
+      <Route path="/mailbox" element={<Navigate to="/mailbox/inbox" replace />} />
 
       {/* mailbox route */}
       <Route

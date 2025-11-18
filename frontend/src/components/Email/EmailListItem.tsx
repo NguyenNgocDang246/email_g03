@@ -1,12 +1,12 @@
 import React from "react";
 import { Star } from "lucide-react";
-import type { Email } from "../../data/mockData";
+import type { MailInfo } from "../../api/inbox";
 
 interface EmailListItemProps {
-  email: Email;
+  email: MailInfo;
   isSelected: boolean;
   isChecked: boolean;
-  onSelect: (email: Email) => void;
+  onSelect: (email: MailInfo) => void;
   onToggleStar: (
     emailId: number,
     e?: React.MouseEvent<HTMLButtonElement>
@@ -25,6 +25,8 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
   onToggleStar,
   onCheckboxChange,
 }) => {
+
+  
   return (
     <div
       onClick={() => onSelect(email)}

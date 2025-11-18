@@ -1,27 +1,47 @@
-import React from "react";
-import { ChevronLeft, Star, Mail } from "lucide-react";
-import type { Email } from "../../data/mockData";
+import React, { Suspense } from "react";
+import { Star, Mail } from "lucide-react";
+import { getEmailDetail } from "../../api/inbox";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 interface EmailDetailProps {
-  email: Email | null;
-  onToggleStar: (
-    emailId: number,
-    e?: React.MouseEvent<HTMLButtonElement>
-  ) => void;
+  emailId: number|null
   onMarkAsUnread: () => void;
   onDelete: () => void;
 }
 
 export const EmailDetail: React.FC<EmailDetailProps> = ({
-  email,
-  onToggleStar,
+  emailId,
   onMarkAsUnread,
   onDelete,
 }) => {
-  if (!email) {
+  
+  const navigate = useNavigate();
+  // if (!accessToken) {
+  //   navigate("/login");
+  //   return null;
+  // }
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["mailDetailInfo",emailId],
+    queryFn: () => getEmailDetail(emailId!),
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: !!emailId,
+  });
+
+  if (isLoading) return <p className="text-center mt-10">Loading...</p>;
+  if (error)
     return (
-      <div className="p-6 bg-white w-2/3">
-        <div className="h-full flex  justify-center items-center text-gray-400 p-6">
+      <p className="text-center mt-10 text-red-600">
+        Error loading mailboxes info
+      </p>
+    );
+
+  if (!emailId) {
+    return (
+      <div className="w-full">
+        <div className="h-full flex justify-center items-center text-gray-400 p-6">
           <div className="text-center">
             <Mail className="w-24 h-24 mx-auto mb-4 opacity-20" />
             <p className="text-lg">Select an email to view details</p>
@@ -31,45 +51,89 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
     );
   }
 
+  
+
   return (
- 
-      <div className="p-6 w-2/3 bg-white">
-
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold mb-4 text-black">{email.subject}</h1>
-          <div className="flex items-start gap-3 mb-4">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-black font-semibold">
-              {email.from.charAt(0)}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-black">{email.from}</span>
-                <button
-                  onClick={(e) => onToggleStar(email.id, e)}
-                  className="p-1 hover:bg-gray-200 rounded"
-                >
-                  <Star
-                    className={`w-4 h-4 ${
-                      email.isStarred
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-400"
-                    }`}
-                  />
-                </button>
-              </div>
-              <p className="text-gray-500 text-sm">{email.timestamp}</p>
-            </div>
-          </div>
-
-          <div
-            className="prose"
-            dangerouslySetInnerHTML={{ __html: email.body }}
-          />
+    <Suspense
+      fallback={
+        <div className="p-6 w-full flex justify-center items-center h-full">
+          <p className="text-gray-400 text-lg">Loading email...</p>
+        </div>
+      }
+    >
+      <div className="w-full">
+        {/* SUBJECT */}
+        <div className="mb-4">
+          <h1 className="text-xl font-semibold text-black">{data?.subject}</h1>
         </div>
 
+        {/* SENDER + RECIPIENTS */}
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+            {data?.sender.name.charAt(0)}
+          </div>
+
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-black">
+                {data?.sender.name} ({data?.sender.email})
+              </span>
+
+              <button className="p-1 hover:bg-gray-200 rounded">
+                <Star
+                  className={`w-4 h-4 ${
+                    data?.isStarred
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-400"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* RECIPIENTS */}
+            <p className="text-gray-500 text-sm">
+              To: {data?.recipients.map((r) => r.email).join(", ")}
+            </p>
+
+            {/* DATE */}
+            <p className="text-gray-400 text-xs">{data?.timestamp}</p>
+          </div>
+        </div>
+
+        {/* BODY */}
+        <div
+          className="prose max-w-none text-black"
+          dangerouslySetInnerHTML={{ __html: data?.body ?? "" }}
+        />
+
+        {/* ATTACHMENTS */}
+        {data?.attachments && data?.attachments.length > 0 && (
+          <div className="mt-6">
+            <h3 className="font-medium text-black mb-2">Attachments</h3>
+            <ul className="space-y-2">
+              {data?.attachments.map((file) => (
+                <li
+                  key={file.id}
+                  className="flex justify-between items-center p-2 bg-gray-100 rounded"
+                >
+                  <span>{file.fileName}</span>
+                  <a
+                    href={file.url}
+                    target="_blank"
+                    className="text-blue-600 font-medium hover:underline"
+                  >
+                    Download
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* ACTION BUTTONS */}
         <div className="flex items-center gap-2 mt-6">
           <button
-            className="px-4 py-2 bg-green-500 rounded hover:bg-gray-300 text-black font-medium"
+            className="px-4 py-2 bg-green-500 rounded hover:bg-green-600 text-white"
             onClick={onMarkAsUnread}
           >
             Mark as unread
@@ -82,6 +146,6 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
           </button>
         </div>
       </div>
-
+    </Suspense>
   );
 };
