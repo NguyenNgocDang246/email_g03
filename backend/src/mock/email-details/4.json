@@ -1,0 +1,18 @@
+{
+  "id": 4,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "HR Team",
+    "email": "hr@company.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Thông tin hợp đồng",
+  "body": "<p>Xin chào,</p><p>Hợp đồng thử việc cho bạn đã được chuẩn bị.</p><p>Vui lòng kiểm tra và ký trước ngày 10/11.</p><p>Trân trọng,<br/>HR Team</p>",
+  "timestamp": "2025-11-08T10:00:00Z",
+  "attachments": []
+}

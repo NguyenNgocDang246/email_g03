@@ -1,0 +1,18 @@
+{
+  "id": 5,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "LinkedIn",
+    "email": "no-reply@linkedin.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Bạn có 3 lời mời kết nối mới",
+  "body": "<p>Xin chào,</p><p>Bạn vừa nhận được 3 lời mời kết nối mới từ mạng lưới của bạn.</p><p><a href=\"#\">Xem lời mời</a></p><p>Trân trọng,<br/>LinkedIn Team</p>",
+  "timestamp": "2025-11-09T11:20:00Z",
+  "attachments": []
+}

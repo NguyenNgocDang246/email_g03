@@ -1,0 +1,18 @@
+{
+  "id": 11,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "ABC Corp",
+      "email": "hr@abccorp.com"
+    }
+  ],
+  "subject": "Ứng tuyển vị trí Frontend Developer",
+  "body": "<p>Xin chào,</p><p>Tôi gửi hồ sơ ứng tuyển vị trí Frontend Developer tại ABC Corp. Mong nhận được phản hồi.</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-05T09:00:00Z",
+  "attachments": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": 2,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "Recruiter ABC",
+    "email": "hr@abccorp.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Cơ hội việc làm cho bạn tại ABC Corp",
+  "body": "<p>Xin chào,</p><p>Chúng tôi thấy hồ sơ của bạn phù hợp với vị trí <strong>Software Engineer</strong> tại ABC Corp.</p><p>Vui lòng phản hồi nếu bạn quan tâm để sắp xếp thời gian phỏng vấn.</p><p>Trân trọng,<br/>Recruitment Team</p>",
+  "timestamp": "2025-11-06T09:15:00Z",
+  "attachments": []
+}

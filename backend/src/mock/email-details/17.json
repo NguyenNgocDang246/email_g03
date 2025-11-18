@@ -1,0 +1,18 @@
+{
+  "id": 17,
+  "mailboxId": "sent",
+  "sender": {
+    "name": "Mạnh Trọng Kiên",
+    "email": "kienmt.example@gmail.com"
+  },
+  "recipients": [
+    {
+      "name": "TopDev",
+      "email": "feedback@topdev.vn"
+    }
+  ],
+  "subject": "Gửi phản hồi về khóa học",
+  "body": "<p>Xin chào,</p><p>Đây là phản hồi của tôi về khóa học React nâng cao. Cảm ơn TopDev!</p><p>Trân trọng,<br/>Kiên</p>",
+  "timestamp": "2025-11-11T16:20:00Z",
+  "attachments": []
+}

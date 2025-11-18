@@ -1,0 +1,18 @@
+{
+  "id": 1,
+  "mailboxId": "inbox",
+  "sender": {
+    "name": "TopDev",
+    "email": "no-reply@topdev.vn"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "[TopDev] 12_0167 Mạnh Trọng Kiên ơi! Chào mừng bạn đến với TopDev, hãy bắt đầu hành trình sự nghiệp ngay...",
+  "body": "<p>Xin chào Mạnh Trọng Kiên,</p><p>Chào mừng bạn đến với <strong>TopDev</strong> – nền tảng tuyển dụng IT hàng đầu! Chúng tôi rất vui được đồng hành cùng bạn trong hành trình phát triển sự nghiệp.</p><p>Hãy bắt đầu bằng cách:</p><ul><li>Cập nhật hồ sơ cá nhân</li><li>Tìm kiếm công việc phù hợp</li><li>Tham gia các hội thảo, khóa học miễn phí</li></ul><p>Chúc bạn thành công!</p><p>Trân trọng,<br/>Đội ngũ TopDev</p>",
+  "timestamp": "2025-11-05T08:00:00Z",
+  "attachments": []
+}

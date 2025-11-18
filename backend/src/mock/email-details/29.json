@@ -1,0 +1,18 @@
+{
+  "id": 29,
+  "mailboxId": "spam",
+  "sender": {
+    "name": "Phishing Alert",
+    "email": "alert@fakebank.com"
+  },
+  "recipients": [
+    {
+      "name": "Bạn",
+      "email": "you@example.com"
+    }
+  ],
+  "subject": "Cập nhật mật khẩu ngay",
+  "body": "<p>Xin chào,</p><p>Tài khoản của bạn có nguy cơ bị hack. Vui lòng cập nhật mật khẩu ngay.</p><p><a href=\"#\">Đổi mật khẩu</a></p>",
+  "timestamp": "2025-11-13T21:30:00Z",
+  "attachments": []
+}
