@@ -1,42 +1,112 @@
 [
   {
-    "id": "email-001",
+    "id": 1,
     "mailboxId": "inbox",
-    "sender": "Nguyễn Văn A",
-    "senderEmail": "nguyenvana@example.com",
-    "subject": "Lịch họp tuần này",
-    "previewText": "Chào bạn, đây là lịch họp tuần này...",
-    "timestamp": "2025-11-16T08:30:00Z",
-    "isRead": false
+    "from": "TopDev",
+    "subject": "[TopDev] 12_0167 Mạnh Trọng Kiên ơi! Chào mừng bạn đến với TopDev, hãy bắt đầu hành trình sự nghiệp ngay...",
+    "preview": "Chào mừng bạn đến với TopDev! Hãy bắt đầu hành trình sự nghiệp của bạn",
+    "timestamp": "5 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Chào mừng bạn đến với TopDev! Chúng tôi rất vui được đồng hành cùng bạn trong hành trình phát triển sự nghiệp.</p>"
   },
   {
-    "id": "email-002",
+    "id": 2,
     "mailboxId": "inbox",
-    "sender": "Công ty ABC",
-    "senderEmail": "hr@abc.com",
-    "subject": "Thông báo kết quả phỏng vấn",
-    "previewText": "Chúng tôi vui mừng thông báo rằng...",
-    "timestamp": "2025-11-15T14:12:00Z",
-    "isRead": true
+    "from": "Recruiter ABC",
+    "subject": "Cơ hội việc làm cho bạn tại ABC Corp",
+    "preview": "Chúng tôi muốn mời bạn tham gia buổi phỏng vấn tại ABC Corp",
+    "timestamp": "6 Nov",
+    "isRead": true,
+    "isStarred": true,
+    "body": "<p>Xin chào,</p><p>Chúng tôi thấy hồ sơ của bạn phù hợp với vị trí Software Engineer tại ABC Corp.</p>"
   },
   {
-    "id": "email-003",
+    "id": 3,
     "mailboxId": "inbox",
-    "sender": "Công ty CP XYZ",
-    "senderEmail": "info@xyz.com",
-    "subject": "Hóa đơn tháng 11/2025 cần thanh toán",
-    "previewText": "Hóa đơn tháng này đã có, vui lòng xem chi tiết...",
-    "timestamp": "2025-11-14T09:45:00Z",
-    "isRead": false
+    "from": "TopDev",
+    "subject": "Thông báo khóa học mới",
+    "preview": "Khóa học React nâng cao sắp bắt đầu, đăng ký ngay",
+    "timestamp": "7 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Khóa học React nâng cao sẽ bắt đầu từ tuần tới. Hãy đăng ký để không bỏ lỡ!</p>"
   },
   {
-    "id": "email-004",
+    "id": 4,
     "mailboxId": "inbox",
-    "sender": "Hệ thống",
-    "senderEmail": "no-reply@system.com",
-    "subject": "Xác nhận thay đổi mật khẩu",
-    "previewText": "Bạn đã thay đổi mật khẩu lúc 10:00 sáng...",
-    "timestamp": "2025-11-13T17:00:00Z",
-    "isRead": true
+    "from": "HR Team",
+    "subject": "Thông tin hợp đồng",
+    "preview": "Hợp đồng thử việc của bạn đã sẵn sàng để ký",
+    "timestamp": "8 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Hợp đồng thử việc của bạn đã được chuẩn bị, vui lòng xem và ký trước ngày 10 Nov.</p>"
+  },
+  {
+    "id": 5,
+    "mailboxId": "inbox",
+    "from": "LinkedIn",
+    "subject": "Bạn có 3 lời mời kết nối mới",
+    "preview": "Hãy kiểm tra những lời mời kết nối mới từ mạng lưới của bạn",
+    "timestamp": "9 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Bạn có 3 lời mời kết nối mới từ LinkedIn. Kiểm tra ngay để mở rộng mạng lưới của bạn.</p>"
+  },
+  {
+    "id": 6,
+    "mailboxId": "inbox",
+    "from": "TopDev",
+    "subject": "Cập nhật CV của bạn",
+    "preview": "Hãy cập nhật CV để nhận được nhiều cơ hội việc làm hơn",
+    "timestamp": "10 Nov",
+    "isRead": true,
+    "isStarred": true,
+    "body": "<p>Xin chào,</p><p>Để tăng cơ hội nhận việc, hãy cập nhật CV của bạn trên nền tảng TopDev.</p>"
+  },
+  {
+    "id": 7,
+    "mailboxId": "inbox",
+    "from": "Tech Newsletter",
+    "subject": "Tin tức công nghệ tuần này",
+    "preview": "Các xu hướng công nghệ mới nhất bạn nên biết",
+    "timestamp": "11 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Các xu hướng công nghệ mới nhất tuần này đã được tổng hợp, hãy đọc để không bỏ lỡ.</p>"
+  },
+  {
+    "id": 8,
+    "mailboxId": "inbox",
+    "from": "TopDev",
+    "subject": "Hội thảo trực tuyến sắp tới",
+    "preview": "Tham gia hội thảo trực tuyến về phát triển phần mềm",
+    "timestamp": "12 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Hội thảo trực tuyến về phát triển phần mềm sẽ diễn ra vào cuối tuần. Hãy đăng ký ngay!</p>"
+  },
+  {
+    "id": 9,
+    "mailboxId": "inbox",
+    "from": "Recruiter XYZ",
+    "subject": "Cập nhật trạng thái ứng tuyển",
+    "preview": "Ứng tuyển của bạn đã được xem xét",
+    "timestamp": "13 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Ứng tuyển của bạn cho vị trí Backend Developer đã được xem xét. Chúng tôi sẽ liên hệ sớm.</p>"
+  },
+  {
+    "id": 10,
+    "mailboxId": "inbox",
+    "from": "TopDev",
+    "subject": "Lời mời tham gia nhóm học tập",
+    "preview": "Tham gia nhóm học tập để nâng cao kỹ năng lập trình",
+    "timestamp": "14 Nov",
+    "isRead": false,
+    "isStarred": true,
+    "body": "<p>Xin chào,</p><p>Hãy tham gia nhóm học tập của TopDev để nâng cao kỹ năng lập trình của bạn.</p>"
   }
 ]

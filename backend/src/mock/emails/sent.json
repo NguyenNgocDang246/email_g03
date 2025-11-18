@@ -1,22 +1,112 @@
 [
   {
-    "id": "email-101",
+    "id": 11,
     "mailboxId": "sent",
-    "sender": "Bạn",
-    "senderEmail": "you@example.com",
-    "subject": "Báo cáo hiệu suất tháng 10",
-    "previewText": "Dưới đây là báo cáo hiệu suất...",
-    "timestamp": "2025-11-12T08:00:00Z",
-    "isRead": true
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Ứng tuyển vị trí Frontend Developer",
+    "preview": "Gửi hồ sơ ứng tuyển Frontend Developer tại ABC Corp",
+    "timestamp": "5 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Tôi gửi hồ sơ ứng tuyển vị trí Frontend Developer tại ABC Corp. Mong nhận được phản hồi.</p>"
   },
   {
-    "id": "email-102",
+    "id": 12,
     "mailboxId": "sent",
-    "sender": "Bạn",
-    "senderEmail": "you@example.com",
-    "subject": "Đăng ký tham gia sự kiện Tech Talk",
-    "previewText": "Tôi muốn đăng ký tham gia buổi Tech Talk ngày...",
-    "timestamp": "2025-11-10T10:22:00Z",
-    "isRead": true
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Hỏi về lịch phỏng vấn",
+    "preview": "Xin xác nhận thời gian phỏng vấn cho vị trí Backend Developer",
+    "timestamp": "6 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Xin xác nhận thời gian phỏng vấn của tôi cho vị trí Backend Developer.</p>"
+  },
+  {
+    "id": 13,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Cảm ơn về buổi phỏng vấn",
+    "preview": "Cảm ơn anh/chị đã phỏng vấn tôi ngày hôm qua",
+    "timestamp": "7 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Cảm ơn anh/chị đã dành thời gian phỏng vấn tôi ngày hôm qua. Mong nhận được phản hồi sớm.</p>"
+  },
+  {
+    "id": 14,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Gửi tài liệu tham khảo",
+    "preview": "Gửi kèm tài liệu tham khảo cho dự án XYZ",
+    "timestamp": "8 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Gửi kèm tài liệu tham khảo cho dự án XYZ theo yêu cầu.</p>"
+  },
+  {
+    "id": 15,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Xác nhận lịch họp",
+    "preview": "Xác nhận lịch họp vào ngày 10 Nov",
+    "timestamp": "9 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Xác nhận lịch họp vào ngày 10 Nov. Mong anh/chị tham gia đầy đủ.</p>"
+  },
+  {
+    "id": 16,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Đăng ký tham gia hội thảo",
+    "preview": "Tôi muốn đăng ký tham gia hội thảo trực tuyến",
+    "timestamp": "10 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Tôi muốn đăng ký tham gia hội thảo trực tuyến về phát triển phần mềm.</p>"
+  },
+  {
+    "id": 17,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Gửi phản hồi về khóa học",
+    "preview": "Đây là phản hồi của tôi về khóa học React nâng cao",
+    "timestamp": "11 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Đây là phản hồi của tôi về khóa học React nâng cao. Cảm ơn TopDev!</p>"
+  },
+  {
+    "id": 18,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Yêu cầu hỗ trợ kỹ thuật",
+    "preview": "Xin hỗ trợ tôi về lỗi khi cài đặt phần mềm",
+    "timestamp": "12 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Tôi gặp lỗi khi cài đặt phần mềm. Xin được hỗ trợ.</p>"
+  },
+  {
+    "id": 19,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Cập nhật CV",
+    "preview": "Đính kèm CV cập nhật của tôi",
+    "timestamp": "13 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Đính kèm CV cập nhật của tôi theo yêu cầu.</p>"
+  },
+  {
+    "id": 20,
+    "mailboxId": "sent",
+    "from": "Mạnh Trọng Kiên",
+    "subject": "Tham gia nhóm học tập",
+    "preview": "Tôi muốn tham gia nhóm học tập nâng cao kỹ năng lập trình",
+    "timestamp": "14 Nov",
+    "isRead": true,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Tôi muốn tham gia nhóm học tập của TopDev để nâng cao kỹ năng lập trình.</p>"
   }
 ]

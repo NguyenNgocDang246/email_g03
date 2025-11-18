@@ -1,42 +1,112 @@
 [
   {
-    "id": "email-201",
+    "id": 21,
     "mailboxId": "spam",
-    "sender": "Ngân hàng Vietcom",
-    "senderEmail": "support@vietcombannk.com",
-    "subject": "Xác minh tài khoản",
-    "previewText": "Tài khoản của bạn đang gặp vấn đề...",
-    "timestamp": "2025-11-16T08:00:00Z",
-    "isRead": false
+    "from": "Spammer 123",
+    "subject": "Bạn đã trúng thưởng 1 tỷ đồng!",
+    "preview": "Nhanh tay nhận giải thưởng lớn ngay hôm nay",
+    "timestamp": "5 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Chúc mừng,</p><p>Bạn đã trúng giải thưởng 1 tỷ đồng. Nhấn vào link để nhận giải.</p>"
   },
   {
-    "id": "email-202",
+    "id": 22,
     "mailboxId": "spam",
-    "sender": "Giảm Giá 50%",
-    "senderEmail": "deal@shopping.com",
-    "subject": "Siêu Flash sale cuối tuần!",
-    "previewText": "Mua sắm đi! Giảm tới 70%...",
-    "timestamp": "2025-11-15T12:55:00Z",
-    "isRead": false
+    "from": "Spammer XYZ",
+    "subject": "Giảm giá 90% chỉ hôm nay",
+    "preview": "Mua ngay trước khi hết ưu đãi",
+    "timestamp": "6 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Chào bạn,</p><p>Mua sắm ngay với ưu đãi giảm giá 90% chỉ trong hôm nay!</p>"
   },
   {
-    "id": "email-203",
+    "id": 23,
     "mailboxId": "spam",
-    "sender": "CryptoBot",
-    "senderEmail": "support@crypto-bot.com",
-    "subject": "Bạn nhận được 0.12 Bitcoin!",
-    "previewText": "Nhấn vào đây để nhận ngay...",
-    "timestamp": "2025-11-13T19:10:00Z",
-    "isRead": true
+    "from": "Lottery Winner",
+    "subject": "Bạn là người may mắn",
+    "preview": "Nhận phần thưởng 500 triệu đồng",
+    "timestamp": "7 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Bạn là người may mắn nhận phần thưởng 500 triệu đồng. Click để nhận thưởng.</p>"
   },
   {
-    "id": "email-204",
+    "id": 24,
     "mailboxId": "spam",
-    "sender": "App Lạ",
-    "senderEmail": "promo@weirdapp.cc",
-    "subject": "Tặng bạn 1 tỷ nếu mở email này",
-    "previewText": "Không đùa đâu, click ngay!",
-    "timestamp": "2025-11-13T17:15:00Z",
-    "isRead": false
+    "from": "Marketing Bot",
+    "subject": "Khuyến mãi siêu sốc",
+    "preview": "Nhanh tay đặt hàng để được khuyến mãi",
+    "timestamp": "8 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Chào bạn,</p><p>Đặt hàng ngay để nhận khuyến mãi siêu sốc từ chúng tôi.</p>"
+  },
+  {
+    "id": 25,
+    "mailboxId": "spam",
+    "from": "Fake Bank",
+    "subject": "Cập nhật thông tin tài khoản",
+    "preview": "Vui lòng đăng nhập để cập nhật thông tin",
+    "timestamp": "9 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Vui lòng đăng nhập vào hệ thống để cập nhật thông tin tài khoản.</p>"
+  },
+  {
+    "id": 26,
+    "mailboxId": "spam",
+    "from": "Online Shop",
+    "subject": "Deal hot hôm nay",
+    "preview": "Nhận ngay ưu đãi độc quyền",
+    "timestamp": "10 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Chào bạn,</p><p>Nhận ngay ưu đãi độc quyền chỉ hôm nay tại Online Shop.</p>"
+  },
+  {
+    "id": 27,
+    "mailboxId": "spam",
+    "from": "Spammer 007",
+    "subject": "Tăng lượt theo dõi Instagram nhanh chóng",
+    "preview": "Chỉ trong 24h bạn sẽ tăng 1000 followers",
+    "timestamp": "11 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Chỉ trong 24h bạn sẽ tăng 1000 followers Instagram. Nhấn vào link để biết thêm.</p>"
+  },
+  {
+    "id": 28,
+    "mailboxId": "spam",
+    "from": "Fake Lottery",
+    "subject": "Nhận ngay giải thưởng trị giá 1 triệu USD",
+    "preview": "Click để nhận phần thưởng",
+    "timestamp": "12 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Chúc mừng,</p><p>Bạn đã trúng giải thưởng 1 triệu USD. Click để nhận thưởng.</p>"
+  },
+  {
+    "id": 29,
+    "mailboxId": "spam",
+    "from": "Phishing Alert",
+    "subject": "Cập nhật mật khẩu ngay",
+    "preview": "Tài khoản của bạn có nguy cơ bị hack",
+    "timestamp": "13 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Để bảo vệ tài khoản, vui lòng cập nhật mật khẩu ngay.</p>"
+  },
+  {
+    "id": 30,
+    "mailboxId": "spam",
+    "from": "Unknown Sender",
+    "subject": "Nhận quà miễn phí hôm nay",
+    "preview": "Chỉ cần click để nhận quà miễn phí",
+    "timestamp": "14 Nov",
+    "isRead": false,
+    "isStarred": false,
+    "body": "<p>Xin chào,</p><p>Chỉ cần click vào link để nhận quà miễn phí hôm nay.</p>"
   }
 ]

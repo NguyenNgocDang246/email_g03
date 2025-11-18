@@ -66,7 +66,7 @@ export class MailboxesService {
     const filteredEmails = emails.filter(
       (email) =>
         email.subject.toLowerCase().includes(query.toLowerCase()) ||
-        email.previewText.toLowerCase().includes(query.toLowerCase()),
+        email.preview.toLowerCase().includes(query.toLowerCase()),
     );
 
     const page = paginationDto.page || 1;
