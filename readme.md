@@ -11,14 +11,7 @@ cd backend
 npm i
 ```
 
-- Create a `.env` file in the backend directory using the example:
-
-```
-JWT_SECRET="your-secret-key"
-MONGO_URI="mongodb://localhost:27017/your-database-name"
-```
-
-_(You can copy from `.env.example` if available.)_
+- Create a `.env` file in the backend directory using the example in `.env.exmaple`.
 
 2. **Frontend**
 
@@ -26,6 +19,8 @@ _(You can copy from `.env.example` if available.)_
 cd frontend
 npm i
 ```
+
+- Create a `.env` file in the frontend directory using the example in `.env.exmaple`.
 
 ## Running the Project
 
@@ -43,16 +38,13 @@ cd frontend
 npm run dev
 ```
 
-## Accessing the Project
+## Explanation of token storage choices (local storage)
+- Leverage the existing login management logic from previous exercises.
 
-- Once both backend and frontend are running, open your browser and access the frontend at:
+## Public url
+https://email-g03.vercel.app
 
-```
-http://localhost:5173
-```
-
-- Backend APIs will be available at:
-
-```
-http://localhost:3000
-```
+## Third-party services used
+- Google OAuth client
+- Render
+- Vercel
