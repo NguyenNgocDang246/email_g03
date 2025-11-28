@@ -1,10 +1,8 @@
 import React from "react";
 import { ComposeButton } from "../UI/ComposeButton";
 import { useQuery } from "@tanstack/react-query";
-import { accessTokenMemory as accessToken } from "../../api/baseAPI";
 import { getMailBoxesInfo } from "../../api/inbox";
 import { useNavigate } from "react-router-dom";
-import { useParams } from "next/navigation";
 
 
 interface SidebarProps {

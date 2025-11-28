@@ -3,8 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { loginUser, loginWithGoogle } from "../../../api/user";
-import { setAccessToken } from "../../../api/baseAPI";
-import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../../../contexts/authContext";
 
 interface LoginFormValues {
   email: string;
@@ -14,16 +13,12 @@ interface LoginFormValues {
 export default function Login() {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string | null>(null);
+  const { setUser } = useAuth();
 
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
-      // Lưu access token trong memory
-      setAccessToken(data.data.accessToken);
-
-      // Lưu refresh token trong localStorage
-      localStorage.setItem("refreshToken", data.data.refreshToken);
-
+      setUser(data.data);
       setMessage(`Welcome back, ${data.data.email}!`);
       navigate("/"); // điều hướng về Home
     },
@@ -93,14 +88,11 @@ export default function Login() {
           {mutation.isPending ? "Logging in..." : "Log In"}
         </button>
       </form>
-      <button className="w-full mt-4 py-2.5 rounded-lg transition disabled:opacity-70">
-        <GoogleLogin
-          onSuccess={async (cre) => {
-            await loginWithGoogle(cre);
-            navigate("/");
-          }}
-          onError={() => console.log("Google Login Error")}
-        />
+      <button
+        className="border cursor-pointer hover:bg-blue-200 w-full mt-4 py-2.5 rounded-lg transition disabled:opacity-70"
+        onClick={loginWithGoogle}
+      >
+        Login With Google
       </button>
 
       <p className="text-center text-sm text-gray-600 mt-4">

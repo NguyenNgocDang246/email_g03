@@ -1,6 +1,5 @@
-import API, { setAccessToken } from "./baseAPI"; // Axios instance đã gắn interceptor tự động
+import API from "./baseAPI"; // Axios instance đã gắn interceptor tự động
 import axios from "axios";
-import type { CredentialResponse } from "@react-oauth/google";
 
 export interface RegisterData {
   email: string;
@@ -9,7 +8,7 @@ export interface RegisterData {
 
 export const registerUser = async (data: RegisterData) => {
   try {
-    const res = await API.post("/user/register", data);
+    const res = await API.post("/auth/register", data);
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -26,15 +25,7 @@ export interface LoginData {
 
 export const loginUser = async (data: LoginData) => {
   try {
-    const res = await API.post("/user/login", data);
-
-    // Lưu access token vào memory trong baseAPI
-    setAccessToken(res.data.accessToken);
-
-    // Lưu refresh token vào localStorage
-    localStorage.setItem("refreshToken", res.data.refreshToken);
-    localStorage.setItem("email", data.email);
-
+    const res = await API.post("/auth/login", data);
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -44,28 +35,42 @@ export const loginUser = async (data: LoginData) => {
   }
 };
 
-export const loginWithGoogle = async (credentialResponse: CredentialResponse) => {
+export const loginWithGoogle = async () => {
   try {
-    const credential = credentialResponse.credential;
-    if (!credential) throw new Error("No Google credential");
-
-    const res = await API.post("/user/google", { credential });
-
-    // Lưu access token vào memory (baseAPI)
-    setAccessToken(res.data.data.accessToken);
-
-    // Lưu refresh token vào localStorage
-    localStorage.setItem("refreshToken", res.data.data.refreshToken);
-    localStorage.setItem("email", res.data.data.email);
-
-    return res.data.data;
+    console.log("Login with Google called");
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Request error");
     }
-    throw new Error("Unexpected error");
   }
 };
+
+export const logoutUser = async () => {
+  try {
+    await API.get("/auth/logout");
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Request error");
+    }
+  }
+};
+
+// export const loginWithGoogle = async (credentialResponse: CredentialResponse) => {
+//   try {
+//     const credential = credentialResponse.credential;
+//     if (!credential) throw new Error("No Google credential");
+
+//     const res = await API.post("/user/google", { credential });
+
+//     return res.data.data;
+//   } catch (error: unknown) {
+//     if (axios.isAxiosError(error)) {
+//       throw new Error(error.response?.data?.message || "Request error");
+//     }
+//     throw new Error("Unexpected error");
+//   }
+// };
 
 export interface UserInfo {
   _id: string;

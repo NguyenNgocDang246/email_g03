@@ -1,7 +1,7 @@
 import React from "react";
 import { Menu, Search, HelpCircle, Settings, Grid3x3, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { setAccessToken } from "../../api/baseAPI";
+import { logoutUser } from "../../api/user";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -13,10 +13,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, searchQuery, setSe
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    setAccessToken(null);
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("email");
+  const handleLogout = async () => {
+    await logoutUser();
     window.location.href = "/";
   };
   const handleSearchChange = (value: string) => {

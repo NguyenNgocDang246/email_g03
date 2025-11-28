@@ -16,6 +16,12 @@ export class User {
 
   @Prop({ default: Date.now })
   createdAt: Date;
+
+  @Prop({ default: null })
+  googleAccessToken: string;
+
+  @Prop({ default: null })
+  googleRefreshToken: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

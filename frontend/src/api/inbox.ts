@@ -10,7 +10,6 @@ export interface MailBoxesInfo {
 export const getMailBoxesInfo = async (): Promise<MailBoxesInfo[]> => {
   try {
     const res = await API.get("/mailboxes");
-    console.log(res.data);
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -32,7 +31,6 @@ export interface MailInfo {
   body: string;
 }
 
-
 export const getMailBoxesEmailListInfo = async (
   mailboxId: string,
   query?: string
@@ -40,13 +38,10 @@ export const getMailBoxesEmailListInfo = async (
   try {
     // Nếu có query thì thêm /search?query=
     const url = query
-      ? `/mailboxes/${mailboxId}/emails/search?query=${encodeURIComponent(
-          query
-        )}`
+      ? `/mailboxes/${mailboxId}/emails/search?query=${encodeURIComponent(query)}`
       : `/mailboxes/${mailboxId}/emails`;
 
     const res = await API.get(url);
-    console.log(res.data.data);
     return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -55,7 +50,6 @@ export const getMailBoxesEmailListInfo = async (
     throw new Error("Unexpected error");
   }
 };
-
 
 export interface MailAddress {
   name: string;
@@ -89,7 +83,6 @@ export interface MailDetail {
 export const getEmailDetail = async (emailId: number): Promise<MailDetail> => {
   try {
     const res = await API.get(`/emails/${emailId}`);
-    console.log(res.data);
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
