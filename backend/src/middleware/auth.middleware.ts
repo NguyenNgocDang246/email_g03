@@ -7,8 +7,7 @@ import { UnauthorizedException } from '@nestjs/common/exceptions';
 export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly tokenService: TokenService) {}
   use = async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader?.split(' ')[1];
+    const token = req.cookies['accessToken'];
     if (!token) throw new UnauthorizedException('Token not provided');
     try {
       const decoded = await this.tokenService.validateToken(token);

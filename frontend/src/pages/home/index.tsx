@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogIn, UserPlus, LogOut } from "lucide-react";
-import { setAccessToken, accessTokenMemory, refreshTokenMemory } from "../../api/baseAPI";
 import { Header } from "../../components/Layout/Header";
 import { GuestHeader } from "../../components/Layout/GuestHeader";
+import { logoutUser } from "../../api/user";
+import { useAuth } from "../../contexts/authContext";
 
 export default function Home() {
   const navigate = useNavigate();
-  const isLogged = !!accessTokenMemory || !!refreshTokenMemory;
 
-  const handleLogout = () => {
-    setAccessToken(null);
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("email");
+  const { user } = useAuth();
+  const isLogged = !!user;
+
+  const handleLogout = async () => {
+    await logoutUser();
     window.location.href = "/";
   };
 

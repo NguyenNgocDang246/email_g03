@@ -6,7 +6,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMailBoxesEmailListInfo } from "../../api/inbox";
 import { useState, useEffect } from "react";
-import { accessTokenMemory, refreshTokenMemory } from "../../api/baseAPI";
+import { useAuth } from "../../contexts/authContext";
 
 export default function InboxPage() {
   const {
@@ -21,8 +21,8 @@ export default function InboxPage() {
     handleMarkAsUnread,
     handleRefresh,
   } = useEmailData();
-  const isLogged = !!accessTokenMemory || !!refreshTokenMemory;
-  console.log(isLogged);
+  const { user } = useAuth();
+  const isLogged = !!user;
   const navigate = useNavigate();
   useEffect(() => {
     if (!isLogged) {
