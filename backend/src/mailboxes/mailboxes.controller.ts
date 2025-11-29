@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { MailboxesService } from './mailboxes.service';
 import { PaginationDto } from './dto';
 
@@ -7,8 +7,10 @@ export class MailboxesController {
   constructor(private mailboxesService: MailboxesService) {}
 
   @Get()
-  getMailboxes() {
-    return this.mailboxesService.getMailboxes();
+  getMailboxes(@Req() req: Request) {
+    const data = req['user'];
+    const userId = data.id;
+    return this.mailboxesService.getMailboxes(userId);
   }
 
   @Get(':id/emails')

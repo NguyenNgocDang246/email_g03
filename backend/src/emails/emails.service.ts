@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class EmailsService {
   private cache = new Map();
 
-  constructor() {
+  constructor(private authService: AuthService) {
     this.loadMockFiles();
   }
 

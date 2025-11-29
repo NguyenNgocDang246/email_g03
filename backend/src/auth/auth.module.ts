@@ -9,6 +9,7 @@ import { AuthMiddleware } from 'src/middleware/auth.middleware';
   imports: [UsersModule, TokenModule],
   controllers: [AuthController],
   providers: [AuthService],
+  exports: [AuthService],
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

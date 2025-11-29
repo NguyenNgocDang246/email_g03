@@ -3,13 +3,14 @@ import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Mailbox } from '../types';
 import { PaginationDto } from './dto';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class MailboxesService {
   private mailboxes: Mailbox[];
   private emailsInMailbox = new Map();
 
-  constructor() {
+  constructor(private authService: AuthService) {
     const filePathMailboxes = join(__dirname, '..', 'mock', 'mailboxes.json');
     const dataMailboxes = readFileSync(filePathMailboxes, 'utf8');
     this.mailboxes = JSON.parse(dataMailboxes);
@@ -29,8 +30,12 @@ export class MailboxesService {
     }
   }
 
-  async getMailboxes() {
-    return this.mailboxes;
+  async getMailboxes(userId: string) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return null;
+    return await gmail.users.labels.list({
+      userId: 'me',
+    });
   }
 
   async getEmailsInMailbox(mailboxId: string, paginationDto: PaginationDto) {
