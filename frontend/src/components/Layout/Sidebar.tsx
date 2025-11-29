@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         );
 
     return (
-        <div className="w-full bg-white border-r border-gray-200 overflow-y-auto ">
+        <div className="w-full border-r border-gray-200  overflow-y-auto ">
             <div className="p-4">
                 <ComposeButton />
             </div>
@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className={`w-full flex items-center gap-3 px-4 py-2 rounded-r-full text-left mb-1 transition-colors ${
                             selectedMailbox === mailbox.id
                                 ? "bg-red-100 text-red-600 font-medium"
-                                : "hover:bg-gray-100 text-gray-700"
+                                : "hover:bg-gray-200 text-gray-700"
                         }`}
                     >
                         {/* <span className="text-xl">{mailbox.icon}</span> */}
@@ -68,16 +68,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </button>
                 ))}
             </nav>
-            <div className="mt-8 px-6 py-4 border-t border-gray-200">
-                <div className="text-xs text-gray-500 mb-2">Storage</div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: "22%" }}
-                    ></div>
-                </div>
-                <div className="text-xs text-gray-500">22% of 15 GB used</div>
-            </div>
         </div>
     );
 };

@@ -29,7 +29,7 @@ export default function InboxLayout({
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="hidden md:block w-1/5 bg-white">
+        <div className="hidden md:block w-1/5 bg-gray-100 ">
           <Sidebar
             selectedMailbox={selectedMailbox}
             setSelectedMailbox={setSelectedMailbox}
