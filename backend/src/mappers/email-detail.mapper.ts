@@ -13,6 +13,15 @@ export class EmailDetailMapper {
     // Start from the basic email fields
     const base = GmailMapper.toEmail(fullMsg, mailboxId ?? '');
 
+    const headers = payload?.headers ?? [];
+
+    const getHeader = (name: string) =>
+      headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value;
+
+    const messageIdHeader = getHeader('Message-ID'); // For reply
+    const inReplyToHeader = getHeader('In-Reply-To'); // May exist
+    const referencesHeader = getHeader('References'); // May exist
+
     const decodeBase64Url = (data?: string) => {
       if (!data) return '';
       // Gmail returns base64url, convert to base64
@@ -65,6 +74,9 @@ export class EmailDetailMapper {
       bodyHtml: bodyHtml || undefined,
       bodyText: bodyText || undefined,
       attachments: attachments.length ? attachments : undefined,
+      messageIdHeader, // <abc123@example.com>
+      inReplyToHeader, // when email itself was a reply
+      referencesHeader, // chain of old references
     };
   }
 }

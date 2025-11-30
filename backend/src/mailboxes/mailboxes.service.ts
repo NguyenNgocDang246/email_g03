@@ -34,9 +34,10 @@ export class MailboxesService {
   async getMailboxes(userId: string) {
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
-    return await gmail.users.labels.list({
+    const res = await gmail.users.labels.list({
       userId: 'me',
     });
+    return res.data.labels;
   }
 
   async getEmailsInMailbox(
