@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMailBoxesEmailListInfo } from "../../api/inbox";
 import { useState, useEffect } from "react";
 import { accessTokenMemory, refreshTokenMemory } from "../../api/baseAPI";
+import NewMessage from "../../components/Email/NewMessage";
 
 export default function InboxPage() {
   const {
@@ -84,6 +85,7 @@ export default function InboxPage() {
           onMarkAsUnread={handleMarkAsUnread}
           onDelete={handleDelete}
         />
+        <NewMessage/>
       </div>
     </div>
   );

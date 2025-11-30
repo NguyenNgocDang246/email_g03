@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getMailBoxesInfo } from "../../api/inbox";
-import { ComposeButton } from "../UI/ComposeButton";
+import { useMail } from "../../context/MailContext";
+import { MailPlus } from "lucide-react";
 
 interface SidebarProps {
     selectedMailbox: string;
@@ -18,6 +19,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     //   navigate("/login");
     //   return null;
     // }
+
+    const { setSelectOnNewMail } = useMail();
 
     const {
         data = [],
@@ -40,34 +43,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
         );
 
     return (
-        <div className="w-full border-r border-gray-200  overflow-y-auto ">
-            <div className="p-4">
-                <ComposeButton />
-            </div>
-            <nav className="px-2">
-                {data.map((mailbox) => (
-                    <button
-                        key={mailbox.id}
-                        onClick={() => {
-                            setSelectedMailbox(mailbox.id);
-                            navigate(`/mailbox/${mailbox.id}`);
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-2 rounded-r-full text-left mb-1 transition-colors ${
-                            selectedMailbox === mailbox.id
-                                ? "bg-red-100 text-red-600 font-medium"
-                                : "hover:bg-gray-200 text-gray-700"
-                        }`}
-                    >
-                        {/* <span className="text-xl">{mailbox.icon}</span> */}
-                        <span className="flex-1">{mailbox.name}</span>
-                        {mailbox.unreadCount > 0 && (
-                            <span className="text-sm font-semibold">
-                                {mailbox.unreadCount}
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </nav>
+      <div className="w-full border-r border-gray-200  overflow-y-auto ">
+        <div className="px-2 py-4">
+          <button onClick={()=>{setSelectOnNewMail(true)}} className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6  py-3 rounded flex items-center gap-2 justify-center font-medium shadow-md transition-colors">
+            <MailPlus size={18} />
+            New Email
+          </button>
         </div>
+        <nav className="px-2">
+          {data.map((mailbox) => (
+            <button
+              key={mailbox.id}
+              onClick={() => {
+                setSelectedMailbox(mailbox.id);
+                navigate(`/mailbox/${mailbox.id}`);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2 rounded text-left mb-1 transition-colors ${
+                selectedMailbox === mailbox.id
+                  ? "bg-red-100 text-red-600 font-medium"
+                  : "hover:bg-gray-200 text-gray-700"
+              }`}
+            >
+              {/* <span className="text-xl">{mailbox.icon}</span> */}
+              <span className="flex-1">{mailbox.name}</span>
+              {mailbox.unreadCount > 0 && (
+                <span className="text-sm font-semibold">
+                  {mailbox.unreadCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+      </div>
     );
 };

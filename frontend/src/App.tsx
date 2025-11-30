@@ -5,8 +5,16 @@ import Login from "./pages/auth/login";
 import UserInfo from "./pages/user/userInfo";
 import InboxPage from "./pages/inbox";
 import InboxLayout from "./pages/inbox/layout";
+import { useAuthStore } from "./store/useAuthStore";
+import { useEffect } from "react";
 
 export default function App() {
+   const fetchUser = useAuthStore((s) => s.fetchUser);
+
+   useEffect(() => {
+     fetchUser();
+   }, []);
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />

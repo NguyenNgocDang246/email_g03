@@ -1,10 +1,10 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { loginUser, loginWithGoogle } from "../../../api/user";
-import { setAccessToken } from "../../../api/baseAPI";
 import { GoogleLogin } from "@react-oauth/google";
+import { ArrowLeftFromLineIcon, MailIcon } from "lucide-react";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 interface LoginFormValues {
   email: string;
@@ -15,119 +15,156 @@ export default function Login() {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: loginUser,
-    onSuccess: (data) => {
-      // Lưu access token trong memory
-      setAccessToken(data.data.accessToken);
-
-      // Lưu refresh token trong localStorage
-      localStorage.setItem("refreshToken", data.data.refreshToken);
-
-      setMessage(`Welcome back, ${data.data.email}!`);
-      navigate("/"); // điều hướng về Home
-    },
-    onError: (error: any) => {
-      setMessage(`Error: ${error.message || "Login failed"}`);
-    },
-  });
+  const login = useAuthStore((s) => s.login);
+  const loginGoogle = useAuthStore((s) => s.loginGoogle);
+  const isLoading = useAuthStore((s) => s.isLoading);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormValues>({
     defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (values: LoginFormValues) => {
     setMessage(null);
-    await mutation.mutateAsync(values);
+    try {
+      console.log(values);
+      await login(values);
+      navigate("/");
+    } catch (err: any) {
+      setMessage(err.message);
+    }
   };
 
+
   return (
-    <div className="max-w-md mx-auto mt-16 p-6 w-[400px] bg-white rounded-2xl shadow-lg">
-      <h2 className="text-3xl mb-6 text-center font-bold text-blue-700">Welcome back</h2>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Email */}
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
-          <input
-            type="email"
-            {...register("email", {
-              required: "Email is required",
-              pattern: {
-                value: /\S+@\S+\.\S+/,
-                message: "Invalid email address",
-              },
-            })}
-            className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 outline-none"
-            placeholder="you@example.com"
-          />
-          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-        </div>
-
-        {/* Password */}
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
-            {...register("password", {
-              required: "Password is required",
-              minLength: { value: 6, message: "At least 6 characters" },
-            })}
-            className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 outline-none"
-            placeholder="••••••••"
-          />
-          {errors.password && (
-            <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSubmitting || mutation.isPending}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg transition disabled:opacity-70"
-        >
-          {mutation.isPending ? "Logging in..." : "Log In"}
-        </button>
-      </form>
-      <button className="w-full mt-4 py-2.5 rounded-lg transition disabled:opacity-70">
-        <GoogleLogin
-          onSuccess={async (cre) => {
-            await loginWithGoogle(cre);
-            navigate("/");
-          }}
-          onError={() => console.log("Google Login Error")}
-        />
-      </button>
-
-      <p className="text-center text-sm text-gray-600 mt-4">
-        Don't have an account?{" "}
-        <Link to="/signup" className="text-blue-600 hover:underline font-medium">
-          Register here
-        </Link>
-      </p>
-
-      <div className="flex justify-center mt-4">
-        <button
+    <div className="min-h-screen bg-[#0a1628] flex items-center">
+      {/* Left image */}
+      <div className="w-3/5 flex flex-col justify-center items-center p-6">
+        <MailIcon
+          className="w-48 h-48 text-gray-400 hover:text-white"
           onClick={() => navigate("/")}
-          className="text-sm text-gray-600 hover:text-blue-600 underline"
-        >
-          ← Back to Home
-        </button>
+        />
+        <div>
+          <h1 className="text-gray-400 font-bold text-6xl">Mail Manage</h1>
+        </div>
       </div>
 
-      {message && (
-        <p
-          className={`mt-4 text-center font-medium ${
-            message.startsWith("Error") ? "text-red-600" : "text-green-600"
-          }`}
-        >
-          {message}
-        </p>
-      )}
+      {/* Right form */}
+      <div className="w-2/5 flex justify-center">
+        <div className="w-full max-w-md">
+          <h1 className="text-6xl text-white font-bold mb-3">Login</h1>
+          <h2 className="text-2xl font-medium text-white mb-10">
+            Welcome back! Please login to your account.
+          </h2>
+
+          {/* Google Login */}
+          <button className="w-full font-bold mt-4 py-2.5 rounded-lg transition disabled:opacity-70">
+            <GoogleLogin
+              onSuccess={async (cre) => {
+                try {
+                  await loginGoogle(cre);
+                  navigate("/");
+                } catch (err: any) {
+                  setMessage(err.message);
+                }
+              }}
+              onError={() => setMessage("Google login failed")}
+            />
+          </button>
+          <div>
+            <h1 className="text-xl text-white text-center my-5">OR</h1>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Email */}
+            <div>
+              <label className="block text-sm text-white font-medium mb-2">
+                Email address
+              </label>
+              <input
+                type="email"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /\S+@\S+\.\S+/,
+                    message: "Invalid email address",
+                  },
+                })}
+                className="w-full px-4 py-3 bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500"
+                placeholder="you@example.com"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: { value: 6, message: "At least 6 characters" },
+                })}
+                className="w-full px-4 py-3 bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500"
+                placeholder="••••••••"
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 bg-blue-900 hover:bg-blue-600 text-white font-medium rounded-xl"
+            >
+              {isLoading ? "Logging in..." : "Sign in"}
+            </button>
+
+            {/* Links */}
+            <div className="flex justify-between">
+              <Link
+                to="/signup"
+                className="text-sm text-white hover:text-purple-300"
+              >
+                Don't have account
+              </Link>
+              <Link
+                to="/forgot-password"
+                className="text-sm text-white hover:text-purple-300"
+              >
+                Forgot Password
+              </Link>
+            </div>
+
+            {/* Message */}
+            {message && (
+              <p
+                className={`mt-4 text-center font-medium ${
+                  message.startsWith("Error")
+                    ? "text-red-600"
+                    : "text-green-600"
+                }`}
+              >
+                {message}
+              </p>
+            )}
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
+

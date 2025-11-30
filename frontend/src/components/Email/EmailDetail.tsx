@@ -4,6 +4,7 @@ import React, { Suspense, useState } from "react";
 import { getEmailDetail } from "../../api/inbox";
 import { Trash } from "lucide-react";
 import { SendHorizonal } from "lucide-react";
+import { useMail } from "../../context/MailContext";
 
 interface EmailDetailProps {
     emailId: number | null;
@@ -28,7 +29,9 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
         refetchOnWindowFocus: false,
         enabled: !!emailId,
     });
-
+    
+    const {selectOnNewMail}=useMail()
+    console.log(selectOnNewMail)
     const [message, setMessage] = useState("");
     const [isReply, setIsReply]=useState(false);
 
@@ -42,16 +45,18 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
 
     if (!emailId) {
         return (
-            <div className="w-full h-screen">
-                <div className="h-full flex justify-center items-center text-gray-400">
-                    <div className="text-center">
-                        <Mail className="w-24 h-24 mx-auto mb-4 opacity-20" />
-                        <p className="text-lg">
-                            Select an email to view details
-                        </p>
-                    </div>
-                </div>
+          <div
+            className={`w-full h-screen ${
+              selectOnNewMail ? "hidden" : "block"
+            }`}
+          >
+            <div className="h-full flex justify-center items-center text-gray-400">
+              <div className="text-center">
+                <Mail className="w-24 h-24 mx-auto mb-4 opacity-20" />
+                <p className="text-lg">Select an email to view details</p>
+              </div>
             </div>
+          </div>
         );
     }
 
@@ -63,7 +68,11 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
           </div>
         }
       >
-        <div className="scrollbar overflow-y-auto h-full">
+        <div
+          className={`scrollbar overflow-y-auto h-full ${
+            selectOnNewMail ? "hidden" : "block"
+          }`}
+        >
           <div className="bg-white m-2 rounded shadow">
             <div className="p-3">
               <h1 className="text-xl font-semibold text-black">
@@ -144,7 +153,12 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                 >
                   Mark as unread
                 </button>
-                <button className="px-4 py-2  text-black  hover:bg-gray-200 border border-gray-300 rounded" onClick={()=>{setIsReply(true)}}>
+                <button
+                  className="px-4 py-2  text-black  hover:bg-gray-200 border border-gray-300 rounded"
+                  onClick={() => {
+                    setIsReply(true);
+                  }}
+                >
                   Reply
                 </button>
               </div>
@@ -152,7 +166,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
           </div>
           <div
             className={`bg-white m-2 rounded shadow p-3 ${
-                isReply ? "block" : "hidden"
+              isReply ? "block" : "hidden"
             }`}
           >
             {/* SENDER + RECIPIENTS */}
@@ -201,7 +215,12 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                   Sent
                 </button>
 
-                <button className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded flex items-center gap-2" onClick={()=>{setIsReply(false)}}>
+                <button
+                  className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded flex items-center gap-2"
+                  onClick={() => {
+                    setIsReply(false);
+                  }}
+                >
                   <Trash size={18} />
                   Delete
                 </button>

@@ -28,14 +28,17 @@ export const loginUser = async (data: LoginData) => {
   try {
     const res = await API.post("/user/login", data);
 
+  
     // Lưu access token vào memory trong baseAPI
-    setAccessToken(res.data.accessToken);
+    setAccessToken(res.data.data.accessToken);
+
+     console.log("User ne", res.data.data);
 
     // Lưu refresh token vào localStorage
-    localStorage.setItem("refreshToken", res.data.refreshToken);
-    localStorage.setItem("email", data.email);
+    localStorage.setItem("refreshToken", res.data.data.refreshToken);
+    localStorage.setItem("email", res.data.data.email);
 
-    return res.data;
+    return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Request error");
