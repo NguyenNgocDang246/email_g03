@@ -15,10 +15,13 @@ export class MailboxesController {
 
   @Get(':id/emails')
   getEmailsInMailbox(
+    @Req() req: Request,
     @Param('id') id: string,
     @Query() paginationDto: PaginationDto,
   ) {
-    return this.mailboxesService.getEmailsInMailbox(id, paginationDto);
+    const data = req['user'];
+    const userId = data.id;
+    return this.mailboxesService.getEmailsInMailbox(id, userId, paginationDto);
   }
 
   @Get(':id/emails/search')
