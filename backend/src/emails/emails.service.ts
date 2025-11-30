@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
+import { EmailDetailMapper } from 'src/mappers';
 
 @Injectable()
 export class EmailsService {
@@ -23,13 +24,21 @@ export class EmailsService {
     }
   }
 
-  async getEmailDetail(id: string) {
-    const emailDetail = this.cache.get(Number(id));
+  async getEmailDetail(id: string, userId: string) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return null;
 
-    if (!emailDetail) {
-      throw new NotFoundException('Email detail not found');
-    }
+    const emailDetail = await gmail.users.messages.get({
+      userId: 'me',
+      id: id,
+      format: 'full',
+    });
 
-    return emailDetail;
+    const emailDetailMapped = EmailDetailMapper.toEmailDetail(
+      emailDetail.data,
+      undefined,
+    );
+
+    return emailDetailMapped;
   }
 }
