@@ -64,10 +64,11 @@ export class EmailsController {
     );
   }
 
-  @Get(':id/attachment/stream')
+  @Get(':id/attachments/:index/stream')
   async streamAttachment(
     @Req() req: Request,
     @Param('id') id: string,
+    @Param('index') index: string,
     @Res() res: any,
   ) {
     const data = req['user'];
@@ -80,8 +81,12 @@ export class EmailsController {
     if (!mail.attachments || mail.attachments.length === 0) {
       throw new BadRequestException('No attachments found');
     }
-    const attachmentId = mail.attachments[0].id;
-    const attachment = mail.attachments[0];
+    const idx = parseInt(index, 10);
+    if (isNaN(idx) || idx < 0 || idx >= mail.attachments.length) {
+      throw new BadRequestException('Invalid attachment index');
+    }
+    const attachmentId = mail.attachments[idx].id;
+    const attachment = mail.attachments[idx];
 
     const fileData = await this.emailsService.streamAttachment(
       userId,
