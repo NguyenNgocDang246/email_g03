@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Req,
+  Res,
 } from '@nestjs/common';
 import { EmailsService } from './emails.service';
 
@@ -63,11 +64,43 @@ export class EmailsController {
     );
   }
 
-  @Get(':id')
-  getEmailDetail(@Req() req: Request, @Param('id') id: string) {
+  @Get(':id/attachment/stream')
+  async streamAttachment(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Res() res: any,
+  ) {
     const data = req['user'];
     const userId = data.id;
-    return this.emailsService.getEmailDetail(id, userId);
+    // const userId = '6929c1a4f090673ab256f767';
+    const mail = await this.emailsService.getEmailDetail(id, userId);
+    if (!mail) {
+      throw new BadRequestException('Email not found');
+    }
+    if (!mail.attachments || mail.attachments.length === 0) {
+      throw new BadRequestException('No attachments found');
+    }
+    const attachmentId = mail.attachments[0].id;
+    const attachment = mail.attachments[0];
+
+    const fileData = await this.emailsService.streamAttachment(
+      userId,
+      id,
+      attachmentId,
+    );
+    const fileBuffer = Buffer.from(fileData, 'base64');
+    const { mimeType, fileName } = attachment;
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', fileBuffer.length);
+    res.send(fileBuffer);
+  }
+
+  @Get(':id')
+  async getEmailDetail(@Req() req: Request, @Param('id') id: string) {
+    const data = req['user'];
+    const userId = data.id;
+    return await this.emailsService.getEmailDetail(id, userId);
   }
 
   @Post('send')

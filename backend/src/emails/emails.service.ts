@@ -128,4 +128,25 @@ export class EmailsService {
       },
     });
   }
+
+  async streamAttachment(
+    userId: string,
+    messageId: string,
+    attachmentId: string,
+  ) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) throw new NotFoundException('Gmail not found');
+
+    const attachment = await gmail.users.messages.attachments.get({
+      userId: 'me',
+      messageId: messageId,
+      id: attachmentId,
+    });
+
+    if (!attachment?.data?.data) {
+      throw new NotFoundException('Attachment content not found');
+    }
+
+    return attachment.data.data;
+  }
 }
