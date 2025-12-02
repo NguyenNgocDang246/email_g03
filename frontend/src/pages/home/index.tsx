@@ -3,18 +3,17 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { LogIn, UserPlus, LogOut } from "lucide-react";
 import { Header } from "../../components/Layout/Header";
 import { GuestHeader } from "../../components/Layout/GuestHeader";
-import { logoutUser } from "../../api/user";
-import { useAuth } from "../../contexts/authContext";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function Home() {
   const navigate = useNavigate();
 
-  const { user } = useAuth();
+  const { user } = useAuthStore((s) => s);
+  const logout = useAuthStore((s) => s.logout);
   const isLogged = !!user;
 
   const handleLogout = async () => {
-    await logoutUser();
-    window.location.href = "/";
+    await logout();
   };
 
   const [showMobileMenu, setShowMobileMenu] = useState(false);
