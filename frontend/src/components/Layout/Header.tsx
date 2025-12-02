@@ -14,14 +14,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, searchQuery, setSe
   const location = useLocation();
 
   const user = useAuthStore((s: any) => s.user);
-  console.log(user);
+  const logout = useAuthStore((s) => s.logout);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
-    useAuthStore.getState().logout();
-    window.location.href = "/";
+  const handleLogout = async () => {
+    await logout();
   };
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);

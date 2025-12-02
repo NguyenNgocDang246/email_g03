@@ -16,7 +16,7 @@ interface AuthState {
   login: (data: LoginData) => Promise<void>;
   loginGoogle: (Credential: any) => Promise<void>;
   fetchUser: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -66,6 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await logoutUser();
+    window.location.href = "/";
     set({
       user: null,
       isAuthenticated: false,

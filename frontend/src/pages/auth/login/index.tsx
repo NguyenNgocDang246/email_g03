@@ -60,7 +60,7 @@ export default function Login() {
 
           {/* Google Login */}
           <button
-            className="border cursor-pointer hover:bg-blue-200 w-full mt-4 py-2.5 rounded-lg transition disabled:opacity-70"
+            className="border cursor-pointer hover:bg-blue-900 text-white w-full mt-4 py-2.5 rounded-lg transition disabled:opacity-70"
             onClick={() => loginGoogle()}
           >
             Login With Google
