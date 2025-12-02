@@ -1,6 +1,7 @@
 import React from "react";
 import { Star } from "lucide-react";
 import type { MailInfo } from "../../api/inbox";
+import { useMail } from "../../context/MailContext";
 
 interface EmailListItemProps {
   email: MailInfo;
@@ -26,10 +27,15 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
   onCheckboxChange,
 }) => {
 
+  const {setSelectOnNewMail}=useMail()
   
   return (
     <div
-      onClick={() => onSelect(email)}
+      onClick={() => {
+        setSelectOnNewMail(false);
+        onSelect(email);
+        console.log("hi")
+      }}
       className={`flex items-center gap-3 px-4 py-3 border border-gray-100 cursor-pointer hover:shadow-md transition-shadow ${
         isSelected ? "bg-blue-50" : ""
       } ${!email.isRead ? "bg-white" : "bg-gray-50"}`}

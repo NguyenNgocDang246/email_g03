@@ -6,7 +6,8 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMailBoxesEmailListInfo } from "../../api/inbox";
 import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/authContext";
+import { useAuthStore } from "../../store/useAuthStore";
+import NewMessage from "../../components/Email/NewMessage";
 
 export default function InboxPage() {
   const {
@@ -21,7 +22,7 @@ export default function InboxPage() {
     handleMarkAsUnread,
     handleRefresh,
   } = useEmailData();
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const isLogged = !!user;
   const navigate = useNavigate();
   useEffect(() => {
@@ -65,7 +66,7 @@ export default function InboxPage() {
     return <p className="text-center mt-10 text-red-600">Error loading list mail from mailboxes</p>;
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full bg-gray-100">
       <EmailList
         emails={data}
         selectedEmail={selectedEmail}
@@ -78,12 +79,13 @@ export default function InboxPage() {
         onMarkAsRead={handleMarkAsRead}
         onRefresh={handleRefresh}
       />
-      <div className="p-6 w-2/3 bg-white">
+      <div className="p-2 w-2/3">
         <EmailDetail
           emailId={selectedEmail ? selectedEmail.id : null}
           onMarkAsUnread={handleMarkAsUnread}
           onDelete={handleDelete}
         />
+        <NewMessage />
       </div>
     </div>
   );

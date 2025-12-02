@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getMailBoxesInfo } from "../../api/inbox";
-import { ComposeButton } from "../UI/ComposeButton";
+import { useMail } from "../../context/MailContext";
+import { MailPlus } from "lucide-react";
 
 interface SidebarProps {
   selectedMailbox: string;
@@ -15,6 +16,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
   //   navigate("/login");
   //   return null;
   // }
+
+  const { setSelectOnNewMail } = useMail();
 
   const {
     data = [],
@@ -32,9 +35,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
   if (error) return <p className="text-center mt-10 text-red-600">Error loading mailboxes info</p>;
 
   return (
-    <div className="w-full bg-white border-r border-gray-200 overflow-y-auto ">
-      <div className="p-4">
-        <ComposeButton />
+    <div className="w-full border-r border-gray-200  overflow-y-auto ">
+      <div className="px-2 py-4">
+        <button
+          onClick={() => {
+            setSelectOnNewMail(true);
+          }}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6  py-3 rounded flex items-center gap-2 justify-center font-medium shadow-md transition-colors"
+        >
+          <MailPlus size={18} />
+          New Email
+        </button>
       </div>
       <nav className="px-2">
         {data.map((mailbox) => (
@@ -44,10 +55,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
               setSelectedMailbox(mailbox.id);
               navigate(`/mailbox/${mailbox.id}`);
             }}
-            className={`w-full flex items-center gap-3 px-4 py-2 rounded-r-full text-left mb-1 transition-colors ${
+            className={`w-full flex items-center gap-3 px-4 py-2 rounded text-left mb-1 transition-colors ${
               selectedMailbox === mailbox.id
                 ? "bg-red-100 text-red-600 font-medium"
-                : "hover:bg-gray-100 text-gray-700"
+                : "hover:bg-gray-200 text-gray-700"
             }`}
           >
             {/* <span className="text-xl">{mailbox.icon}</span> */}
@@ -58,13 +69,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
           </button>
         ))}
       </nav>
-      <div className="mt-8 px-6 py-4 border-t border-gray-200">
-        <div className="text-xs text-gray-500 mb-2">Storage</div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-          <div className="bg-blue-600 h-2 rounded-full" style={{ width: "22%" }}></div>
-        </div>
-        <div className="text-xs text-gray-500">22% of 15 GB used</div>
-      </div>
     </div>
   );
 };
