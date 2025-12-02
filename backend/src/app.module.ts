@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TokenModule } from './token/token.module';
 import { EmailsModule } from './emails/emails.module';
 import { MailboxesModule } from './mailboxes/mailboxes.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MailboxesModule } from './mailboxes/mailboxes.module';
     TokenModule,
     EmailsModule,
     MailboxesModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

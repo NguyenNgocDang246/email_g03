@@ -3,13 +3,15 @@ import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Mailbox } from '../types';
 import { PaginationDto } from './dto';
+import { AuthService } from 'src/auth/auth.service';
+import { GmailMapper } from 'src/mappers';
 
 @Injectable()
 export class MailboxesService {
   private mailboxes: Mailbox[];
   private emailsInMailbox = new Map();
 
-  constructor() {
+  constructor(private authService: AuthService) {
     const filePathMailboxes = join(__dirname, '..', 'mock', 'mailboxes.json');
     const dataMailboxes = readFileSync(filePathMailboxes, 'utf8');
     this.mailboxes = JSON.parse(dataMailboxes);
@@ -29,30 +31,55 @@ export class MailboxesService {
     }
   }
 
-  async getMailboxes() {
-    return this.mailboxes;
+  async getMailboxes(userId: string) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return null;
+    const res = await gmail.users.labels.list({
+      userId: 'me',
+    });
+    return res.data.labels;
   }
 
-  async getEmailsInMailbox(mailboxId: string, paginationDto: PaginationDto) {
-    const emails = this.emailsInMailbox.get(mailboxId);
+  async getEmailsInMailbox(
+    mailboxId: string,
+    userId: string,
+    paginationDto: PaginationDto,
+  ) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return null;
 
-    if (!emails) {
-      throw new NotFoundException('No emails found for this mailbox');
-    }
+    const page = Number(paginationDto?.page) || 1;
+    const limit = Number(paginationDto?.limit) || 10;
 
-    const page = Number(paginationDto.page) || 1;
-    const limit = Number(paginationDto.limit) || emails.length;
+    let pageToken: string | undefined = paginationDto?.page?.toString();
 
-    const skip = (page - 1) * limit;
-    const take = limit || emails.length;
+    const list = await gmail.users.messages.list({
+      userId: 'me',
+      labelIds: [mailboxId],
+      maxResults: limit,
+      pageToken: pageToken,
+    });
 
-    const paginatedEmails = emails.slice(skip, skip + take);
+    const messages = list.data.messages ?? [];
+    const total = list.data.resultSizeEstimate ?? 0;
+
+    const emails = await Promise.all(
+      messages.map(async (msg) => {
+        const res = await gmail.users.messages.get({
+          userId: 'me',
+          id: msg.id as string,
+          format: 'full',
+        });
+
+        return GmailMapper.toEmail(res.data, mailboxId);
+      }),
+    );
 
     return {
       page: page,
       limit: limit,
-      total: emails.length,
-      data: paginatedEmails,
+      total: total,
+      data: emails,
     };
   }
 

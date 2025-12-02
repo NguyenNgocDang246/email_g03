@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { accessTokenMemory as accessToken } from "../../../api/baseAPI";
 import { getUserInfo } from "../../../api/user";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/authContext";
 
 export default function UserInfo() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  if (!accessToken) {
+  if (!user) {
     navigate("/login"); // nếu chưa login → redirect
     return null;
   }
@@ -14,7 +15,7 @@ export default function UserInfo() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["userInfo"], // đây là bắt buộc
     queryFn: () => getUserInfo(),
-    enabled: !!accessToken, // chỉ gọi khi accessToken tồn tại
+    enabled: !!user, // chỉ gọi khi accessToken tồn tại
   });
 
   if (isLoading) return <p className="text-center mt-10">Loading...</p>;

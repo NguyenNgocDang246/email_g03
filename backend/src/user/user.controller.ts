@@ -18,27 +18,6 @@ import { AuthGuard } from '@nestjs/passport';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  async register(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.register(createUserDto);
-    return { success: true, data: user };
-  }
-
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  async login(@Body() loginUserDto: LoginUserDto) {
-    const user = await this.usersService.login(loginUserDto);
-    return { success: true, data: user };
-  }
-
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  async logout(@Body() body: { userId: string }) {
-    await this.usersService.logout(body.userId);
-    return { success: true, data: null };
-  }
-
   @Post('google')
   @HttpCode(HttpStatus.OK)
   async googleLogin(@Body('credential') credential: string) {

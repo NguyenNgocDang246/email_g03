@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import bcryptjs from 'bcryptjs';
@@ -21,52 +15,6 @@ export class UsersService {
     private tokenService: TokenService,
   ) {}
 
-  async register(body: { email: string; password: string }) {
-    const { email, password } = body;
-    if (!email || !password)
-      throw new BadRequestException('Email and password are required');
-
-    const exists = await this.userModel.findOne({ email });
-    if (exists) throw new ConflictException('Email already exists');
-
-    const hashed = await bcryptjs.hash(password, 10);
-    const refreshToken = randomBytes(32).toString('hex');
-    const user = await this.userModel.create({
-      email,
-      password: hashed,
-      refreshToken,
-    });
-    return {
-      id: user._id,
-      email: user.email,
-      refreshToken,
-      createdAt: user.createdAt,
-    };
-  }
-
-  async login(body: { email: string; password: string }) {
-    const { email, password } = body;
-    if (!email || !password)
-      throw new BadRequestException('Email and password are required');
-
-    const user = await this.userModel.findOne({ email });
-    if (!user) throw new NotFoundException('User not found');
-
-    const isValid = await bcryptjs.compare(password, user.password);
-    if (!isValid) throw new UnauthorizedException('Invalid password');
-
-    const refreshToken = await this.getRefreshToken(user._id as string);
-    const accessToken = await this.tokenService.createToken({ id: user._id });
-
-    return {
-      id: user._id,
-      email: user.email,
-      createdAt: user.createdAt,
-      accessToken,
-      refreshToken,
-    };
-  }
-
   async loginWithGoogleCredential(credential: string) {
     const ticket = await this.googleClient.verifyIdToken({
       idToken: credential,
@@ -77,7 +25,8 @@ export class UsersService {
     const { email } = payload as { email: string };
 
     if (!email) {
-      throw new UnauthorizedException('Google token invalid');
+      // throw new UnauthorizedException('Google token invalid');
+      return null;
     }
 
     let user = await this.userModel.findOne({ email });
@@ -105,27 +54,54 @@ export class UsersService {
     };
   }
 
-  async logout(userId: string) {
-    const refreshToken = randomBytes(32).toString('hex');
-    await this.userModel.updateOne({ _id: userId }, { refreshToken });
+  async createUser(email: string, password: string, refreshToken: string) {
+    const user = await this.userModel.create({ email, password, refreshToken });
+    return user;
   }
 
   async getRefreshToken(userId: string) {
     const user = await this.userModel.findById(userId).select('refreshToken');
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) return null;
     return user.refreshToken;
   }
-  async getUserId(email: string) {
-    const user = await this.userModel.findOne({ email }).select('_id');
-    if (!user) throw new NotFoundException('User not found');
-    return (user._id as string).toString();
+
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    await this.userModel.updateOne({ _id: userId }, { refreshToken });
+  }
+
+  async findUserByRefreshToken(refreshToken: string) {
+    const user = await this.userModel.findOne({ refreshToken });
+    return user;
+  }
+
+  async updateGoogleTokens(
+    userId: string,
+    googleAccessToken: string,
+    googleRefreshToken: string,
+  ) {
+    await this.userModel.updateOne(
+      { _id: userId },
+      { $set: { googleRefreshToken, googleAccessToken } },
+      { upsert: true },
+    );
+  }
+
+  async getUserByEmail(email: string) {
+    const user = await this.userModel.findOne({ email });
+    return user;
   }
 
   async getUserInfo(userId: string) {
     const user = await this.userModel
       .findById(userId)
       .select('-password -refreshToken');
-    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async getGoogleTokens(userId: string) {
+    const user = await this.userModel
+      .findById(userId)
+      .select('googleAccessToken googleRefreshToken');
     return user;
   }
 }

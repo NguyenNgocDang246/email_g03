@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Get,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Req,
+  Res,
+} from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { UnauthorizedException } from '@nestjs/common/exceptions';
 import { UsersService } from '../user/user.service';
 import { TokenService } from './token.service';
@@ -8,15 +16,23 @@ export class TokenController {
     private readonly userService: UsersService,
     private readonly tokenService: TokenService,
   ) {}
-  @Post('refresh')
+  @Get('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body() body: { refreshToken: string; email: string }) {
-    const id = await this.userService.getUserId(body.email);
-    const userRefreshToken = await this.userService.getRefreshToken(id);
-    if (!userRefreshToken) throw new UnauthorizedException('Invalid token');
-    if (userRefreshToken !== body.refreshToken)
-      throw new UnauthorizedException('Invalid token');
+  async refresh(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies['refreshToken'];
+    if (!refreshToken)
+      throw new UnauthorizedException('Refresh token not provided');
+    const user = await this.userService.findUserByRefreshToken(refreshToken);
+    if (!user) throw new UnauthorizedException('Invalid token');
+    const id = user._id as string;
+
     const newAccessToken = await this.tokenService.createToken({ id });
-    return { success: true, data: { accessToken: newAccessToken } };
+    res.cookie('accessToken', newAccessToken, {
+      httpOnly: true,
+      secure: process.env.ENVIRONMENT === 'production',
+      sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000,
+    });
+    return res.json({ success: true, data: null });
   }
 }

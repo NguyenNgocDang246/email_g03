@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class TokenService {
@@ -14,5 +15,9 @@ export class TokenService {
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
     }
+  }
+
+  createRefreshToken(): string {
+    return randomBytes(32).toString('hex');
   }
 }
