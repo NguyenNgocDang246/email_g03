@@ -6,16 +6,17 @@ import type { MailInfo } from "../../api/inbox";
 interface EmailListProps {
   emails: MailInfo[];
   selectedEmail: MailInfo | null;
-  selectedEmails: number[];
+  selectedEmails: string[];
   onEmailSelect: (email: MailInfo) => void;
   onToggleStar: (
-    emailId: number,
+    emailId:string,
+    isStar:boolean,
     e?: React.MouseEvent<HTMLButtonElement>
   ) => void;
-  onCheckboxChange: (
-    emailId: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => void;
+  // onCheckboxChange: (
+  //   emailId: number,
+  //   e: React.ChangeEvent<HTMLInputElement>
+  // ) => void;
   onSelectAll: () => void;
   onDelete: () => void;
   onMarkAsRead: () => void;
@@ -28,7 +29,7 @@ export const EmailList: React.FC<EmailListProps> = ({
   selectedEmails,
   onEmailSelect,
   onToggleStar,
-  onCheckboxChange,
+  // onCheckboxChange,
   onSelectAll,
   onDelete,
   onMarkAsRead,
@@ -88,7 +89,7 @@ export const EmailList: React.FC<EmailListProps> = ({
               isChecked={selectedEmails.includes(email.id)}
               onSelect={onEmailSelect}
               onToggleStar={onToggleStar}
-              onCheckboxChange={onCheckboxChange}
+              // onCheckboxChange={onCheckboxChange}
             />
           ))
         )}

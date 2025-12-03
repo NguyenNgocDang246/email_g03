@@ -15,6 +15,8 @@ export default function App() {
     fetchUser();
   }, []);
 
+
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -22,7 +24,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/user-info" element={<UserInfo />} />
       {/* redirect /inbox sang /mailbox/inbox */}
-      <Route path="/mailbox" element={<Navigate to="/mailbox/inbox" replace />} />
+      <Route path="/mailbox" element={<Navigate to="/mailbox/SENT" replace />} />
 
       {/* mailbox route */}
       <Route

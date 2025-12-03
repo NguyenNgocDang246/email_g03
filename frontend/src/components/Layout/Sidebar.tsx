@@ -25,7 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
     error,
   } = useQuery({
     queryKey: ["mailboxesInfo"],
-    queryFn: () => getMailBoxesInfo(),
+    queryFn:  ()=>getMailBoxesInfo(),
     retry: false,
     refetchOnWindowFocus: false,
     // enabled: !!accessToken,
@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
   if (error) return <p className="text-center mt-10 text-red-600">Error loading mailboxes info</p>;
 
   return (
-    <div className="w-full border-r border-gray-200  overflow-y-auto ">
+    <div className="w-full border-r border-gray-200 overflow-y-auto ">
       <div className="px-2 py-4">
         <button
           onClick={() => {
@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
           New Email
         </button>
       </div>
-      <nav className="px-2">
+      <nav className="px-2 scrollbar overflow-y-scroll h-[calc(100vh-100px)]">
         {data.map((mailbox) => (
           <button
             key={mailbox.id}
@@ -64,7 +64,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
             {/* <span className="text-xl">{mailbox.icon}</span> */}
             <span className="flex-1">{mailbox.name}</span>
             {mailbox.unreadCount > 0 && (
-              <span className="text-sm font-semibold">{mailbox.unreadCount}</span>
+              <span className="text-sm font-semibold">
+                {mailbox.unreadCount}
+              </span>
             )}
           </button>
         ))}

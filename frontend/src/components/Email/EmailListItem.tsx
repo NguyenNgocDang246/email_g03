@@ -9,13 +9,14 @@ interface EmailListItemProps {
   isChecked: boolean;
   onSelect: (email: MailInfo) => void;
   onToggleStar: (
-    emailId: number,
+    emailId:string,
+    isStar:boolean,
     e?: React.MouseEvent<HTMLButtonElement>
   ) => void;
-  onCheckboxChange: (
-    emailId: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => void;
+  // onCheckboxChange: (
+  //   emailId: number,
+  //   e: React.ChangeEvent<HTMLInputElement>
+  // ) => void;
 }
 
 export const EmailListItem: React.FC<EmailListItemProps> = ({
@@ -24,7 +25,7 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
   isChecked,
   onSelect,
   onToggleStar,
-  onCheckboxChange,
+  // onCheckboxChange,
 }) => {
 
   const {setSelectOnNewMail}=useMail()
@@ -43,12 +44,12 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
       <input
         type="checkbox"
         checked={isChecked}
-        onChange={(e) => onCheckboxChange(email.id, e)}
+        onChange={(e) =>{}}
         className="w-4 h-4 rounded"
         onClick={(e) => e.stopPropagation()}
       />
       <button
-        onClick={(e) => onToggleStar(email.id, e)}
+        onClick={(e) => {onToggleStar(email.id,email.isStarred,e);}}
         className="p-1 hover:bg-gray-200 rounded"
       >
         <Star

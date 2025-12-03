@@ -12,7 +12,7 @@ export default function InboxLayout({
 }) {
   const { id } = useParams<{ id: string }>();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [selectedMailbox, setSelectedMailbox] = useState("inbox");
+  const [selectedMailbox, setSelectedMailbox] = useState("SENT");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectOnNewMail,setSelectOnNewMail]=useState(false);
 
