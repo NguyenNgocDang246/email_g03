@@ -29,7 +29,6 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
     "image/gif": "GIF",
     "text/plain": "TXT",
   };
-  console.log("ne",attachments)
 
   return (
     <div className="mt-6 w-full">
@@ -43,12 +42,10 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
               ? att.filename.length > maxLength
                 ? att.filename.slice(0, maxLength - 3) + "..."
                 : att.filename
-              : "No Tittle"; 
+              : "No Tittle";
 
           const mimeType = att.mimeType.split("/")[1]?.toLowerCase() || "file";
-          console.log(mimeType)
           const displayType = mimeMap[mimeType] || mimeType.toUpperCase();
-         
 
           let IconComponent;
           let iconColor = "text-gray-600";
@@ -64,13 +61,11 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
           }
 
           return (
-            <li key={att.id} className="flex-shrink-0 w-48">
+            <li key={att.id} className="shrink-0 w-48">
               <div className="flex justify-between items-center p-2 bg-gray-100 rounded hover:bg-gray-200 transition">
                 <IconComponent className={`w-6 h-6 ${iconColor}`} />
                 <div className="flex-1 min-w-0 ml-2">
-                  <p className="font-medium text-gray-800 truncate">
-                    {displayName}
-                  </p>
+                  <p className="font-medium text-gray-800 truncate">{displayName}</p>
                   <p className="text-xs text-gray-500">
                     {displayType} • {fileSizeKB} KB
                   </p>
