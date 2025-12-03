@@ -26,7 +26,6 @@ export interface LoginData {
 export const loginUser = async (data: LoginData) => {
   try {
     const res = await API.post("/auth/login", data);
-    console.log(res)
     return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -38,7 +37,6 @@ export const loginUser = async (data: LoginData) => {
 
 export const loginWithGoogle = async () => {
   try {
-    console.log("Login with Google called");
     window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -81,7 +79,6 @@ export interface UserInfo {
 export const getUserInfo = async (): Promise<UserInfo> => {
   try {
     const res = await API.get("/user/info");
-    console.log("user ne",res.data.data)
     return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {

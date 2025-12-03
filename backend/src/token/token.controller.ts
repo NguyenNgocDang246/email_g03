@@ -28,6 +28,7 @@ export class TokenController {
 
     const newAccessToken = await this.tokenService.createToken({ id });
     res.cookie('accessToken', newAccessToken, {
+      domain: process.env.FRONTEND_URL,
       httpOnly: true,
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
