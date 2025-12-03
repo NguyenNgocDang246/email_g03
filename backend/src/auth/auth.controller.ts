@@ -49,6 +49,7 @@ export class AuthController {
   ) {
     const user = await this.authService.login(loginUserDto);
     res.cookie('refreshToken', user.refreshToken, {
+      domain: process.env.FRONTEND_URL,
       httpOnly: true,
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
@@ -56,6 +57,7 @@ export class AuthController {
       path: '/',
     });
     res.cookie('accessToken', user.accessToken, {
+      domain: process.env.FRONTEND_URL,
       httpOnly: true,
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
@@ -72,12 +74,14 @@ export class AuthController {
     await this.authService.logout(userId);
     console.log('Logging out user:', userId);
     res.clearCookie('accessToken', {
+      domain: process.env.FRONTEND_URL,
       httpOnly: true,
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
       path: '/',
     });
     res.clearCookie('refreshToken', {
+      domain: process.env.FRONTEND_URL,
       httpOnly: true,
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
