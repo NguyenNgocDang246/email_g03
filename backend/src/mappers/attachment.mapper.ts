@@ -1,5 +1,5 @@
 import { gmail_v1 } from 'googleapis';
-import { Attachment } from 'src/types';
+import { Attachment } from '../types';
 
 export class AttachmentMapper {
   static fromPart(

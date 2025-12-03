@@ -1,5 +1,5 @@
 import { gmail_v1 } from 'googleapis';
-import { Email } from 'src/types';
+import { Email } from '../types';
 
 export class GmailMapper {
   static toEmail(fullMsg: gmail_v1.Schema$Message, mailboxId: string): Email {
