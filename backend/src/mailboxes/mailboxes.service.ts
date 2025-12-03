@@ -48,10 +48,8 @@ export class MailboxesService {
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
 
-    const page = Number(paginationDto?.page) || 1;
     const limit = Number(paginationDto?.limit) || 10;
-
-    let pageToken: string | undefined = paginationDto?.page?.toString();
+    const pageToken = paginationDto?.pageToken;
 
     const list = await gmail.users.messages.list({
       userId: 'me',
@@ -61,6 +59,7 @@ export class MailboxesService {
     });
 
     const messages = list.data.messages ?? [];
+    const nextPageToken = list.data.nextPageToken ?? null;
     const total = list.data.resultSizeEstimate ?? 0;
 
     const emails = await Promise.all(
@@ -76,9 +75,9 @@ export class MailboxesService {
     );
 
     return {
-      page: page,
       limit: limit,
       total: total,
+      nextPageToken,
       data: emails,
     };
   }
@@ -100,7 +99,7 @@ export class MailboxesService {
         email.preview.toLowerCase().includes(query.toLowerCase()),
     );
 
-    const page = Number(paginationDto.page) || 1;
+    const page = Number(paginationDto.pageToken) || 1;
     const limit = Number(paginationDto.limit) || filteredEmails.length;
 
     const skip = (page - 1) * limit;

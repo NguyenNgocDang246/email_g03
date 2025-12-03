@@ -4,13 +4,14 @@ import axios from "axios";
 export interface MailBoxesInfo {
   id: string;
   name: string;
-  unreadCount: number;
+  messageListVisibility: string;
+  labelListVisibility: string;
+  type: string;
 }
 
 export const getMailBoxesInfo = async (): Promise<MailBoxesInfo[]> => {
   try {
     const res = await API.get("/mailboxes");
-    console.log("day ne",res)
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -33,28 +34,28 @@ export interface MailInfo {
 }
 
 export interface MailListResponse {
-  page: number;
-  limit: number;
+  nextPageToken: string | null;
   total: number;
   data: MailInfo[];
 }
 
 export const getMailBoxesEmailListInfo = async (
   mailboxId: string,
-  query?: string
+  query?: string,
+  pageToken?: string
 ): Promise<MailListResponse> => {
   try {
     const url = query
       ? `/mailboxes/${mailboxId}/emails/search?query=${encodeURIComponent(
           query
-        )}`
-      : `/mailboxes/${mailboxId}/emails`;
+        )}&limit=10&pageToken=${pageToken || ""}`
+      : `/mailboxes/${mailboxId}/emails?limit=10&pageToken=${pageToken || ""}`;
+
 
     const res = await API.get(url);
 
-    const { page, limit, total, data } = res.data;
+    const { nextPageToken, total, data } = res.data;
 
-    // Map dữ liệu API -> MailInfo
     const mappedData: MailInfo[] = data.map((item: any) => ({
       id: item.id,
       mailboxId: item.mailboxId,
@@ -67,8 +68,7 @@ export const getMailBoxesEmailListInfo = async (
     }));
 
     return {
-      page,
-      limit,
+      nextPageToken,
       total,
       data: mappedData,
     };
@@ -116,10 +116,9 @@ export interface MailDetail {
 
 export const getEmailDetail = async (emailId: string): Promise<MailDetail> => {
   try {
-    console.log("day ne",emailId);
     const res = await API.get(`/emails/${emailId}`);
-    const data = res.data; 
-    // map API response sang interface MailDetail
+    const data = res.data;
+
     const mailDetail: MailDetail = {
       id: data.id,
       threadId: data.threadId,
@@ -140,23 +139,21 @@ export const getEmailDetail = async (emailId: string): Promise<MailDetail> => {
       labels: data.labels,
       attachments: data.attachments?.map((att: any) => ({
         id: att.id,
-        filename: att.filename,
+        filename: att.fileName,
         mimeType: att.mimeType,
         size: att.size,
       })),
     };
 
+
     return mailDetail;
   } catch (error: unknown) {
-    console.log(error)
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Request error");
     }
     throw new Error("Unexpected error");
   }
 };
-
-
 
 export interface ModifyEmailPayload {
   isStar?: boolean;
@@ -178,24 +175,18 @@ export const modifyEmail = async (
   }
 };
 
-
-
 export interface SendEmailPayload {
-  to: string; // Địa chỉ email người nhận
-  subject: string; // Tiêu đề email
-  html: string; // Nội dung email dạng HTML
+  to: string; 
+  subject: string; 
+  html: string; 
 }
 
 export interface SendEmailResponse {
-  message: string; // Thông báo trạng thái
-  id: string; // Mã định danh của email vừa gửi
+  message: string;
+  id: string; 
 }
 
-/**
- * Gửi email
- * @param payload SendEmailPayload
- * @returns Promise<SendEmailResponse>
- */
+
 export const sendEmail = async (
   payload: SendEmailPayload
 ): Promise<SendEmailResponse> => {
@@ -210,24 +201,17 @@ export const sendEmail = async (
   }
 };
 
-
 export interface ReplyEmailPayload {
-  to: string; // Địa chỉ email người nhận (*)
-  subject?: string; // Tiêu đề email, có thể để trống để giữ nguyên subject cũ
-  html: string; // Nội dung email ở dạng HTML (*)
+  to: string; 
+  subject?: string;
+  html: string;
 }
 
 export interface ReplyEmailResponse {
-  message: string; // Thông báo trạng thái, ví dụ: 'Email replied!'
-  id: string; // Mã định danh của email vừa được trả lời
+  message: string; 
+  id: string; 
 }
 
-/**
- * Trả lời một email
- * @param emailId ID của email cần reply
- * @param payload Thông tin reply email
- * @returns Promise<ReplyEmailResponse>
- */
 export const replyEmail = async (
   emailId: string,
   payload: ReplyEmailPayload

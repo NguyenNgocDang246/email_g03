@@ -63,11 +63,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedMailbox, setSelectedMa
           >
             {/* <span className="text-xl">{mailbox.icon}</span> */}
             <span className="flex-1">{mailbox.name}</span>
-            {mailbox.unreadCount > 0 && (
-              <span className="text-sm font-semibold">
-                {mailbox.unreadCount}
-              </span>
-            )}
           </button>
         ))}
       </nav>
