@@ -6,6 +6,10 @@ const API = axios.create({
   baseURL: backendURL,
   withCredentials: true,
 });
+const refreshAxios = axios.create({
+  baseURL: backendURL,
+  withCredentials: true,
+});
 
 API.interceptors.response.use(
   (response) => response,
@@ -13,7 +17,7 @@ API.interceptors.response.use(
     // Nếu 401, gọi refresh token API
     if (error.response?.status === 401) {
       try {
-        await axios.get(`${backendURL}/token/refresh`);
+        await refreshAxios.get(`${backendURL}/token/refresh`);
         // cookie access token mới sẽ được gửi tự động
         return API(error.config); // retry request
       } catch {

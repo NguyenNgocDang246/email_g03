@@ -26,7 +26,8 @@ export interface LoginData {
 export const loginUser = async (data: LoginData) => {
   try {
     const res = await API.post("/auth/login", data);
-    return res.data;
+    console.log(res)
+    return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Request error");
@@ -80,6 +81,7 @@ export interface UserInfo {
 export const getUserInfo = async (): Promise<UserInfo> => {
   try {
     const res = await API.get("/user/info");
+    console.log("user ne",res.data.data)
     return res.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {

@@ -97,4 +97,11 @@ export class UsersService {
       .select('-password -refreshToken');
     return user;
   }
+
+  async getGoogleTokens(userId: string) {
+    const user = await this.userModel
+      .findById(userId)
+      .select('googleAccessToken googleRefreshToken');
+    return user;
+  }
 }

@@ -123,4 +123,13 @@ export class AuthService {
     const refreshToken = this.tokenService.createRefreshToken();
     await this.usersService.updateRefreshToken(userId, refreshToken);
   }
+
+  async getGmail(userId: string) {
+    const data = await this.usersService.getGoogleTokens(userId);
+    if (!data || !data.googleRefreshToken) return null;
+    this.oauth2Client.setCredentials({
+      refresh_token: data.googleRefreshToken,
+    });
+    return google.gmail({ version: 'v1', auth: this.oauth2Client });
+  }
 }

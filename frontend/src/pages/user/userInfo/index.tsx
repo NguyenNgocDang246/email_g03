@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getUserInfo } from "../../../api/user";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/authContext";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export default function UserInfo() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuthStore();
 
   if (!user) {
     navigate("/login"); // nếu chưa login → redirect

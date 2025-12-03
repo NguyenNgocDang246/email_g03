@@ -29,7 +29,7 @@ export class AuthController {
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/token/refresh',
+      path: '/',
     });
     const frontend_url = process.env.FRONTEND_URL || 'http://localhost:5173';
     console.log('Redirecting to frontend:', frontend_url);
@@ -53,7 +53,7 @@ export class AuthController {
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/token/refresh',
+      path: '/',
     });
     res.cookie('accessToken', user.accessToken, {
       httpOnly: true,
@@ -81,7 +81,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.ENVIRONMENT === 'production',
       sameSite: process.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-      path: '/token/refresh',
+      path: '/',
     });
     return res.json({ success: true, data: null });
   }

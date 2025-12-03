@@ -1,6 +1,7 @@
 import React from "react";
 import { Star } from "lucide-react";
 import type { MailInfo } from "../../api/inbox";
+import { useMail } from "../../context/MailContext";
 
 interface EmailListItemProps {
   email: MailInfo;
@@ -8,13 +9,14 @@ interface EmailListItemProps {
   isChecked: boolean;
   onSelect: (email: MailInfo) => void;
   onToggleStar: (
-    emailId: number,
+    emailId:string,
+    isStar:boolean,
     e?: React.MouseEvent<HTMLButtonElement>
   ) => void;
-  onCheckboxChange: (
-    emailId: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => void;
+  // onCheckboxChange: (
+  //   emailId: number,
+  //   e: React.ChangeEvent<HTMLInputElement>
+  // ) => void;
 }
 
 export const EmailListItem: React.FC<EmailListItemProps> = ({
@@ -23,13 +25,18 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
   isChecked,
   onSelect,
   onToggleStar,
-  onCheckboxChange,
+  // onCheckboxChange,
 }) => {
 
+  const {setSelectOnNewMail}=useMail()
   
   return (
     <div
-      onClick={() => onSelect(email)}
+      onClick={() => {
+        setSelectOnNewMail(false);
+        onSelect(email);
+        
+      }}
       className={`flex items-center gap-3 px-4 py-3 border border-gray-100 cursor-pointer hover:shadow-md transition-shadow ${
         isSelected ? "bg-blue-50" : ""
       } ${!email.isRead ? "bg-white" : "bg-gray-50"}`}
@@ -37,12 +44,12 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
       <input
         type="checkbox"
         checked={isChecked}
-        onChange={(e) => onCheckboxChange(email.id, e)}
+        onChange={(e) =>{}}
         className="w-4 h-4 rounded"
         onClick={(e) => e.stopPropagation()}
       />
       <button
-        onClick={(e) => onToggleStar(email.id, e)}
+        onClick={(e) => {onToggleStar(email.id,email.isStarred,e);}}
         className="p-1 hover:bg-gray-200 rounded"
       >
         <Star

@@ -5,24 +5,17 @@ import Login from "./pages/auth/login";
 import UserInfo from "./pages/user/userInfo";
 import InboxPage from "./pages/inbox";
 import InboxLayout from "./pages/inbox/layout";
-import { useAuth } from "./contexts/authContext";
+import { useAuthStore } from "./store/useAuthStore";
 import { useEffect } from "react";
-import API from "./api/baseAPI";
 
 export default function App() {
-  const { setUser } = useAuth();
+  const fetchUser = useAuthStore((s: any) => s.fetchUser);
+
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await API.get("/user/info");
-        console.log("Fetched user info:", res.data);
-        setUser(res.data);
-      } catch {
-        setUser(null);
-      }
-    };
     fetchUser();
   }, []);
+
+
 
   return (
     <Routes>
@@ -31,7 +24,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/user-info" element={<UserInfo />} />
       {/* redirect /inbox sang /mailbox/inbox */}
-      <Route path="/mailbox" element={<Navigate to="/mailbox/inbox" replace />} />
+      <Route path="/mailbox" element={<Navigate to="/mailbox/SENT" replace />} />
 
       {/* mailbox route */}
       <Route

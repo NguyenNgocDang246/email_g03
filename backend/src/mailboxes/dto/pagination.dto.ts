@@ -1,12 +1,10 @@
-import { IsNumber, IsOptional, IsPositive } from 'class-validator';
+import { IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class PaginationDto {
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
+  @IsString()
   @IsOptional()
-  page: number;
+  pageToken: string;
 
   @Type(() => Number)
   @IsNumber()
