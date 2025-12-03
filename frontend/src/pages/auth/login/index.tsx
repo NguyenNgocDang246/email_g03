@@ -29,7 +29,6 @@ export default function Login() {
   const onSubmit = async (values: LoginFormValues) => {
     setMessage(null);
     try {
-      console.log(values);
       await login(values);
       navigate("/");
     } catch (err: any) {

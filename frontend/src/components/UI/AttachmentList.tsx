@@ -19,15 +19,17 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
   onRemove,
 }) => {
   const mimeMap: Record<string, string> = {
-    pdf: "PDF",
-    msword: "DOC",
+    "application/pdf": "PDF",
+    "application/msword": "DOC",
     "vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
-    png: "PNG",
-    jpeg: "JPG",
-    jpg: "JPG",
-    gif: "GIF",
-    plain: "TXT",
+    "vnd.openxmlformats-officedocument.spreadsheetml.sheet": "XLSX",
+    "image/png": "PNG",
+    "image/jpeg": "JPG",
+    "image/jpg": "JPG",
+    "image/gif": "GIF",
+    "text/plain": "TXT",
   };
+  console.log("ne",attachments)
 
   return (
     <div className="mt-6 w-full">
@@ -37,12 +39,16 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
           const fileSizeKB = (att.size / 1024).toFixed(1);
           const maxLength = 25;
           const displayName =
-            att.filename.length > maxLength
-              ? att.filename.slice(0, maxLength - 3) + "..."
-              : att.filename;
+            att.filename && att.filename.length > 0
+              ? att.filename.length > maxLength
+                ? att.filename.slice(0, maxLength - 3) + "..."
+                : att.filename
+              : "No Tittle"; 
 
           const mimeType = att.mimeType.split("/")[1]?.toLowerCase() || "file";
+          console.log(mimeType)
           const displayType = mimeMap[mimeType] || mimeType.toUpperCase();
+         
 
           let IconComponent;
           let iconColor = "text-gray-600";
