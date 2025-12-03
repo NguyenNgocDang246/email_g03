@@ -35,7 +35,7 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
       onClick={() => {
         setSelectOnNewMail(false);
         onSelect(email);
-        console.log("hi")
+        
       }}
       className={`flex items-center gap-3 px-4 py-3 border border-gray-100 cursor-pointer hover:shadow-md transition-shadow ${
         isSelected ? "bg-blue-50" : ""

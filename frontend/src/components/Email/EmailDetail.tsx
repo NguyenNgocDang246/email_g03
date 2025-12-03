@@ -56,6 +56,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
     },
   });
 
+
   if (isLoading) return <p className="text-center mt-10">Loading...</p>;
 
   if (error)
@@ -77,6 +78,8 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
       </div>
     );
   }
+
+
 
   return (
     <Suspense
@@ -126,6 +129,12 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
               </p>
               <p className="text-gray-400 text-xs">{data.date}</p>
             </div>
+
+            <Trash
+              size={18}
+              className="text-gray-500 hover:text-red-500"
+              onClick={onDelete}
+            />
           </div>
 
           <div className="pl-12 pr-3 my-4">
@@ -140,7 +149,6 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                 onRemove={() => {}}
               />
             )}
-
             {/* ACTION BUTTONS */}
             <div className="flex items-center gap-2 mt-6">
               <button
