@@ -1,5 +1,5 @@
 import { gmail_v1 } from 'googleapis';
-import { EmailDetail } from 'src/types';
+import { EmailDetail } from '../types';
 import { AttachmentMapper } from './attachment.mapper';
 import { GmailMapper } from './email.mapper';
 

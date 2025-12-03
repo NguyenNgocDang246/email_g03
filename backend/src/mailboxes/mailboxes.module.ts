@@ -3,7 +3,7 @@ import { MailboxesController } from './mailboxes.controller';
 import { MailboxesService } from './mailboxes.service';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 import { TokenModule } from '../token/token.module';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [TokenModule, AuthModule],
