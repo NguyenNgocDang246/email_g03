@@ -107,6 +107,13 @@ export default function InboxPage() {
     },
   });
 
+  const markAsUnStarMutation = useMutation({
+    mutationFn: (emailId: string) => modifyEmail(emailId, { isStar: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["emails", mailboxId] });
+    },
+  });
+
    const markAsDeleteMutation = useMutation({
      mutationFn: (emailId: string) => modifyEmail(emailId, { isDelete: true }),
      onSuccess: () => {
@@ -122,15 +129,18 @@ export default function InboxPage() {
     }
   };
 
-  const handleToggleStar = (
+  const handleToggleStar = (    
     emailId: string,
     isStar: boolean,
     e?: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (e) e.stopPropagation();
-    if (!isStar) {
+    if(isStar){
+      markAsUnStarMutation.mutate(emailId);
+    }else{
       markAsStarMutation.mutate(emailId);
     }
+    
   };
 
   if (isLoading) return <p className="text-center mt-10">Loading...</p>;
