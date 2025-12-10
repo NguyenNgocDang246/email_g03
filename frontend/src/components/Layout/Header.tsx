@@ -1,15 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Menu, Search, HelpCircle, Settings, Grid3x3, LogOut } from "lucide-react";
+import { Menu, HelpCircle, Settings, Grid3x3, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
+import { SearchBar } from "../Search/SearchBar";
 
 interface HeaderProps {
   onMenuToggle: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  searchMode: "keyword" | "semantic";
+  setSearchMode: (mode: "keyword" | "semantic") => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuToggle, searchQuery, setSearchQuery }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onMenuToggle,
+  searchQuery,
+  setSearchQuery,
+  searchMode,
+  setSearchMode,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,6 +41,19 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, searchQuery, setSe
       params.delete("query");
     }
 
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+  const handleSearchModeChange = (mode: "keyword" | "semantic") => {
+    setSearchMode(mode);
+    const params = new URLSearchParams(location.search);
+    if (mode) {
+      params.set("mode", mode);
+    } else {
+      params.delete("mode");
+    }
+    if (searchQuery) {
+      params.set("query", searchQuery);
+    }
     navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
   };
 
@@ -57,16 +79,15 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, searchQuery, setSe
         <span className="text-xl text-gray-700 hidden sm:inline">Mail</span>
       </div>
       <div className="flex-1 max-w-2xl mx-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm mail"
-            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          value={searchQuery}
+          onChange={handleSearchChange}
+          mode={searchMode}
+          onModeChange={handleSearchModeChange}
+          placeholder="Tìm kiếm mail"
+          className="shadow-none border-0 p-0"
+          variant="inline"
+        />
       </div>
       <div className="flex items-center gap-2">
         <button className="p-2 hover:bg-gray-100 rounded-full hidden sm:block">

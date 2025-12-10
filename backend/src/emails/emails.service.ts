@@ -1,10 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { EmailEntity, EmailStatus } from './email.schema';
+import { Model, type AnyBulkWriteOperation } from 'mongoose';
 import { AuthService } from '../auth/auth.service';
 import { EmailDetailMapper } from '../mappers';
 
 @Injectable()
 export class EmailsService {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    @InjectModel(EmailEntity.name)
+    private emailModel: Model<EmailEntity>,
+  ) {}
 
   async getEmailDetail(id: string, userId: string) {
     const gmail = await this.authService.getGmail(userId);
@@ -20,6 +27,26 @@ export class EmailsService {
       emailDetail.data,
       undefined,
     );
+
+    const statusDoc = await this.emailModel
+      .findOne({ userId, emailId: id })
+      .lean();
+    if (!statusDoc) {
+      await this.emailModel.create({
+        emailId: id,
+        userId,
+        sender: emailDetailMapped.from,
+        subject: emailDetailMapped.subject,
+        snippet: emailDetailMapped.snippet ?? '',
+        receivedAt: emailDetailMapped.date
+          ? new Date(emailDetailMapped.date)
+          : new Date(),
+        status: 'INBOX',
+      });
+      emailDetailMapped.status = 'INBOX';
+    } else {
+      emailDetailMapped.status = statusDoc.status as EmailStatus;
+    }
 
     return emailDetailMapped;
   }
@@ -114,19 +141,8 @@ export class EmailsService {
     addLabels: string[],
     removeLabels: string[],
   ) {
-    const gmail = await this.authService.getGmail(userId);
-    if (!gmail) return null;
-    if (addLabels.length === 0 && removeLabels.length === 0) {
-      return null;
-    }
-    const res = await gmail.users.messages.modify({
-      userId: 'me',
-      id: messageId,
-      requestBody: {
-        addLabelIds: addLabels,
-        removeLabelIds: removeLabels,
-      },
-    });
+    // Deprecated: labels not used for Kanban status
+    return null;
   }
 
   async streamAttachment(
@@ -148,5 +164,131 @@ export class EmailsService {
     }
 
     return attachment.data.data;
+  }
+
+  private async unsnoozeExpired(userId: string) {
+    const now = new Date();
+    const expired = await this.emailModel
+      .find({
+        userId,
+        status: 'SNOOZED',
+        snoozedUntil: { $lte: now },
+      })
+      .lean();
+
+    if (!expired.length) return;
+    const ops: AnyBulkWriteOperation<EmailEntity>[] = expired.map((doc) => ({
+      updateOne: {
+        filter: { _id: doc._id },
+        update: {
+          $set: {
+            status: doc.previousStatus || 'INBOX',
+          },
+          $unset: { snoozedUntil: '', previousStatus: '' },
+        },
+      },
+    }));
+    await this.emailModel.bulkWrite(ops);
+  }
+
+  async mergeStatuses(
+    userId: string,
+    emails: {
+      id: string;
+      from: string;
+      subject: string;
+      snippet: string;
+      date: string;
+    }[],
+  ) {
+    await this.unsnoozeExpired(userId);
+    const ids = emails.map((e) => e.id);
+    const existing = await this.emailModel
+      .find({ userId, emailId: { $in: ids } })
+      .lean();
+    const existingMap = new Map(existing.map((e) => [e.emailId, e]));
+
+    const ops: AnyBulkWriteOperation<EmailEntity>[] = [];
+    emails.forEach((mail) => {
+      if (!existingMap.has(mail.id)) {
+        ops.push({
+          insertOne: {
+            document: {
+              emailId: mail.id,
+              userId,
+              sender: mail.from,
+              subject: mail.subject,
+              snippet: mail.snippet ?? '',
+              receivedAt: mail.date ? new Date(mail.date) : new Date(),
+              status: 'INBOX',
+            },
+          },
+        });
+      }
+    });
+    if (ops.length) {
+      await this.emailModel.bulkWrite(ops);
+    }
+
+    const refreshed = await this.emailModel
+      .find({ userId, emailId: { $in: ids } })
+      .lean();
+    const refreshedMap = new Map(refreshed.map((e) => [e.emailId, e.status]));
+
+    return emails.map((mail) => ({
+      ...mail,
+      status: refreshedMap.get(mail.id) || 'INBOX',
+    }));
+  }
+
+  async updateStatus(
+    userId: string,
+    emailId: string,
+    status: EmailStatus,
+    options?: { snoozedUntil?: string | Date; previousStatus?: EmailStatus },
+  ) {
+    await this.unsnoozeExpired(userId);
+    if (status === 'SNOOZED') {
+      const until = options?.snoozedUntil
+        ? new Date(options.snoozedUntil)
+        : new Date(Date.now() + 4 * 60 * 60 * 1000);
+      const existing = await this.emailModel
+        .findOne({ userId, emailId })
+        .lean();
+      const prevStatus =
+        options?.previousStatus ||
+        existing?.status ||
+        existing?.previousStatus ||
+        'INBOX';
+
+      await this.emailModel.updateOne(
+        { userId, emailId },
+        {
+          $set: {
+            status: 'SNOOZED',
+            snoozedUntil: until,
+            previousStatus: prevStatus,
+          },
+        },
+        { upsert: true },
+      );
+      return {
+        message: 'Status updated',
+        status: 'SNOOZED',
+        snoozedUntil: until,
+      };
+    }
+
+    await this.emailModel.updateOne(
+      { userId, emailId },
+      {
+        $set: {
+          status,
+        },
+        $unset: { snoozedUntil: '', previousStatus: '' },
+      },
+      { upsert: true },
+    );
+    return { message: 'Status updated', status };
   }
 }

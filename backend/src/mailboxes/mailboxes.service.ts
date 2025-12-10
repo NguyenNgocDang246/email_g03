@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Mailbox } from '../types';
 import { PaginationDto } from './dto';
+import { EmailsService } from 'src/emails/emails.service';
 import { AuthService } from '../auth/auth.service';
 import { GmailMapper } from '../mappers';
 
@@ -11,7 +12,10 @@ export class MailboxesService {
   private mailboxes: Mailbox[];
   private emailsInMailbox = new Map();
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private emailsService: EmailsService,
+  ) {
     const filePathMailboxes = join(__dirname, '..', 'mock', 'mailboxes.json');
     const dataMailboxes = readFileSync(filePathMailboxes, 'utf8');
     this.mailboxes = JSON.parse(dataMailboxes);
@@ -74,11 +78,16 @@ export class MailboxesService {
       }),
     );
 
+    const emailsWithStatus = await this.emailsService.mergeStatuses(
+      userId,
+      emails,
+    );
+
     return {
       limit: limit,
       total: total,
       nextPageToken,
-      data: emails,
+      data: emailsWithStatus,
     };
   }
 
@@ -86,6 +95,7 @@ export class MailboxesService {
     mailboxId: string,
     query: string,
     paginationDto: PaginationDto,
+    userId: string,
   ) {
     const emails = this.emailsInMailbox.get(mailboxId);
 
@@ -107,11 +117,16 @@ export class MailboxesService {
 
     const paginatedEmails = filteredEmails.slice(skip, skip + take);
 
+    const merged = await this.emailsService.mergeStatuses(
+      userId,
+      paginatedEmails,
+    );
+
     return {
       page: page,
       limit: limit,
       total: filteredEmails.length,
-      data: paginatedEmails,
+      data: merged,
     };
   }
 }
