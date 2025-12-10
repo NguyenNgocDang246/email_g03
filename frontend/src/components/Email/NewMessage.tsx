@@ -51,8 +51,9 @@ const NewMessage: React.FC<NewMessageProps> = ({ mailboxId }) => {
       setSelectOnNewMail(false);
       queryClient.invalidateQueries({ queryKey: ["emails", mailboxId] });
     },
-    onError: (error: any) => {
-      alert(error.message || "Gửi email thất bại!");
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Gửi email thất bại!";
+      alert(message);
     },
   });
 

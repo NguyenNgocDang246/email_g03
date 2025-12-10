@@ -12,11 +12,10 @@ interface LoginFormValues {
 export default function Login() {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string | null>(null);
-  // const { setUser } = useAuth();
 
-  const login = useAuthStore((s: any) => s.login);
-  const loginGoogle = useAuthStore((s: any) => s.loginGoogle);
-  const isLoading = useAuthStore((s: any) => s.isLoading);
+  const login = useAuthStore((s) => s.login);
+  const loginGoogle = useAuthStore((s) => s.loginGoogle);
+  const isLoading = useAuthStore((s) => s.isLoading);
 
   const {
     register,
@@ -31,8 +30,9 @@ export default function Login() {
     try {
       await login(values);
       navigate("/");
-    } catch (err: any) {
-      setMessage(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      setMessage(errorMessage);
     }
   };
 

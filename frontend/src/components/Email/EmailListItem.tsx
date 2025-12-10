@@ -43,7 +43,7 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
       <input
         type="checkbox"
         checked={isChecked}
-        onChange={(_e) => {}}
+        onChange={(e) => e.stopPropagation()}
         className="w-4 h-4 rounded"
         onClick={(e) => e.stopPropagation()}
       />

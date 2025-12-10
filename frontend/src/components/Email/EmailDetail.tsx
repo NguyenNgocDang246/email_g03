@@ -65,8 +65,9 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
       queryClient.invalidateQueries({ queryKey: ["emails", mailBoxId] });
     },
 
-    onError: (error: any) => {
-      alert(error.message || "Reply failed!");
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Reply failed!";
+      alert(message);
     },
   });
 

@@ -18,6 +18,7 @@ export default function Home() {
 
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<"keyword" | "semantic">("keyword");
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 w-screen">
@@ -34,6 +35,8 @@ export default function Home() {
           onMenuToggle={() => setShowMobileMenu(!showMobileMenu)}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          searchMode={searchMode}
+          setSearchMode={setSearchMode}
         />
       )}
       <div className="flex flex-col items-center justify-center grow px-4 text-center mt-12">
