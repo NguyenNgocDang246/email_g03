@@ -8,6 +8,7 @@ import { TokenModule } from './token/token.module';
 import { EmailsModule } from './emails/emails.module';
 import { MailboxesModule } from './mailboxes/mailboxes.module';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AuthModule } from './auth/auth.module';
     EmailsModule,
     MailboxesModule,
     AuthModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

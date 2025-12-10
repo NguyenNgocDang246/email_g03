@@ -18,4 +18,5 @@ export type Email = {
 
   fromName?: string;
   fromAvatar?: string;
+  status?: string;
 };

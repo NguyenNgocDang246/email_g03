@@ -1,5 +1,10 @@
 import API from "./baseAPI";
 import axios from "axios";
+import {
+  buildStatusLabelUpdate,
+  deriveStatusFromLabels,
+  type KanbanStatus,
+} from "../constants/kanban";
 
 export interface MailBoxesInfo {
   id: string;
@@ -31,6 +36,8 @@ export interface MailInfo {
   isRead: boolean;
   isStarred: boolean; // API không có -> default false
   body: string; // API không có -> để rỗng
+  labels?: string[];
+  status?: KanbanStatus;
 }
 
 export interface MailListResponse {
@@ -65,6 +72,9 @@ export const getMailBoxesEmailListInfo = async (
       timestamp: item.date,
       isRead: item.isRead,
       isStarred: item.labels?.includes("STARRED") || false,
+      body: item.body || "",
+      labels: item.labels,
+      status: deriveStatusFromLabels(item.labels),
     }));
 
     return {
@@ -110,6 +120,7 @@ export interface MailDetail {
   isRead?: boolean;
   hasAttachments?: boolean;
   labels?: string[];
+  status?: KanbanStatus;
 
   attachments?: Attachment[];
 }
@@ -137,6 +148,7 @@ export const getEmailDetail = async (emailId: string): Promise<MailDetail> => {
       isRead: data.isRead,
       hasAttachments: data.hasAttachments,
       labels: data.labels,
+      status: deriveStatusFromLabels(data.labels),
       attachments: data.attachments?.map((att: any) => ({
         id: att.id,
         filename: att.fileName,
@@ -159,6 +171,8 @@ export interface ModifyEmailPayload {
   isStar?: boolean;
   isRead?: boolean;
   isDelete?: boolean;
+  addLabels?: string[];
+  removeLabels?: string[];
 }
 
 export const modifyEmail = async (
@@ -173,6 +187,14 @@ export const modifyEmail = async (
     }
     throw new Error("Unexpected error");
   }
+};
+
+export const updateEmailStatus = async (
+  emailId: string,
+  status: KanbanStatus
+): Promise<void> => {
+  const { addLabels, removeLabels } = buildStatusLabelUpdate(status);
+  return modifyEmail(emailId, { addLabels, removeLabels });
 };
 
 export interface SendEmailPayload {

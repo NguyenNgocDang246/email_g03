@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { MailboxesService } from './mailboxes.service';
-import { PaginationDto } from './dto';
+import type { PaginationDto } from './dto';
+import type { Request } from 'express';
 
 @Controller('mailboxes')
 export class MailboxesController {

@@ -9,6 +9,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { EmailsService } from './emails.service';
+import type { Request } from 'express';
 
 @Controller('emails')
 export class EmailsController {

@@ -9,6 +9,7 @@ import { AuthModule } from 'src/auth/auth.module';
   imports: [TokenModule, AuthModule],
   controllers: [MailboxesController],
   providers: [MailboxesService],
+  exports: [MailboxesService],
 })
 export class MailboxesModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

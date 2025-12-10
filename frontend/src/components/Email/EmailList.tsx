@@ -44,7 +44,7 @@ export const EmailList: React.FC<EmailListProps> = ({
   const { ref, inView } = useInView();
 
   useEffect(() => {
-    if (inView) {
+    if (inView && hasNextPage) {
       fetchNextPage();
     }
   }, [fetchNextPage, inView, hasNextPage]);

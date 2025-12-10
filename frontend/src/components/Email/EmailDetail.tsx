@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, Star } from "lucide-react";
+import { Mail, Star, RefreshCcw } from "lucide-react";
 import React, { Suspense, useState } from "react";
 import { getEmailDetail, replyEmail, type ReplyEmailPayload } from "../../api/inbox";
 import { Trash } from "lucide-react";
 import { SendHorizonal } from "lucide-react";
 import { useMail } from "../../context/MailContext";
 import { AttachmentList } from "../UI/AttachmentList";
+import { summarizeEmail } from "../../api/ai";
 
 interface EmailDetailProps {
   mailBoxId:string;
@@ -26,6 +27,17 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
     retry: false,
     refetchOnWindowFocus: false,
     enabled: !!emailId,
+  });
+  const {
+    data: summaryData,
+    isFetching: isSummaryLoading,
+    error: summaryError,
+    refetch: refetchSummary,
+  } = useQuery({
+    queryKey: ["mailSummaryInfo", emailId],
+    queryFn: () => summarizeEmail(emailId!),
+    enabled: !!emailId,
+    staleTime: 1000 * 60 * 10,
   });
 
   const queryClient = useQueryClient();
@@ -99,6 +111,57 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
           <div className="p-3">
             <h1 className="text-xl font-semibold text-black">{data.subject}</h1>
           </div>
+        </div>
+
+        <div className="bg-white m-2 rounded shadow p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-sm font-semibold text-black">AI Summary</p>
+              <p className="text-xs text-gray-500">
+                Tóm tắt email và metadata liên quan
+              </p>
+            </div>
+            <button
+              onClick={() => refetchSummary()}
+              className="flex items-center gap-2 px-3 py-1 rounded-md border text-xs text-gray-700 hover:bg-gray-100"
+            >
+              <RefreshCcw size={14} />
+              Làm mới
+            </button>
+          </div>
+          {isSummaryLoading && (
+            <p className="text-xs text-gray-500">Đang sinh tóm tắt...</p>
+          )}
+          {summaryError && (
+            <p className="text-xs text-red-500">
+              {(summaryError as Error)?.message || "Không lấy được summary"}
+            </p>
+          )}
+          {summaryData && (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                {summaryData.summary || "Chưa có summary cho email này"}
+              </p>
+              {summaryData.metadata && (
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(summaryData.metadata).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="text-[11px] text-gray-500 bg-gray-50 rounded p-2"
+                    >
+                      <span className="font-semibold text-gray-700">
+                        {key}:
+                      </span>{" "}
+                      <span>{String(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {!isSummaryLoading && !summaryData && !summaryError && (
+            <p className="text-xs text-gray-500">Chưa có summary sẵn.</p>
+          )}
         </div>
 
         {/* SENDER + RECIPIENTS + BODY */}
