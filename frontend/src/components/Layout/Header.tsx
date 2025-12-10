@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { Menu, HelpCircle, Settings, Grid3x3, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
-import { SearchBar } from "../Search/SearchBar";
+import { SearchBar, type SearchMode } from "../Search/SearchBar";
 
 interface HeaderProps {
   onMenuToggle: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  searchMode: "keyword" | "semantic";
-  setSearchMode: (mode: "keyword" | "semantic") => void;
+  searchMode: SearchMode;
+  setSearchMode: (mode: SearchMode) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const user = useAuthStore((s: any) => s.user);
+  const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
 
     navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
   };
-  const handleSearchModeChange = (mode: "keyword" | "semantic") => {
+  const handleSearchModeChange = (mode: SearchMode) => {
     setSearchMode(mode);
     const params = new URLSearchParams(location.search);
     if (mode) {

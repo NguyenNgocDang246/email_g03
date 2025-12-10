@@ -9,11 +9,11 @@ import { useAuthStore } from "./store/useAuthStore";
 import { useEffect } from "react";
 
 export default function App() {
-  const fetchUser = useAuthStore((s: any) => s.fetchUser);
+  const fetchUser = useAuthStore((s) => s.fetchUser);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
 
 

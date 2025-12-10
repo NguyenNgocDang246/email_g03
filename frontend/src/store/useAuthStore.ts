@@ -13,16 +13,17 @@ interface AuthState {
   user: UserInfo | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isHydrated?: boolean;
 
   login: (data: LoginData) => Promise<void>;
-  loginGoogle: (Credential: any) => Promise<void>;
+  loginGoogle: () => Promise<void>;
   fetchUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, _get) => ({
+    (set) => ({
       user: null,
       isLoading: false,
       isAuthenticated: false,

@@ -42,6 +42,25 @@ export interface MailListResponse {
   data: MailInfo[];
 }
 
+interface MailListApiItem {
+  id: string;
+  mailboxId: string;
+  from: string;
+  subject?: string;
+  snippet?: string;
+  date: string;
+  isRead: boolean;
+  labels?: string[];
+  body?: string;
+  status?: KanbanStatus;
+}
+
+interface MailListApiResponse {
+  nextPageToken: string | null;
+  total: number;
+  data: MailListApiItem[];
+}
+
 export const getMailBoxesEmailListInfo = async (
   mailboxId: string,
   query?: string,
@@ -57,9 +76,9 @@ export const getMailBoxesEmailListInfo = async (
 
     const res = await API.get(url);
 
-    const { nextPageToken, total, data } = res.data;
+    const { nextPageToken, total, data } = res.data as MailListApiResponse;
 
-    const mappedData: MailInfo[] = data.map((item: any) => ({
+    const mappedData: MailInfo[] = data.map((item) => ({
       id: item.id,
       mailboxId: item.mailboxId,
       from: item.from,
@@ -121,10 +140,37 @@ export interface MailDetail {
   attachments?: Attachment[];
 }
 
+interface AttachmentResponse {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+}
+
+interface MailDetailResponse {
+  id: string;
+  threadId: string;
+  mailboxId: string;
+  from: string;
+  fromName?: string;
+  to: string[];
+  subject: string;
+  snippet?: string;
+  bodyHtml: string;
+  bodyText?: string;
+  date: string;
+  messageIdHeader?: string;
+  isRead?: boolean;
+  hasAttachments?: boolean;
+  labels?: string[];
+  status?: KanbanStatus;
+  attachments?: AttachmentResponse[];
+}
+
 export const getEmailDetail = async (emailId: string): Promise<MailDetail> => {
   try {
     const res = await API.get(`/emails/${emailId}`);
-    const data = res.data;
+    const data = res.data as MailDetailResponse;
 
     const mailDetail: MailDetail = {
       id: data.id,
@@ -145,7 +191,7 @@ export const getEmailDetail = async (emailId: string): Promise<MailDetail> => {
       hasAttachments: data.hasAttachments,
       labels: data.labels,
       status: (data.status as KanbanStatus) || "INBOX",
-      attachments: data.attachments?.map((att: any) => ({
+      attachments: data.attachments?.map((att) => ({
         id: att.id,
         filename: att.fileName,
         mimeType: att.mimeType,

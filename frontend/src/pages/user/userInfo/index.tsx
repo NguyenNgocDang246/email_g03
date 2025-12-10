@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserInfo } from "../../../api/user";
 import { useNavigate } from "react-router-dom";
@@ -7,16 +8,21 @@ export default function UserInfo() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  if (!user) {
-    navigate("/login"); // nếu chưa login → redirect
-    return null;
-  }
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["userInfo"], // đây là bắt buộc
     queryFn: () => getUserInfo(),
     enabled: !!user, // chỉ gọi khi accessToken tồn tại
   });
+
+  if (!user) {
+    return null;
+  }
 
   if (isLoading) return <p className="text-center mt-10">Loading...</p>;
   if (error) return <p className="text-center mt-10 text-red-600">Error loading user info</p>;

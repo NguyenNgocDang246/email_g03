@@ -20,8 +20,10 @@ export default function Register() {
       setMessage(`Registered successfully, ${data.data.email}!`);
       navigate("/login");
     },
-    onError: (error: any) => {
-      setMessage(`Error: ${error.message || "Registration failed"}`);
+    onError: (error: unknown) => {
+      const errorMessage =
+        error instanceof Error ? error.message : "Registration failed";
+      setMessage(`Error: ${errorMessage}`);
     },
   });
 

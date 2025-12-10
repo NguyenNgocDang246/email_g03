@@ -1,6 +1,7 @@
+import type { FC } from "react";
 import { Search } from "lucide-react";
 
-type SearchMode = "keyword" | "semantic";
+export type SearchMode = "keyword" | "semantic";
 
 interface SearchBarProps {
   value: string;
@@ -12,7 +13,7 @@ interface SearchBarProps {
   variant?: "card" | "inline";
 }
 
-export const SearchBar = ({
+export const SearchBar: FC<SearchBarProps> = ({
   value,
   onChange,
   mode,
@@ -20,7 +21,7 @@ export const SearchBar = ({
   placeholder = "Tìm kiếm mail hoặc đặt câu hỏi",
   className = "",
   variant = "card",
-}) => {
+}: SearchBarProps) => {
   const baseClasses =
     variant === "inline"
       ? "p-0 bg-transparent"

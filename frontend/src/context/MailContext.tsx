@@ -1,4 +1,16 @@
 import { createContext, useContext } from "react";
 
-export const MailContext = createContext<any>(null);
-export const useMail = () => useContext(MailContext);
+interface MailContextValue {
+  selectOnNewMail: boolean;
+  setSelectOnNewMail: (value: boolean) => void;
+}
+
+export const MailContext = createContext<MailContextValue | undefined>(undefined);
+
+export const useMail = (): MailContextValue => {
+  const context = useContext(MailContext);
+  if (!context) {
+    throw new Error("useMail must be used within a MailContext.Provider");
+  }
+  return context;
+};
