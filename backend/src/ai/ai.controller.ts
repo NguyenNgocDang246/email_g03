@@ -11,8 +11,7 @@ export class AiController {
     const { query, mailboxId } = body || {};
     const data = req['user'];
     const userId = data?.id;
-    // userId currently unused, but reserved for future personalized search
-    const results = await this.aiService.semanticSearch(mailboxId, query);
+    const results = await this.aiService.semanticSearch(mailboxId, query, userId);
     return { data: results, userId };
   }
 

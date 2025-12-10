@@ -59,23 +59,6 @@ export const KANBAN_COLUMNS: KanbanColumnConfig[] = [
   },
 ];
 
-export const deriveStatusFromLabels = (
-  labels: string[] = [],
-): KanbanStatus => {
-  const matched = labels.find((label) =>
-    KANBAN_STATUS_LABELS.includes(label as KanbanStatus),
-  );
-  if (matched && KANBAN_STATUS_LABELS.includes(matched as KanbanStatus)) {
-    return matched as KanbanStatus;
-  }
-  return "INBOX";
-};
-
-export const buildStatusLabelUpdate = (next: KanbanStatus) => ({
-  addLabels: [next],
-  removeLabels: KANBAN_STATUS_LABELS.filter((label) => label !== next),
-});
-
 export const formatStatusLabel = (status: KanbanStatus) => {
   switch (status) {
     case "INBOX":

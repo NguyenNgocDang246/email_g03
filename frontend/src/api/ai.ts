@@ -1,6 +1,6 @@
 import axios from "axios";
 import API from "./baseAPI";
-import { deriveStatusFromLabels, type KanbanStatus } from "../constants/kanban";
+import { type KanbanStatus } from "../constants/kanban";
 import type { MailInfo } from "./inbox";
 
 export interface SemanticSearchPayload {
@@ -31,7 +31,7 @@ export const semanticSearchEmails = async (
     const res = await API.post<SemanticSearchResponse>("/ai/search", payload);
     return (res.data?.data ?? []).map((item) => ({
       ...item,
-      status: deriveStatusFromLabels(item.labels),
+      status: (item.status as KanbanStatus) || "INBOX",
     }));
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {

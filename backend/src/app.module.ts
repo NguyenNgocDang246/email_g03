@@ -9,6 +9,7 @@ import { EmailsModule } from './emails/emails.module';
 import { MailboxesModule } from './mailboxes/mailboxes.module';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './ai/ai.module';
+import { KanbanModule } from './kanban/kanban.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AiModule } from './ai/ai.module';
     MailboxesModule,
     AuthModule,
     AiModule,
+    KanbanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -27,14 +27,18 @@ export class MailboxesController {
 
   @Get(':id/emails/search')
   searchEmailsInMailbox(
+    @Req() req: Request,
     @Param('id') id: string,
     @Query('query') query: string,
     @Query() paginationDto: PaginationDto,
   ) {
+    const data = req['user'];
+    const userId = data.id;
     return this.mailboxesService.searchEmailsInMailbox(
       id,
       query,
       paginationDto,
+      userId,
     );
   }
 }

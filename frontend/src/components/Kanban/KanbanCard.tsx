@@ -12,7 +12,7 @@ interface KanbanCardProps {
 }
 
 export const KanbanCard = ({ email, columnId, onSelect, isSelected }: KanbanCardProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: email.id,
     data: { columnId },
   });
@@ -20,6 +20,7 @@ export const KanbanCard = ({ email, columnId, onSelect, isSelected }: KanbanCard
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.6 : 1,
   };
 
   const formattedDate = email.timestamp ? new Date(email.timestamp).toLocaleString() : "";

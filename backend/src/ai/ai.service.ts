@@ -9,17 +9,21 @@ export class AiService {
     private readonly mailboxesService: MailboxesService,
   ) {}
 
-  async semanticSearch(mailboxId: string | undefined, query: string) {
+  async semanticSearch(
+    mailboxId: string | undefined,
+    query: string,
+    userId: string,
+  ) {
     if (!query) return [];
-    if (mailboxId) {
-      const results = await this.mailboxesService.searchEmailsInMailbox(
-        mailboxId,
-        query,
-        { limit: 50, pageToken: 1 } as any,
-      );
-      return results.data || [];
-    }
-    return [];
+    if (!mailboxId) return [];
+
+    const results = await this.mailboxesService.searchEmailsInMailbox(
+      mailboxId,
+      query,
+      { limit: 50, pageToken: 1 } as any,
+      userId,
+    );
+    return results.data || [];
   }
 
   async summarizeEmail(emailId: string, userId: string) {

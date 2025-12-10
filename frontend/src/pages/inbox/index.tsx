@@ -22,11 +22,7 @@ import NewMessage from "../../components/Email/NewMessage";
 import { KanbanBoard } from "../../components/Kanban/KanbanBoard";
 import { ToggleButton } from "../../components/Kanban/ToggleButton";
 import { EmailDetailPanel } from "../../components/Kanban/EmailDetailPanel";
-import {
-  KANBAN_COLUMNS,
-  deriveStatusFromLabels,
-  type KanbanStatus,
-} from "../../constants/kanban";
+import { KANBAN_COLUMNS, type KanbanStatus } from "../../constants/kanban";
 
 export default function InboxPage() {
   const {
@@ -135,7 +131,7 @@ export default function InboxPage() {
     const source = searchMode === "semantic" ? semanticEmails ?? [] : allEmails;
     return source.map((mail) => ({
       ...mail,
-      status: mail.status ?? deriveStatusFromLabels(mail.labels),
+      status: (mail.status as KanbanStatus) || "INBOX",
     }));
   }, [allEmails, semanticEmails, searchMode]);
 
@@ -241,7 +237,7 @@ export default function InboxPage() {
       {} as Record<KanbanStatus, MailInfo[]>
     );
     displayEmails.forEach((mail) => {
-      const status = mail.status ?? deriveStatusFromLabels(mail.labels);
+      const status = (mail.status as KanbanStatus) || "INBOX";
       if (base[status]) {
         base[status].push(mail);
       } else {

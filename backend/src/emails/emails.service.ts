@@ -1,10 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { EmailDetailMapper } from 'src/mappers';
+import { InjectModel } from '@nestjs/mongoose';
+import { EmailEntity, EmailStatus } from './email.schema';
+import { Model, type AnyBulkWriteOperation } from 'mongoose';
 
 @Injectable()
 export class EmailsService {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    @InjectModel(EmailEntity.name)
+    private emailModel: Model<EmailEntity>,
+  ) {}
 
   async getEmailDetail(id: string, userId: string) {
     const gmail = await this.authService.getGmail(userId);
@@ -20,6 +27,26 @@ export class EmailsService {
       emailDetail.data,
       undefined,
     );
+
+    const statusDoc = await this.emailModel
+      .findOne({ userId, emailId: id })
+      .lean();
+    if (!statusDoc) {
+      await this.emailModel.create({
+        emailId: id,
+        userId,
+        sender: emailDetailMapped.from,
+        subject: emailDetailMapped.subject,
+        snippet: emailDetailMapped.snippet ?? '',
+        receivedAt: emailDetailMapped.date
+          ? new Date(emailDetailMapped.date)
+          : new Date(),
+        status: 'INBOX',
+      });
+      emailDetailMapped.status = 'INBOX';
+    } else {
+      emailDetailMapped.status = statusDoc.status as EmailStatus;
+    }
 
     return emailDetailMapped;
   }
@@ -148,5 +175,67 @@ export class EmailsService {
     }
 
     return attachment.data.data;
+  }
+
+  async mergeStatuses(
+    userId: string,
+    emails: {
+      id: string;
+      from: string;
+      subject: string;
+      snippet: string;
+      date: string;
+    }[],
+  ) {
+    const ids = emails.map((e) => e.id);
+    const existing = await this.emailModel
+      .find({ userId, emailId: { $in: ids } })
+      .lean();
+    const existingMap = new Map(existing.map((e) => [e.emailId, e]));
+
+    const ops: AnyBulkWriteOperation<EmailEntity>[] = [];
+    emails.forEach((mail) => {
+      if (!existingMap.has(mail.id)) {
+        ops.push({
+          insertOne: {
+            document: {
+              emailId: mail.id,
+              userId,
+              sender: mail.from,
+              subject: mail.subject,
+              snippet: mail.snippet ?? '',
+              receivedAt: mail.date ? new Date(mail.date) : new Date(),
+              status: 'INBOX',
+            },
+          },
+        });
+      }
+    });
+    if (ops.length) {
+      await this.emailModel.bulkWrite(ops);
+    }
+
+    const refreshed = await this.emailModel
+      .find({ userId, emailId: { $in: ids } })
+      .lean();
+    const refreshedMap = new Map(refreshed.map((e) => [e.emailId, e.status]));
+
+    return emails.map((mail) => ({
+      ...mail,
+      status: refreshedMap.get(mail.id) || 'INBOX',
+    }));
+  }
+
+  async updateStatus(userId: string, emailId: string, status: EmailStatus) {
+    await this.emailModel.updateOne(
+      { userId, emailId },
+      {
+        $set: {
+          status,
+        },
+      },
+      { upsert: true },
+    );
+    return { message: 'Status updated', status };
   }
 }

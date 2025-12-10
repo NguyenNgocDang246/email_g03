@@ -3,12 +3,16 @@ import {
   PointerSensor,
   closestCorners,
   type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import { type MailInfo } from "../../api/inbox";
 import { type KanbanColumnConfig, type KanbanStatus } from "../../constants/kanban";
 import { KanbanColumn } from "./KanbanColumn";
+import { KanbanCard } from "./KanbanCard";
+import { useMemo, useState } from "react";
 
 interface KanbanBoardProps {
   columns: KanbanColumnConfig[];
@@ -25,11 +29,25 @@ export const KanbanBoard = ({
   onCardSelect,
   selectedEmailId,
 }: KanbanBoardProps) => {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const flatItems = useMemo(
+    () =>
+      Object.values(itemsByColumn).flatMap((list) => list),
+    [itemsByColumn]
+  );
+  const activeItem = activeId
+    ? flatItems.find((item) => item.id === activeId)
+    : null;
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
     })
   );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -48,12 +66,14 @@ export const KanbanBoard = ({
     ) {
       onMove(active.id as string, activeColumn, overColumn as KanbanStatus);
     }
+    setActiveId(null);
   };
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className="grid auto-cols-[minmax(320px,1fr)] grid-flow-col md:grid-flow-col md:auto-cols-[minmax(360px,1fr)] lg:auto-cols-[minmax(400px,1fr)] gap-4 h-full overflow-x-auto pb-3 pr-2">
@@ -67,6 +87,18 @@ export const KanbanBoard = ({
           />
         ))}
       </div>
+      <DragOverlay adjustScale={false} dropAnimation={null}>
+        {activeItem ? (
+          <div className="pointer-events-none w-[320px]">
+            <KanbanCard
+              email={activeItem}
+              columnId={activeItem.status as KanbanStatus}
+              onSelect={() => {}}
+              isSelected={false}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 };

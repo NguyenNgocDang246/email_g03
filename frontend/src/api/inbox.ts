@@ -1,10 +1,6 @@
 import API from "./baseAPI";
 import axios from "axios";
-import {
-  buildStatusLabelUpdate,
-  deriveStatusFromLabels,
-  type KanbanStatus,
-} from "../constants/kanban";
+import { type KanbanStatus } from "../constants/kanban";
 
 export interface MailBoxesInfo {
   id: string;
@@ -74,7 +70,7 @@ export const getMailBoxesEmailListInfo = async (
       isStarred: item.labels?.includes("STARRED") || false,
       body: item.body || "",
       labels: item.labels,
-      status: deriveStatusFromLabels(item.labels),
+      status: (item.status as KanbanStatus) || "INBOX",
     }));
 
     return {
@@ -148,7 +144,7 @@ export const getEmailDetail = async (emailId: string): Promise<MailDetail> => {
       isRead: data.isRead,
       hasAttachments: data.hasAttachments,
       labels: data.labels,
-      status: deriveStatusFromLabels(data.labels),
+      status: (data.status as KanbanStatus) || "INBOX",
       attachments: data.attachments?.map((att: any) => ({
         id: att.id,
         filename: att.fileName,
@@ -193,8 +189,7 @@ export const updateEmailStatus = async (
   emailId: string,
   status: KanbanStatus
 ): Promise<void> => {
-  const { addLabels, removeLabels } = buildStatusLabelUpdate(status);
-  return modifyEmail(emailId, { addLabels, removeLabels });
+  await API.post(`/emails/${emailId}/status`, { status });
 };
 
 export interface SendEmailPayload {
