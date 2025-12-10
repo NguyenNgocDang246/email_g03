@@ -141,19 +141,8 @@ export class EmailsService {
     addLabels: string[],
     removeLabels: string[],
   ) {
-    const gmail = await this.authService.getGmail(userId);
-    if (!gmail) return null;
-    if (addLabels.length === 0 && removeLabels.length === 0) {
-      return null;
-    }
-    const res = await gmail.users.messages.modify({
-      userId: 'me',
-      id: messageId,
-      requestBody: {
-        addLabelIds: addLabels,
-        removeLabelIds: removeLabels,
-      },
-    });
+    // Deprecated: labels not used for Kanban status
+    return null;
   }
 
   async streamAttachment(
@@ -177,6 +166,31 @@ export class EmailsService {
     return attachment.data.data;
   }
 
+  private async unsnoozeExpired(userId: string) {
+    const now = new Date();
+    const expired = await this.emailModel
+      .find({
+        userId,
+        status: 'SNOOZED',
+        snoozedUntil: { $lte: now },
+      })
+      .lean();
+
+    if (!expired.length) return;
+    const ops: AnyBulkWriteOperation<EmailEntity>[] = expired.map((doc) => ({
+      updateOne: {
+        filter: { _id: doc._id },
+        update: {
+          $set: {
+            status: doc.previousStatus || 'INBOX',
+          },
+          $unset: { snoozedUntil: '', previousStatus: '' },
+        },
+      },
+    }));
+    await this.emailModel.bulkWrite(ops);
+  }
+
   async mergeStatuses(
     userId: string,
     emails: {
@@ -187,6 +201,7 @@ export class EmailsService {
       date: string;
     }[],
   ) {
+    await this.unsnoozeExpired(userId);
     const ids = emails.map((e) => e.id);
     const existing = await this.emailModel
       .find({ userId, emailId: { $in: ids } })
@@ -226,13 +241,45 @@ export class EmailsService {
     }));
   }
 
-  async updateStatus(userId: string, emailId: string, status: EmailStatus) {
+  async updateStatus(
+    userId: string,
+    emailId: string,
+    status: EmailStatus,
+    options?: { snoozedUntil?: string | Date; previousStatus?: EmailStatus },
+  ) {
+    await this.unsnoozeExpired(userId);
+    if (status === 'SNOOZED') {
+      const until = options?.snoozedUntil
+        ? new Date(options.snoozedUntil)
+        : new Date(Date.now() + 4 * 60 * 60 * 1000);
+      const existing = await this.emailModel.findOne({ userId, emailId }).lean();
+      const prevStatus =
+        options?.previousStatus ||
+        existing?.status ||
+        existing?.previousStatus ||
+        'INBOX';
+
+      await this.emailModel.updateOne(
+        { userId, emailId },
+        {
+          $set: {
+            status: 'SNOOZED',
+            snoozedUntil: until,
+            previousStatus: prevStatus,
+          },
+        },
+        { upsert: true },
+      );
+      return { message: 'Status updated', status: 'SNOOZED', snoozedUntil: until };
+    }
+
     await this.emailModel.updateOne(
       { userId, emailId },
       {
         $set: {
           status,
         },
+        $unset: { snoozedUntil: '', previousStatus: '' },
       },
       { upsert: true },
     );

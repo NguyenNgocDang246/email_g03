@@ -24,9 +24,11 @@ export const KanbanColumn = ({
   return (
     <section
       ref={setNodeRef}
-      className={`flex flex-col h-full min-h-[400px] min-w-[320px] md:min-w-[360px] lg:min-w-[400px] rounded-xl border ${column.accent} bg-white`}
+      className={`flex flex-col h-full min-h-[400px] min-w-[320px] md:min-w-[360px] lg:min-w-[400px] rounded-xl border ${column.accent} bg-white overflow-hidden`}
     >
-      <header className={`p-3 border-b ${column.accent} ${column.softBg}`}>
+      <header
+        className={`p-3 border-b ${column.accent} ${column.softBg} rounded-t-xl`}
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold">{column.title}</p>

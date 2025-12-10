@@ -13,6 +13,7 @@ interface EmailDetailProps {
   emailId: string|null;
   onMarkAsUnread: () => void;
   onDelete: () => void;
+  onSnooze?: (durationMs: number) => void;
 }
 
 export const EmailDetail: React.FC<EmailDetailProps> = ({
@@ -20,6 +21,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
   emailId,
   onMarkAsUnread,
   onDelete,
+  onSnooze,
 }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["mailDetailInfo", emailId],
@@ -226,6 +228,14 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
               >
                 Reply
               </button>
+              {onSnooze && (
+                <button
+                  className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded"
+                  onClick={() => onSnooze(4 * 60 * 60 * 1000)}
+                >
+                  Snooze 4h
+                </button>
+              )}
             </div>
           </div>
         </div>

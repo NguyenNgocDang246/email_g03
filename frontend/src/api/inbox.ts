@@ -187,9 +187,10 @@ export const modifyEmail = async (
 
 export const updateEmailStatus = async (
   emailId: string,
-  status: KanbanStatus
+  status: KanbanStatus,
+  options?: { snoozedUntil?: string; previousStatus?: KanbanStatus }
 ): Promise<void> => {
-  await API.post(`/emails/${emailId}/status`, { status });
+  await API.post(`/emails/${emailId}/status`, { status, ...options });
 };
 
 export interface SendEmailPayload {

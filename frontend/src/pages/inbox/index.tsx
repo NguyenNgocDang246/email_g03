@@ -182,8 +182,17 @@ export default function InboxPage() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ emailId, status }: { emailId: string; status: KanbanStatus }) =>
-      updateEmailStatus(emailId, status),
+    mutationFn: ({
+      emailId,
+      status,
+      snoozedUntil,
+      previousStatus,
+    }: {
+      emailId: string;
+      status: KanbanStatus;
+      snoozedUntil?: string;
+      previousStatus?: KanbanStatus;
+    }) => updateEmailStatus(emailId, status, { snoozedUntil, previousStatus }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["emails", mailboxId] });
     },
@@ -214,6 +223,13 @@ export default function InboxPage() {
     emailId: string,
     nextStatus: KanbanStatus
   ) => {
+    const isSnoozed = nextStatus === "SNOOZED";
+    const snoozedUntil = isSnoozed
+      ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+      : undefined;
+    const previousStatus =
+      emails.find((m) => m.id === emailId)?.status || "INBOX";
+
     setEmails((prev) =>
       prev.map((mail) =>
         mail.id === emailId ? { ...mail, status: nextStatus } : mail
@@ -222,7 +238,12 @@ export default function InboxPage() {
     if (selectedEmail?.id === emailId) {
       setSelectedEmail({ ...selectedEmail, status: nextStatus } as MailInfo);
     }
-    updateStatusMutation.mutate({ emailId, status: nextStatus });
+    updateStatusMutation.mutate({
+      emailId,
+      status: nextStatus,
+      snoozedUntil,
+      previousStatus,
+    });
   };
 
   const isSemanticMode = searchMode === "semantic";
@@ -341,6 +362,18 @@ export default function InboxPage() {
                       ? markAsDeleteMutation.mutate(selectedEmail.id)
                       : undefined
                   }
+                  onSnooze={(durationMs) =>
+                    selectedEmail
+                      ? updateStatusMutation.mutate({
+                          emailId: selectedEmail.id,
+                          status: "SNOOZED",
+                          snoozedUntil: new Date(
+                            Date.now() + durationMs
+                          ).toISOString(),
+                          previousStatus: selectedEmail.status as KanbanStatus,
+                        })
+                      : undefined
+                  }
                 />
                 <NewMessage mailboxId={mailboxId!} />
               </div>
@@ -378,6 +411,18 @@ export default function InboxPage() {
                     onDelete={() =>
                       selectedEmail
                         ? markAsDeleteMutation.mutate(selectedEmail.id)
+                        : undefined
+                    }
+                    onSnooze={(durationMs) =>
+                      selectedEmail
+                        ? updateStatusMutation.mutate({
+                            emailId: selectedEmail.id,
+                            status: "SNOOZED",
+                            snoozedUntil: new Date(
+                              Date.now() + durationMs
+                            ).toISOString(),
+                            previousStatus: selectedEmail.status as KanbanStatus,
+                          })
                         : undefined
                     }
                   />

@@ -70,11 +70,15 @@ export class EmailsController {
   async updateStatus(
     @Req() req: Request,
     @Param('id') id: string,
-    @Body('status') status: string,
+    @Body() body: any,
   ) {
     const data = req['user'];
     const userId = data.id;
-    return this.emailsService.updateStatus(userId, id, status as EmailStatus);
+    const { status, snoozedUntil, previousStatus } = body || {};
+    return this.emailsService.updateStatus(userId, id, status as EmailStatus, {
+      snoozedUntil,
+      previousStatus,
+    });
   }
 
   @Get(':id/attachments/:index/stream')

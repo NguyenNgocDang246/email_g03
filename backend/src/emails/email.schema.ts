@@ -36,6 +36,16 @@ export class EmailEntity {
     default: 'INBOX',
   })
   status: EmailStatus;
+
+  @Prop({ type: Date, default: null })
+  snoozedUntil?: Date | null;
+
+  @Prop({
+    type: String,
+    enum: ['INBOX', 'TO_DO', 'IN_PROGRESS', 'DONE', 'SNOOZED'],
+    default: null,
+  })
+  previousStatus?: EmailStatus | null;
 }
 
 export const EmailSchema = SchemaFactory.createForClass(EmailEntity);
