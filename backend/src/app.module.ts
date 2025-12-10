@@ -8,6 +8,8 @@ import { TokenModule } from './token/token.module';
 import { EmailsModule } from './emails/emails.module';
 import { MailboxesModule } from './mailboxes/mailboxes.module';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
+import { KanbanModule } from './kanban/kanban.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { AuthModule } from './auth/auth.module';
     EmailsModule,
     MailboxesModule,
     AuthModule,
+    AiModule,
+    KanbanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

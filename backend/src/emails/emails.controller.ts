@@ -9,6 +9,8 @@ import {
   Res,
 } from '@nestjs/common';
 import { EmailsService } from './emails.service';
+import type { Request } from 'express';
+import { EmailStatus } from './email.schema';
 
 @Controller('emails')
 export class EmailsController {
@@ -62,6 +64,21 @@ export class EmailsController {
       addLabels,
       removeLabels,
     );
+  }
+
+  @Post(':id/status')
+  async updateStatus(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    const data = req['user'];
+    const userId = data.id;
+    const { status, snoozedUntil, previousStatus } = body || {};
+    return this.emailsService.updateStatus(userId, id, status as EmailStatus, {
+      snoozedUntil,
+      previousStatus,
+    });
   }
 
   @Get(':id/attachments/:index/stream')

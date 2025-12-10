@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { MailboxesService } from './mailboxes.service';
-import { PaginationDto } from './dto';
+import type { PaginationDto } from './dto';
+import type { Request } from 'express';
 
 @Controller('mailboxes')
 export class MailboxesController {
@@ -26,14 +27,18 @@ export class MailboxesController {
 
   @Get(':id/emails/search')
   searchEmailsInMailbox(
+    @Req() req: Request,
     @Param('id') id: string,
     @Query('query') query: string,
     @Query() paginationDto: PaginationDto,
   ) {
+    const data = req['user'];
+    const userId = data.id;
     return this.mailboxesService.searchEmailsInMailbox(
       id,
       query,
       paginationDto,
+      userId,
     );
   }
 }

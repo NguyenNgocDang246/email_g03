@@ -14,7 +14,10 @@ export default function InboxLayout({
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [selectedMailbox, setSelectedMailbox] = useState("SENT");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectOnNewMail,setSelectOnNewMail]=useState(false);
+  const [searchMode, setSearchMode] = useState<"keyword" | "semantic">(
+    "keyword"
+  );
+  const [selectOnNewMail, setSelectOnNewMail] = useState(false);
 
    useEffect(() => {
      if (id) {
@@ -33,6 +36,8 @@ export default function InboxLayout({
           onMenuToggle={() => setShowMobileMenu(!showMobileMenu)}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          searchMode={searchMode}
+          setSearchMode={setSearchMode}
         />
 
         <div className="flex flex-1 overflow-hidden">
