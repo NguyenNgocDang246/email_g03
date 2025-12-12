@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Mailbox } from '../types';
 import { PaginationDto } from './dto';
-import { EmailsService } from 'src/emails/emails.service';
+import { EmailsService } from '../emails/emails.service';
 import { AuthService } from '../auth/auth.service';
 import { GmailMapper } from '../mappers';
 

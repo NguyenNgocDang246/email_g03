@@ -4,7 +4,7 @@ import { TokenModule } from '../token/token.module';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 import { EmailsController } from './emails.controller';
 import { EmailsService } from './emails.service';
-import { KanbanModule } from 'src/kanban/kanban.module';
+import { KanbanModule } from '../kanban/kanban.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EmailEntity, EmailSchema } from './email.schema';
 
