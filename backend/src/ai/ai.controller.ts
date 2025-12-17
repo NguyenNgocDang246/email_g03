@@ -11,7 +11,11 @@ export class AiController {
     const { query, mailboxId } = body || {};
     const data = req['user'];
     const userId = data?.id;
-    const results = await this.aiService.semanticSearch(mailboxId, query, userId);
+    const results = await this.aiService.semanticSearch(
+      mailboxId,
+      query,
+      userId,
+    );
     return { data: results, userId };
   }
 
