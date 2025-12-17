@@ -24,12 +24,12 @@ export const KanbanColumn = ({
   return (
     <section
       ref={setNodeRef}
-      className={`flex flex-col h-full min-h-[400px] min-w-[320px] md:min-w-[360px] lg:min-w-[400px] rounded-xl border ${column.accent} bg-white overflow-hidden`}
+      className={`flex flex-col h-full rounded-xl border ${column.accent} bg-white`}
     >
       <header
         className={`p-3 border-b ${column.accent} ${column.softBg} rounded-t-xl`}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between ">
           <div>
             <p className="text-sm font-semibold">{column.title}</p>
             <p className="text-xs text-gray-500">{column.description}</p>
@@ -45,7 +45,7 @@ export const KanbanColumn = ({
         strategy={verticalListSortingStrategy}
       >
         <div
-          className={`flex-1 p-3 space-y-3 overflow-y-auto ${
+          className={`flex-1 p-3 space-y-3 rounded-xl ${
             isOver ? "bg-blue-50/60" : "bg-gray-50"
           }`}
         >

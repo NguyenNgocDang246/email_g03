@@ -37,6 +37,7 @@ body {
 .scrollbar {
   scrollbar-width: thin;           /* Firefox */
   scrollbar-color: #9ca3af #f3f4f6; /* thumb màu xám, track màu sáng */
+  
 }
 
 /* Chrome, Edge, Safari */
@@ -46,10 +47,13 @@ body {
 
 .scrollbar::-webkit-scrollbar-track {
   background: #f3f4f6; /* màu track */
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
   background-color: #9ca3af; /* màu thanh kéo */
-  border-radius: 4px;        /* bo góc */
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;    /* bo góc */
   border: 2px solid #f3f4f6; /* khoảng cách với track */
 }
