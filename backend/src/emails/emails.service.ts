@@ -141,8 +141,19 @@ export class EmailsService {
     addLabels: string[],
     removeLabels: string[],
   ) {
-    // Deprecated: labels not used for Kanban status
-    return null;
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return null;
+    if (addLabels.length === 0 && removeLabels.length === 0) {
+      return null;
+    }
+    const res = await gmail.users.messages.modify({
+      userId: 'me',
+      id: messageId,
+      requestBody: {
+        addLabelIds: addLabels,
+        removeLabelIds: removeLabels,
+      },
+    });
   }
 
   async streamAttachment(
