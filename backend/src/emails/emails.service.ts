@@ -202,6 +202,39 @@ export class EmailsService {
     await this.emailModel.bulkWrite(ops);
   }
 
+  async saveEmailSummaries(
+    userId: string,
+    emails: {
+      id: string;
+      from: string;
+      subject: string;
+      snippet: string;
+      date: string;
+    }[],
+  ) {
+    if (!emails.length) return;
+
+    const ops: AnyBulkWriteOperation<EmailEntity>[] = emails.map((mail) => ({
+      updateOne: {
+        filter: { userId, emailId: mail.id },
+        update: {
+          $setOnInsert: {
+            emailId: mail.id,
+            userId,
+            sender: mail.from,
+            subject: mail.subject,
+            snippet: mail.snippet ?? '',
+            receivedAt: mail.date ? new Date(mail.date) : new Date(),
+            status: 'INBOX',
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    await this.emailModel.bulkWrite(ops, { ordered: false });
+  }
+
   async mergeStatuses(
     userId: string,
     emails: {
