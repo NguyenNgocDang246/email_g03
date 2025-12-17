@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { EmailsService } from './emails.service';
 import type { Request } from 'express';
-import { EmailStatus } from './email.schema';
+import { EmailStatus } from './schemas/email.schema';
 
 @Controller('emails')
 export class EmailsController {
