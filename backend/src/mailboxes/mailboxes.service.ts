@@ -78,6 +78,7 @@ export class MailboxesService {
       }),
     );
 
+    await this.emailsService.saveEmailSummaries(userId, emails);
     const emailsWithStatus = await this.emailsService.mergeStatuses(
       userId,
       emails,
