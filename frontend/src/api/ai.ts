@@ -42,11 +42,14 @@ export const semanticSearchEmails = async (
 };
 
 export const summarizeEmail = async (
-  emailId: string
+  emailId: string,
+  refresh = false
 ): Promise<SummaryResponse> => {
   try {
     const res = await API.post<SummaryResponse>(
-      `/ai/emails/${emailId}/summarize`
+      `/ai/emails/${emailId}/summarize`,
+      undefined,
+      refresh ? { params: { refresh: true } } : undefined
     );
     return res.data;
   } catch (error: unknown) {

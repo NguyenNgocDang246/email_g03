@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, Star, RefreshCcw } from "lucide-react";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useRef, useState } from "react";
 import { getEmailDetail, replyEmail, type ReplyEmailPayload } from "../../api/inbox";
 import { Trash } from "lucide-react";
 import { SendHorizonal } from "lucide-react";
@@ -23,6 +23,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
   onDelete,
   onSnooze,
 }) => {
+  const forceRefreshRef = useRef(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["mailDetailInfo", emailId],
     queryFn: () => getEmailDetail(emailId!),
@@ -37,10 +38,19 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
     refetch: refetchSummary,
   } = useQuery({
     queryKey: ["mailSummaryInfo", emailId],
-    queryFn: () => summarizeEmail(emailId!),
+    queryFn: () => summarizeEmail(emailId!, forceRefreshRef.current),
     enabled: !!emailId,
     staleTime: 1000 * 60 * 10,
   });
+
+  const handleRefreshSummary = async () => {
+    try {
+      forceRefreshRef.current = true;
+      await refetchSummary();
+    } finally {
+      forceRefreshRef.current = false;
+    }
+  };
 
   const queryClient = useQueryClient();
 
@@ -125,7 +135,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
               </p>
             </div>
             <button
-              onClick={() => refetchSummary()}
+              onClick={handleRefreshSummary}
               className="flex items-center gap-2 px-3 py-1 rounded-md border text-xs text-gray-700 hover:bg-gray-100"
             >
               <RefreshCcw size={14} />

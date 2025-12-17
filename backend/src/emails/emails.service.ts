@@ -252,6 +252,48 @@ export class EmailsService {
     }));
   }
 
+  async getCachedSummary(emailId: string, userId: string) {
+    const doc = await this.emailModel
+      .findOne({ userId, emailId })
+      .select('summary fullText status')
+      .lean();
+    if (!doc || (!doc.summary && !doc.fullText)) return null;
+    return {
+      summary: doc.summary,
+      fullText: doc.fullText,
+      status: doc.status as EmailStatus,
+    };
+  }
+
+  async saveSummary(
+    emailId: string,
+    userId: string,
+    summary: string,
+    fullText: string,
+    detail: {
+      from: string;
+      subject?: string;
+      snippet?: string;
+      date?: string;
+      status?: EmailStatus;
+    },
+  ) {
+    await this.emailModel.updateOne(
+      { userId, emailId },
+      {
+        $set: { summary, fullText },
+        $setOnInsert: {
+          sender: detail.from,
+          subject: detail.subject,
+          snippet: detail.snippet ?? '',
+          receivedAt: detail.date ? new Date(detail.date) : new Date(),
+          status: detail.status || 'INBOX',
+        },
+      },
+      { upsert: true },
+    );
+  }
+
   async updateStatus(
     userId: string,
     emailId: string,

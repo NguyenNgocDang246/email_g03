@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Param, Post, Query, Req } from '@nestjs/common';
 import { AiService } from './ai.service';
 import type { Request } from 'express';
 
@@ -16,10 +16,19 @@ export class AiController {
   }
 
   @Post('emails/:id/summarize')
-  async summarize(@Param('id') id: string, @Req() req: Request) {
+  async summarize(
+    @Param('id') id: string,
+    @Query('refresh') refresh: string | undefined,
+    @Req() req: Request,
+  ) {
     const data = req['user'];
     const userId = data?.id;
-    const summary = await this.aiService.summarizeEmail(id, userId);
+    const forceRefresh = refresh === 'true' || refresh === '1';
+    const summary = await this.aiService.summarizeEmail(
+      id,
+      userId,
+      forceRefresh,
+    );
     return summary ?? { summary: 'Email not found', metadata: {} };
   }
 }

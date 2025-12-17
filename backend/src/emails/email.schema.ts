@@ -30,6 +30,12 @@ export class EmailEntity {
   @Prop({ required: true })
   receivedAt: Date;
 
+  @Prop({ default: '' })
+  summary?: string;
+
+  @Prop({ default: '' })
+  fullText?: string;
+
   @Prop({
     type: String,
     enum: ['INBOX', 'TO_DO', 'IN_PROGRESS', 'DONE', 'SNOOZED'],

@@ -8,7 +8,12 @@ import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
 
 @Module({
-  imports: [TokenModule, AuthModule, EmailsModule, MailboxesModule],
+  imports: [
+    TokenModule,
+    AuthModule,
+    EmailsModule,
+    MailboxesModule,
+  ],
   controllers: [AiController],
   providers: [AiService],
 })
