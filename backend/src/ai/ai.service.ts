@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { EmailEmbeddingsService } from 'src/emails/email-embeddings.service';
 import { EmailsService } from '../emails/emails.service';
+import { EmbeddingLevel } from 'src/emails/schemas/email-embedding.schema';
 
 @Injectable()
 export class AiService {
@@ -26,23 +27,52 @@ export class AiService {
     });
 
     const result = await model.embedContent(text);
-
     return result.embedding.values;
   }
 
-  async embedEmailIfNeeded(email: any, userId: string, mailboxId: string) {
-    console.log('🔥 EMBED CALLED FOR EMAIL:', email.emailId);
-    const text = this.buildEmailText(email);
+  async embedEmailIfNeeded(
+    email: {
+      emailId: string;
+      subject?: string;
+      snippet?: string;
+      bodyText?: string;
+      from?: string;
+    },
+    userId: string,
+    mailboxId: string,
+    level: EmbeddingLevel = EmbeddingLevel.SUMMARY,
+  ) {
+    if (
+      level === EmbeddingLevel.SUMMARY &&
+      (await this.emailEmbeddingsService.hasFullEmbedding(
+        email.emailId,
+        userId,
+      ))
+    ) {
+      return;
+    }
+
+    const text =
+      level === EmbeddingLevel.FULL
+        ? this.buildFullEmailText(email)
+        : this.buildSummaryEmailText(email);
+
     if (!text) return;
 
-    const hash = this.hashContent(text);
+    const contentHash = this.hashContent(text);
 
     const existing = await this.emailEmbeddingsService.findByEmailId(
       email.emailId,
       userId,
     );
 
-    if (existing && existing.contentHash === hash) return;
+    if (
+      existing &&
+      existing.level === level &&
+      existing.contentHash === contentHash
+    ) {
+      return;
+    }
 
     const embedding = await this.embed(text);
 
@@ -50,9 +80,10 @@ export class AiService {
       emailId: email.emailId,
       userId,
       mailboxId,
-      contentHash: hash,
+      contentHash,
       embedding,
       model: 'text-embedding-004',
+      level,
     });
   }
 
@@ -109,13 +140,25 @@ export class AiService {
     };
   }
 
-  private buildEmailText(email: any): string {
-    return `
-Subject: ${email.subject || ''}
-From: ${email.sender || email.from || ''}
-Content:
-${email.bodyText || email.snippet || ''}
-    `.trim();
+  private buildSummaryEmailText(email: any): string {
+    return [
+      email.from && `From: ${email.from}`,
+      email.subject && `Subject: ${email.subject}`,
+      email.snippet && `Snippet: ${email.snippet}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  private buildFullEmailText(email: any): string {
+    return [
+      email.from && `From: ${email.from}`,
+      email.subject && `Subject: ${email.subject}`,
+      email.snippet && `Snippet: ${email.snippet}`,
+      email.bodyText && `Body:\n${email.bodyText}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
   }
 
   private hashContent(text: string): string {
@@ -129,6 +172,7 @@ ${email.bodyText || email.snippet || ''}
     const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
     const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
 
+    if (!magA || !magB) return 0;
     return dot / (magA * magB);
   }
 }

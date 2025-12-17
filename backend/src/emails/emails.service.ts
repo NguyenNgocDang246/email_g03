@@ -10,6 +10,7 @@ import { Model, type AnyBulkWriteOperation } from 'mongoose';
 import { AuthService } from '../auth/auth.service';
 import { EmailDetailMapper, GmailMapper } from '../mappers';
 import { AiService } from '../ai/ai.service';
+import { EmbeddingLevel } from './schemas/email-embedding.schema';
 
 @Injectable()
 export class EmailsService {
@@ -51,6 +52,9 @@ export class EmailsService {
           : new Date(),
         status: 'INBOX',
       });
+    }
+
+    if (emailDetailMapped?.bodyText || emailDetailMapped?.snippet) {
       await this.aiService.embedEmailIfNeeded(
         {
           emailId: id,
@@ -60,12 +64,12 @@ export class EmailsService {
           from: emailDetailMapped.from,
         },
         userId,
-        'INBOX', // mailboxId
+        'INBOX',
+        EmbeddingLevel.FULL,
       );
-      emailDetailMapped.status = 'INBOX';
-    } else {
-      emailDetailMapped.status = statusDoc.status as EmailStatus;
     }
+
+    emailDetailMapped.status = statusDoc?.status ?? 'INBOX';
 
     return emailDetailMapped;
   }
@@ -289,6 +293,22 @@ export class EmailsService {
     }));
 
     await this.emailModel.bulkWrite(ops, { ordered: false });
+
+    await Promise.all(
+      emails.map((mail) =>
+        this.aiService.embedEmailIfNeeded(
+          {
+            emailId: mail.id,
+            subject: mail.subject,
+            snippet: mail.snippet,
+            from: mail.from,
+          },
+          userId,
+          'INBOX',
+          EmbeddingLevel.SUMMARY,
+        ),
+      ),
+    );
   }
 
   async mergeStatuses(
