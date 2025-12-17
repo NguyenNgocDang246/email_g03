@@ -121,8 +121,7 @@ export default function InboxPage() {
   } = useQuery({
     queryKey: ["semantic-emails", mailboxId, debouncedQuery],
     queryFn: () => semanticSearchEmails({ query: debouncedQuery, mailboxId }),
-    enabled:
-      searchMode === "semantic" && !!debouncedQuery && !!mailboxId,
+    enabled: searchMode === "semantic" && !!debouncedQuery && !!mailboxId,
     staleTime: 1000 * 60 * 5,
     retry: false,
   });
@@ -205,24 +204,20 @@ export default function InboxPage() {
     }
   };
 
-  const handleToggleStar = (    
+  const handleToggleStar = (
     emailId: string,
     isStar: boolean,
     e?: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (e) e.stopPropagation();
-    if(isStar){
+    if (isStar) {
       markAsUnStarMutation.mutate(emailId);
-    }else{
+    } else {
       markAsStarMutation.mutate(emailId);
     }
-    
   };
 
-  const handleStatusChange = (
-    emailId: string,
-    nextStatus: KanbanStatus
-  ) => {
+  const handleStatusChange = (emailId: string, nextStatus: KanbanStatus) => {
     const isSnoozed = nextStatus === "SNOOZED";
     const snoozedUntil = isSnoozed
       ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
@@ -292,27 +287,33 @@ export default function InboxPage() {
 
   return (
     <div className="flex flex-col h-full w-full bg-gray-100 p-3 gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-gray-800">Mailbox board</p>
-            <p className="text-xs text-gray-500">
-              {isSemanticMode
-                ? "Semantic search: kết quả dựa trên độ liên quan ngữ nghĩa"
-                : "Keyword search: kết quả dựa trên từ khóa"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <ToggleButton mode={viewMode} onChange={setViewMode} />
-            {viewMode === "kanban" && (
-              <button
-                className="px-3 py-2 text-xs border rounded-md bg-white text-gray-700 hover:bg-gray-50"
-                onClick={() => setIsDetailCollapsed((prev) => !prev)}
-              >
-                {isDetailCollapsed ? "Show detail" : "Hide detail"}
-              </button>
-            )}
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-lg font-semibold text-gray-800">Mailbox board</p>
+          <p className="text-xs text-gray-500">
+            {isSemanticMode
+              ? "Semantic search: kết quả dựa trên độ liên quan ngữ nghĩa"
+              : "Keyword search: kết quả dựa trên từ khóa"}
+          </p>
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            className={`px-3 py-2 text-xs border rounded-md
+      transition-opacity
+      ${
+        viewMode === "kanban"
+          ? "bg-white text-gray-700 hover:bg-gray-50"
+          : "opacity-0 pointer-events-none"
+      }
+    `}
+            onClick={() => setIsDetailCollapsed((prev) => !prev)}
+          >
+            {isDetailCollapsed ? "Show detail" : "Hide detail"}
+          </button>
+
+          <ToggleButton mode={viewMode} onChange={setViewMode} />
+        </div>
+      </div>
 
       {isEmptySemanticQuery && (
         <div className="text-sm text-gray-600 bg-white border rounded-md p-3">
@@ -348,7 +349,7 @@ export default function InboxPage() {
                 fetchNextPage={handleLoadMore}
                 hasNextPage={!isSemanticMode && Boolean(hasNextPage)}
               />
-              <div className="p-2 w-2/3">
+              <div className=" w-2/3">
                 <EmailDetail
                   mailBoxId={mailboxId!}
                   emailId={selectedEmail ? selectedEmail.id : null}
@@ -399,33 +400,33 @@ export default function InboxPage() {
                 />
               </div>
               {!isDetailCollapsed && (
-                <div className="hidden md:block flex-shrink-0 w-full md:max-w-md lg:max-w-lg min-w-[360px]">
-                  <EmailDetailPanel
-                    mailboxId={mailboxId!}
-                    emailId={selectedEmail ? selectedEmail.id : null}
-                    onMarkAsUnread={() =>
-                      selectedEmail
-                        ? markAsUnreadMutation.mutate(selectedEmail.id)
-                        : undefined
-                    }
-                    onDelete={() =>
-                      selectedEmail
-                        ? markAsDeleteMutation.mutate(selectedEmail.id)
-                        : undefined
-                    }
-                    onSnooze={(durationMs) =>
-                      selectedEmail
-                        ? updateStatusMutation.mutate({
-                            emailId: selectedEmail.id,
-                            status: "SNOOZED",
-                            snoozedUntil: new Date(
-                              Date.now() + durationMs
-                            ).toISOString(),
-                            previousStatus: selectedEmail.status as KanbanStatus,
-                          })
-                        : undefined
-                    }
-                  />
+                <div
+                  className="fixed inset-0 z-40 bg-black/50"
+                  onClick={() => setIsDetailCollapsed(true)}
+                >
+                  <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div
+                      className="
+                        w-full max-w-4/5 h-4/5 max-h-4/5
+                        bg-white rounded-lg shadow-2xl
+                        overflow-hidden
+                      "
+                      onClick={(e) => e.stopPropagation()} // 👈 click trong không tắt
+                    >
+                      <EmailDetailPanel
+                        mailboxId={mailboxId!}
+                        emailId={selectedEmail?.id ?? null}
+                        onMarkAsUnread={() =>
+                          selectedEmail &&
+                          markAsUnreadMutation.mutate(selectedEmail.id)
+                        }
+                        onDelete={() =>
+                          selectedEmail &&
+                          markAsDeleteMutation.mutate(selectedEmail.id)
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

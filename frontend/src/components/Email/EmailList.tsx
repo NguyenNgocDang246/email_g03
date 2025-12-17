@@ -50,7 +50,7 @@ export const EmailList: React.FC<EmailListProps> = ({
   }, [fetchNextPage, inView, hasNextPage]);
 
   return (
-    <main className="lg:block flex-1 lg:max-w-xl bg-white border-r border-gray-200 flex flex-col w-1/3 scrollbar overflow-y-auto">
+    <main className="mt-2 lg:block flex-1 lg:max-w-xl bg-white border-r border-gray-200 flex flex-col w-1/3 rounded-xl scrollbar overflow-y-auto">
       <div className="border-b border-gray-200 py-2 px-4 flex items-center gap-2 sticky top-0 bg-white z-10">
         <input
           type="checkbox"
