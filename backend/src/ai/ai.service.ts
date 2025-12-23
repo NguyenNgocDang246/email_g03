@@ -5,8 +5,8 @@ import { EmailStatus } from '../emails/schemas/email.schema';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { EmailEmbeddingsService } from 'src/emails/email-embeddings.service';
-import { EmbeddingLevel } from 'src/emails/schemas/email-embedding.schema';
+import { EmailEmbeddingsService } from '../emails/email-embeddings.service';
+import { EmbeddingLevel } from '../emails/schemas/email-embedding.schema';
 
 @Injectable()
 export class AiService {
