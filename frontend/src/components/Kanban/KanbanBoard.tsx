@@ -3,7 +3,6 @@ import {
   PointerSensor,
   // closestCorners,
   pointerWithin, // <-- Thêm cái này (Khuyên dùng)
-  rectIntersection, // <-- Hoặc cái này
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
