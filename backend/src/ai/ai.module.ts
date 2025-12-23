@@ -1,9 +1,14 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { TokenModule } from '../token/token.module';
+import {
+  forwardRef,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+} from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
-import { AuthMiddleware } from '../middleware/auth.middleware';
 import { EmailsModule } from '../emails/emails.module';
 import { MailboxesModule } from '../mailboxes/mailboxes.module';
+import { AuthMiddleware } from '../middleware/auth.middleware';
+import { TokenModule } from '../token/token.module';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
 
@@ -11,11 +16,12 @@ import { AiService } from './ai.service';
   imports: [
     TokenModule,
     AuthModule,
-    EmailsModule,
-    MailboxesModule,
+    forwardRef(() => EmailsModule),
+    forwardRef(() => MailboxesModule),
   ],
   controllers: [AiController],
   providers: [AiService],
+  exports: [AiService],
 })
 export class AiModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

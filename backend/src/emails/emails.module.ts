@@ -1,23 +1,38 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  forwardRef,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+} from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AiModule } from '../ai/ai.module';
 import { AuthModule } from '../auth/auth.module';
-import { TokenModule } from '../token/token.module';
+import { KanbanModule } from '../kanban/kanban.module';
 import { AuthMiddleware } from '../middleware/auth.middleware';
+import { TokenModule } from '../token/token.module';
+import { EmailEmbeddingsService } from './email-embeddings.service';
 import { EmailsController } from './emails.controller';
 import { EmailsService } from './emails.service';
-import { KanbanModule } from '../kanban/kanban.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { EmailEntity, EmailSchema } from './email.schema';
+import {
+  EmailEmbeddingEntity,
+  EmailEmbeddingSchema,
+} from './schemas/email-embedding.schema';
+import { EmailEntity, EmailSchema } from './schemas/email.schema';
 
 @Module({
   imports: [
     TokenModule,
     AuthModule,
     KanbanModule,
-    MongooseModule.forFeature([{ name: EmailEntity.name, schema: EmailSchema }]),
+    MongooseModule.forFeature([
+      { name: EmailEntity.name, schema: EmailSchema },
+      { name: EmailEmbeddingEntity.name, schema: EmailEmbeddingSchema },
+    ]),
+    forwardRef(() => AiModule),
   ],
   controllers: [EmailsController],
-  providers: [EmailsService],
-  exports: [EmailsService],
+  providers: [EmailsService, EmailEmbeddingsService],
+  exports: [EmailsService, EmailEmbeddingsService],
 })
 export class EmailsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

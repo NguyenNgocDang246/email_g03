@@ -1,14 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { EmailEntity, EmailStatus } from './email.schema';
+import { EmailEntity, EmailStatus } from './schemas/email.schema';
 import { Model, type AnyBulkWriteOperation } from 'mongoose';
 import { AuthService } from '../auth/auth.service';
-import { EmailDetailMapper } from '../mappers';
+import { EmailDetailMapper, GmailMapper } from '../mappers';
+import { AiService } from '../ai/ai.service';
+import { EmbeddingLevel } from './schemas/email-embedding.schema';
 
 @Injectable()
 export class EmailsService {
   constructor(
     private authService: AuthService,
+    @Inject(forwardRef(() => AiService))
+    private aiService: AiService,
     @InjectModel(EmailEntity.name)
     private emailModel: Model<EmailEntity>,
   ) {}
@@ -43,12 +52,74 @@ export class EmailsService {
           : new Date(),
         status: 'INBOX',
       });
-      emailDetailMapped.status = 'INBOX';
-    } else {
-      emailDetailMapped.status = statusDoc.status as EmailStatus;
     }
 
+    if (emailDetailMapped?.bodyText || emailDetailMapped?.snippet) {
+      await this.aiService.embedEmailIfNeeded(
+        {
+          emailId: id,
+          subject: emailDetailMapped.subject,
+          bodyText: emailDetailMapped.bodyText,
+          snippet: emailDetailMapped.snippet,
+          from: emailDetailMapped.from,
+        },
+        userId,
+        'INBOX',
+        EmbeddingLevel.FULL,
+      );
+    }
+
+    emailDetailMapped.status = statusDoc?.status ?? 'INBOX';
+
     return emailDetailMapped;
+  }
+
+  async findByEmailIds(userId: string, emailIds: string[], mailboxId?: string) {
+    const gmail = await this.authService.getGmail(userId);
+
+    // Fetch stored statuses from DB to merge later
+    const stored = await this.emailModel
+      .find({ userId, emailId: { $in: emailIds } })
+      .lean();
+    const storedMap = new Map(stored.map((s) => [s.emailId, s]));
+
+    if (!gmail) {
+      return emailIds.map((id) => ({
+        id,
+        mailboxId: mailboxId || '',
+        from: storedMap.get(id)?.sender || '',
+        subject: storedMap.get(id)?.subject || '',
+        snippet: storedMap.get(id)?.snippet || '',
+        date: storedMap.get(id)?.receivedAt
+          ? new Date(storedMap.get(id)!.receivedAt).toISOString()
+          : new Date().toISOString(),
+        isRead: false,
+        labels: undefined,
+        status: (storedMap.get(id)?.status as any) || 'INBOX',
+      }));
+    }
+
+    const responses = await Promise.all(
+      emailIds.map((id) =>
+        gmail.users.messages.get({ userId: 'me', id, format: 'full' }),
+      ),
+    );
+
+    const mapped = responses.map((r) =>
+      GmailMapper.toEmail(r.data as any, mailboxId || ''),
+    );
+
+    return mapped.map((m) => ({
+      id: m.id,
+      mailboxId: m.mailboxId,
+      from: m.from,
+      subject: m.subject,
+      snippet: m.snippet,
+      date: m.date,
+      isRead: m.isRead,
+      labels: m.labels,
+      status: (storedMap.get(m.id)?.status as any) || 'INBOX',
+    }));
   }
 
   buildMimeEmail(to: string, subject: string, html: string) {
@@ -233,6 +304,22 @@ export class EmailsService {
     }));
 
     await this.emailModel.bulkWrite(ops, { ordered: false });
+
+    await Promise.all(
+      emails.map((mail) =>
+        this.aiService.embedEmailIfNeeded(
+          {
+            emailId: mail.id,
+            subject: mail.subject,
+            snippet: mail.snippet,
+            from: mail.from,
+          },
+          userId,
+          'INBOX',
+          EmbeddingLevel.SUMMARY,
+        ),
+      ),
+    );
   }
 
   async mergeStatuses(
