@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { readdirSync, readFileSync } from 'fs';
 import { Model } from 'mongoose';
 import { join } from 'path';
-import { EmailEntity } from 'src/emails/schemas/email.schema';
+import { EmailEntity } from '../emails/schemas/email.schema';
 import { AuthService } from '../auth/auth.service';
 import { EmailsService } from '../emails/emails.service';
 import { GmailMapper } from '../mappers';
