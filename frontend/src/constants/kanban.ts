@@ -61,7 +61,12 @@ const toTitleCase = (value: string) =>
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
 export const buildKanbanColumns = (
-  columns: { name: string; displayName: string; isLocked?: boolean }[],
+  columns: {
+    name: string;
+    displayName: string;
+    description?: string;
+    isLocked?: boolean;
+  }[],
   mailboxId?: string
 ): KanbanColumnConfig[] => {
   return columns.map((column, index) => {
@@ -73,7 +78,7 @@ export const buildKanbanColumns = (
     const description =
       column.name === "INBOX" && mailboxId
         ? `Mailbox: ${mailboxId}`
-        : defaults?.description || baseTitle;
+        : column.description?.trim() || defaults?.description || "custom column";
 
     return {
       id: column.name,

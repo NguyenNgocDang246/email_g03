@@ -25,8 +25,8 @@ export class KanbanController {
   async createColumn(@Req() req: Request, @Body() body: any) {
     const userId = req['user']?.id;
     return this.kanbanService.createColumn(userId, {
-      name: body?.name,
       displayName: body?.displayName,
+      description: body?.description,
     });
   }
 
@@ -38,8 +38,8 @@ export class KanbanController {
   ) {
     const userId = req['user']?.id;
     return this.kanbanService.updateColumn(userId, id, {
-      name: body?.name,
       displayName: body?.displayName,
+      description: body?.description,
     });
   }
 

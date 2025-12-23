@@ -14,6 +14,9 @@ export class KanbanColumn {
   @Prop({ required: true })
   displayName: string;
 
+  @Prop({ default: '' })
+  description?: string;
+
   @Prop({ required: true })
   position: number;
 

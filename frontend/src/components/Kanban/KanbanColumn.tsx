@@ -84,7 +84,7 @@ export const KanbanColumn = ({
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Lọc theo từ khóa..."
+            placeholder="Filter by keyword..."
             className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs outline-none focus:border-blue-400 sm:w-44"
           />
 
@@ -92,12 +92,12 @@ export const KanbanColumn = ({
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as SortOption)}
             className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs outline-none focus:border-blue-400"
-            aria-label="Sắp xếp"
+            aria-label="Sort"
           >
-            <option value="newest">Mới nhất</option>
-            <option value="oldest">Cũ nhất</option>
-            <option value="fromAsc">Từ (A-Z)</option>
-            <option value="subjectAsc">Tiêu đề (A-Z)</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="fromAsc">From (A-Z)</option>
+            <option value="subjectAsc">Subject (A-Z)</option>
           </select>
 
           <label className="flex items-center gap-1 text-xs text-gray-700 select-none">
@@ -107,7 +107,7 @@ export const KanbanColumn = ({
               onChange={(e) => setUnreadOnly(e.target.checked)}
               className="h-3.5 w-3.5 accent-blue-600"
             />
-            Chưa đọc
+            Unread
           </label>
 
           <label className="flex items-center gap-1 text-xs text-gray-700 select-none">
@@ -117,7 +117,7 @@ export const KanbanColumn = ({
               onChange={(e) => setStarredOnly(e.target.checked)}
               className="h-3.5 w-3.5 accent-blue-600"
             />
-            Gắn sao
+            Starred
           </label>
         </div>
       </header>
@@ -142,7 +142,7 @@ export const KanbanColumn = ({
           ))}
           {filteredAndSortedItems.length === 0 && (
             <p className="text-xs text-gray-400 text-center py-6">
-              Không có email phù hợp
+              No matching emails
             </p>
           )}
         </div>

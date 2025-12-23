@@ -74,11 +74,12 @@ export default function InboxPage() {
   );
   const [isDetailCollapsed, setIsDetailCollapsed] = useState(true);
   const [isManageColumnsOpen, setIsManageColumnsOpen] = useState(false);
-  const [newColumnName, setNewColumnName] = useState("");
   const [newColumnDisplayName, setNewColumnDisplayName] = useState("");
+  const [newColumnDescription, setNewColumnDescription] = useState("");
   const [editingColumn, setEditingColumn] = useState<KanbanColumn | null>(null);
-  const [editingName, setEditingName] = useState("");
   const [editingDisplayName, setEditingDisplayName] = useState("");
+  const [editingDescription, setEditingDescription] = useState("");
+  const [columnActionError, setColumnActionError] = useState("");
 
   // debounce 3s trước khi set debouncedQuery
   useEffect(() => {
@@ -165,11 +166,11 @@ export default function InboxPage() {
 
   const kanbanColumns = useMemo(() => {
     const fallback = [
-      { name: "INBOX", displayName: "Inbox" },
-      { name: "TO_DO", displayName: "To Do" },
-      { name: "IN_PROGRESS", displayName: "In Progress" },
-      { name: "DONE", displayName: "Done" },
-      { name: "SNOOZED", displayName: "Snoozed" },
+      { name: "INBOX", displayName: "Inbox", description: "Fresh emails waiting for triage" },
+      { name: "TO_DO", displayName: "To Do", description: "Emails that require follow-up" },
+      { name: "IN_PROGRESS", displayName: "In Progress", description: "Actively being handled" },
+      { name: "DONE", displayName: "Done", description: "No further action needed" },
+      { name: "SNOOZED", displayName: "Snoozed", description: "Parked for later" },
     ];
     const columns = kanbanColumnsData?.length ? kanbanColumnsData : fallback;
     return buildKanbanColumns(columns, mailboxId);
@@ -240,30 +241,37 @@ export default function InboxPage() {
 
   const createColumnMutation = useMutation({
     mutationFn: ({
-      name,
       displayName,
+      description,
     }: {
-      name: string;
-      displayName?: string;
-    }) => createKanbanColumn({ name, displayName }),
+      displayName: string;
+      description?: string;
+    }) => createKanbanColumn({ displayName, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kanban-columns"] });
+    },
+    onError: (error: Error) => {
+      setColumnActionError(error.message);
     },
   });
 
   const updateColumnMutation = useMutation({
     mutationFn: ({
       id,
-      name,
       displayName,
+      description,
     }: {
       id: string;
-      name?: string;
       displayName?: string;
-    }) => updateKanbanColumn(id, { name, displayName }),
+      description?: string;
+    }) => updateKanbanColumn(id, { displayName, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kanban-columns"] });
       queryClient.invalidateQueries({ queryKey: ["emails", mailboxId] });
+      setColumnActionError("");
+    },
+    onError: (error: Error) => {
+      setColumnActionError(error.message);
     },
   });
 
@@ -272,8 +280,17 @@ export default function InboxPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kanban-columns"] });
       queryClient.invalidateQueries({ queryKey: ["emails", mailboxId] });
+      setColumnActionError("");
+    },
+    onError: (error: Error) => {
+      setColumnActionError(error.message);
     },
   });
+
+  const isColumnMutationPending =
+    createColumnMutation.isPending ||
+    updateColumnMutation.isPending ||
+    deleteColumnMutation.isPending;
 
   const handleEmailSelect = (email: MailInfo) => {
     setSelectedEmail(email);
@@ -365,16 +382,20 @@ export default function InboxPage() {
 
   const isColumnsAtLimit = (kanbanColumnsData?.length ?? 0) >= 10;
   const handleCreateColumn = () => {
-    if (!newColumnName.trim()) return;
+    if (!newColumnDisplayName.trim()) {
+      setColumnActionError("Column name is required.");
+      return;
+    }
     createColumnMutation.mutate(
       {
-        name: newColumnName.trim(),
-        displayName: newColumnDisplayName.trim() || undefined,
+        displayName: newColumnDisplayName.trim(),
+        description: newColumnDescription.trim() || "",
       },
       {
         onSuccess: () => {
-          setNewColumnName("");
           setNewColumnDisplayName("");
+          setNewColumnDescription("");
+          setColumnActionError("");
         },
       }
     );
@@ -382,23 +403,28 @@ export default function InboxPage() {
 
   const handleStartEdit = (column: KanbanColumn) => {
     setEditingColumn(column);
-    setEditingName(column.name);
     setEditingDisplayName(column.displayName);
+    setEditingDescription(column.description ?? "");
+    setColumnActionError("");
   };
 
   const handleCancelEdit = () => {
     setEditingColumn(null);
-    setEditingName("");
     setEditingDisplayName("");
+    setEditingDescription("");
   };
 
   const handleSaveEdit = () => {
     if (!editingColumn) return;
+    if (!editingDisplayName.trim()) {
+      setColumnActionError("Column name is required.");
+      return;
+    }
     updateColumnMutation.mutate(
       {
         id: editingColumn._id,
-        name: editingName.trim() || editingColumn.name,
-        displayName: editingDisplayName.trim() || editingColumn.displayName,
+        displayName: editingDisplayName.trim(),
+        description: editingDescription.trim(),
       },
       {
         onSuccess: () => {
@@ -421,8 +447,15 @@ export default function InboxPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            className="px-3 py-2 text-xs border rounded-md bg-white text-gray-700 hover:bg-gray-50"
-            onClick={() => setIsManageColumnsOpen(true)}
+            className={`px-3 py-2 text-xs border rounded-md bg-white text-gray-700 hover:bg-gray-50 cursor-pointer transition-opacity ${
+              viewMode === "kanban"
+                ? "opacity-100"
+                : "opacity-0 pointer-events-none"
+            }`}
+            onClick={() => {
+              setIsManageColumnsOpen(true);
+              setColumnActionError("");
+            }}
           >
             Manage columns
           </button>
@@ -572,11 +605,11 @@ export default function InboxPage() {
                     Kanban columns
                   </p>
                   <p className="text-xs text-gray-500">
-                    Tối đa 10 cột, không thể xóa Inbox hoặc Snoozed.
+                    Max 10 columns, Inbox and Snoozed cannot be deleted.
                   </p>
                 </div>
                 <button
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
                   onClick={() => setIsManageColumnsOpen(false)}
                 >
                   Close
@@ -589,8 +622,18 @@ export default function InboxPage() {
                     "Error loading columns"}
                 </div>
               )}
+              {columnActionError && (
+                <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                  {columnActionError}
+                </div>
+              )}
+              {isColumnMutationPending && (
+                <div className="mt-3 rounded-md border border-blue-100 bg-blue-50 p-3 text-xs text-blue-700">
+                  Saving changes...
+                </div>
+              )}
 
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 max-h-[45vh] space-y-3 overflow-y-auto pr-1">
                 {(kanbanColumnsData ?? []).map((column) => {
                   const isEditing = editingColumn?._id === column._id;
                   return (
@@ -603,25 +646,24 @@ export default function InboxPage() {
                           <input
                             value={editingDisplayName}
                             onChange={(e) => setEditingDisplayName(e.target.value)}
-                            placeholder="Display name"
+                            placeholder="Name"
                             className="h-9 flex-1 rounded-md border border-gray-200 px-2 text-sm"
                           />
                           <input
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            placeholder="Name (key)"
-                            disabled={column.isLocked}
-                            className="h-9 flex-1 rounded-md border border-gray-200 px-2 text-sm disabled:bg-gray-100"
+                            value={editingDescription}
+                            onChange={(e) => setEditingDescription(e.target.value)}
+                            placeholder="Description"
+                            className="h-9 w-full rounded-md border border-gray-200 px-2 text-sm"
                           />
                           <button
-                            className="h-9 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700"
+                            className="h-9 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 cursor-pointer"
                             onClick={handleSaveEdit}
                             disabled={updateColumnMutation.isPending}
                           >
-                            Save
+                            {updateColumnMutation.isPending ? "Saving..." : "Save"}
                           </button>
                           <button
-                            className="h-9 rounded-md border border-gray-200 px-3 text-xs text-gray-600 hover:bg-gray-50"
+                            className="h-9 rounded-md border border-gray-200 px-3 text-xs text-gray-600 hover:bg-gray-50 cursor-pointer"
                             onClick={handleCancelEdit}
                           >
                             Cancel
@@ -633,20 +675,23 @@ export default function InboxPage() {
                             <p className="text-sm font-semibold text-gray-800">
                               {column.displayName}
                             </p>
-                            <p className="text-xs text-gray-500">{column.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {column.description?.trim() || "custom column"}
+                            </p>
+                            <p className="text-[11px] text-gray-400">{column.name}</p>
                           </div>
                           <button
-                            className="h-8 rounded-md border border-gray-200 px-3 text-xs text-gray-600 hover:bg-gray-50"
+                            className="h-8 rounded-md border border-gray-200 px-3 text-xs text-gray-600 hover:bg-gray-50 cursor-pointer"
                             onClick={() => handleStartEdit(column)}
                           >
                             Edit
                           </button>
                           <button
-                            className="h-8 rounded-md border border-gray-200 px-3 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="h-8 rounded-md border border-gray-200 px-3 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                             onClick={() => deleteColumnMutation.mutate(column._id)}
                             disabled={column.isLocked}
                           >
-                            Delete
+                            {deleteColumnMutation.isPending ? "Deleting..." : "Delete"}
                           </button>
                         </>
                       )}
@@ -661,27 +706,27 @@ export default function InboxPage() {
                   <input
                     value={newColumnDisplayName}
                     onChange={(e) => setNewColumnDisplayName(e.target.value)}
-                    placeholder="Display name"
+                    placeholder="Name"
                     className="h-9 flex-1 rounded-md border border-gray-200 px-2 text-sm"
                   />
                   <input
-                    value={newColumnName}
-                    onChange={(e) => setNewColumnName(e.target.value)}
-                    placeholder="Name (key)"
-                    className="h-9 flex-1 rounded-md border border-gray-200 px-2 text-sm"
+                    value={newColumnDescription}
+                    onChange={(e) => setNewColumnDescription(e.target.value)}
+                    placeholder="Description"
+                    className="h-9 w-full rounded-md border border-gray-200 px-2 text-sm"
                   />
                   <button
-                    className="h-9 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-9 w-full rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                     onClick={handleCreateColumn}
                     disabled={createColumnMutation.isPending || isColumnsAtLimit}
                   >
-                    Add
+                    {createColumnMutation.isPending ? "Adding..." : "Add"}
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
                   {isColumnsAtLimit
-                    ? "Đã đạt tối đa 10 cột."
-                    : "Nhập tên và display name để tạo cột mới."}
+                    ? "Reached the 10-column limit."
+                    : "Provide a name and optional description to add a column."}
                 </p>
               </div>
 

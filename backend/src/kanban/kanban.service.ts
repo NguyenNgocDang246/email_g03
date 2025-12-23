@@ -78,20 +78,20 @@ export class KanbanService {
       .lean();
   }
 
-  async createColumn(userId: string, payload: { name?: string; displayName?: string }) {
+  async createColumn(
+    userId: string,
+    payload: { displayName?: string; description?: string },
+  ) {
     await this.ensureDefaultColumns(userId);
-    const rawName = payload?.name?.trim();
-    if (!rawName) {
+    const displayName = payload?.displayName
+      ? this.normalizeDisplayName(payload.displayName)
+      : '';
+    if (!displayName) {
       throw new BadRequestException('Column name is required');
     }
 
-    const name = this.normalizeName(rawName);
-    let displayName = payload?.displayName
-      ? this.normalizeDisplayName(payload.displayName)
-      : rawName;
-    if (!displayName) {
-      displayName = rawName;
-    }
+    const name = this.normalizeName(displayName);
+    const description = payload?.description?.trim() || '';
 
     if (name === 'INBOX' || name === SNOOZED_COLUMN_NAME) {
       throw new BadRequestException('Column name is reserved');
@@ -118,6 +118,7 @@ export class KanbanService {
       userId,
       name,
       displayName,
+      description,
       position: position + 1,
       isLocked: false,
     });
@@ -129,7 +130,7 @@ export class KanbanService {
   async updateColumn(
     userId: string,
     columnId: string,
-    payload: { name?: string; displayName?: string },
+    payload: { displayName?: string; description?: string },
   ) {
     const column = await this.columnModel.findOne({ _id: columnId, userId });
     if (!column) {
@@ -140,13 +141,17 @@ export class KanbanService {
       column.isLocked ||
       column.name === 'INBOX' ||
       column.name === SNOOZED_COLUMN_NAME;
-    if (isReserved && payload?.name) {
+    if (isReserved && payload?.displayName) {
       throw new BadRequestException('Column is locked');
     }
 
     let nextName = column.name;
-    if (payload?.name) {
-      const normalizedName = this.normalizeName(payload.name);
+    if (payload?.displayName !== undefined) {
+      const nextDisplayName = this.normalizeDisplayName(payload.displayName);
+      if (!nextDisplayName) {
+        throw new BadRequestException('Column name cannot be empty');
+      }
+      const normalizedName = this.normalizeName(nextDisplayName);
       if (normalizedName === 'INBOX' || normalizedName === SNOOZED_COLUMN_NAME) {
         throw new BadRequestException('Column name is reserved');
       }
@@ -159,14 +164,10 @@ export class KanbanService {
         }
         nextName = normalizedName;
       }
-    }
-
-    if (payload?.displayName) {
-      const nextDisplayName = this.normalizeDisplayName(payload.displayName);
-      if (!nextDisplayName) {
-        throw new BadRequestException('Display name cannot be empty');
-      }
       column.displayName = nextDisplayName;
+    }
+    if (payload?.description !== undefined) {
+      column.description = payload.description?.trim() || '';
     }
     if (nextName !== column.name) {
       const previousName = column.name;

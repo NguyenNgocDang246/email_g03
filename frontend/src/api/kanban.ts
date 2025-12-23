@@ -5,6 +5,7 @@ export interface KanbanColumn {
   _id: string;
   name: string;
   displayName: string;
+  description?: string;
   position: number;
   isLocked?: boolean;
 }
@@ -22,8 +23,8 @@ export const getKanbanColumns = async (): Promise<KanbanColumn[]> => {
 };
 
 export const createKanbanColumn = async (payload: {
-  name: string;
-  displayName?: string;
+  displayName: string;
+  description?: string;
 }): Promise<KanbanColumn> => {
   try {
     const res = await API.post("/kanban/columns", payload);
@@ -38,7 +39,7 @@ export const createKanbanColumn = async (payload: {
 
 export const updateKanbanColumn = async (
   id: string,
-  payload: { name?: string; displayName?: string }
+  payload: { displayName?: string; description?: string }
 ): Promise<KanbanColumn> => {
   try {
     const res = await API.patch(`/kanban/columns/${id}`, payload);
