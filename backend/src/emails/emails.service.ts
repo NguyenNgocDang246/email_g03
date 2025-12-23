@@ -2,6 +2,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,6 +12,7 @@ import { AuthService } from '../auth/auth.service';
 import { EmailDetailMapper, GmailMapper } from '../mappers';
 import { AiService } from '../ai/ai.service';
 import { EmbeddingLevel } from './schemas/email-embedding.schema';
+import { KanbanService } from '../kanban/kanban.service';
 
 @Injectable()
 export class EmailsService {
@@ -18,6 +20,7 @@ export class EmailsService {
     private authService: AuthService,
     @Inject(forwardRef(() => AiService))
     private aiService: AiService,
+    private kanbanService: KanbanService,
     @InjectModel(EmailEntity.name)
     private emailModel: Model<EmailEntity>,
   ) {}
@@ -421,18 +424,33 @@ export class EmailsService {
     options?: { snoozedUntil?: string | Date; previousStatus?: EmailStatus },
   ) {
     await this.unsnoozeExpired(userId);
-    if (status === 'SNOOZED') {
+    const normalizedStatus = (status || '').toString().trim().toUpperCase();
+    if (!normalizedStatus) {
+      throw new BadRequestException('Status is required');
+    }
+
+    const columns = await this.kanbanService.getColumns(userId);
+    const allowedStatuses = new Set(columns.map((col) => col.name));
+    if (!allowedStatuses.has(normalizedStatus)) {
+      throw new BadRequestException('Invalid kanban status');
+    }
+
+    if (normalizedStatus === 'SNOOZED') {
       const until = options?.snoozedUntil
         ? new Date(options.snoozedUntil)
         : new Date(Date.now() + 4 * 60 * 60 * 1000);
       const existing = await this.emailModel
         .findOne({ userId, emailId })
         .lean();
-      const prevStatus =
+      const rawPrevStatus =
         options?.previousStatus ||
         existing?.status ||
         existing?.previousStatus ||
         'INBOX';
+      const prevStatus = rawPrevStatus.toString().trim().toUpperCase();
+      const nextPreviousStatus = allowedStatuses.has(prevStatus)
+        ? prevStatus
+        : 'INBOX';
 
       await this.emailModel.updateOne(
         { userId, emailId },
@@ -440,7 +458,7 @@ export class EmailsService {
           $set: {
             status: 'SNOOZED',
             snoozedUntil: until,
-            previousStatus: prevStatus,
+            previousStatus: nextPreviousStatus,
           },
         },
         { upsert: true },
@@ -456,12 +474,12 @@ export class EmailsService {
       { userId, emailId },
       {
         $set: {
-          status,
+          status: normalizedStatus,
         },
         $unset: { snoozedUntil: '', previousStatus: '' },
       },
       { upsert: true },
     );
-    return { message: 'Status updated', status };
+    return { message: 'Status updated', status: normalizedStatus };
   }
 }

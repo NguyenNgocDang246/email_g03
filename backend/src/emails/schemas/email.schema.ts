@@ -3,12 +3,7 @@ import { Document } from 'mongoose';
 
 export type EmailDocument = EmailEntity & Document;
 
-export type EmailStatus =
-  | 'INBOX'
-  | 'TO_DO'
-  | 'IN_PROGRESS'
-  | 'DONE'
-  | 'SNOOZED';
+export type EmailStatus = string;
 
 @Schema({ timestamps: true })
 export class EmailEntity {
@@ -38,7 +33,6 @@ export class EmailEntity {
 
   @Prop({
     type: String,
-    enum: ['INBOX', 'TO_DO', 'IN_PROGRESS', 'DONE', 'SNOOZED'],
     default: 'INBOX',
   })
   status: EmailStatus;
@@ -48,7 +42,6 @@ export class EmailEntity {
 
   @Prop({
     type: String,
-    enum: ['INBOX', 'TO_DO', 'IN_PROGRESS', 'DONE', 'SNOOZED'],
     default: null,
   })
   previousStatus?: EmailStatus | null;

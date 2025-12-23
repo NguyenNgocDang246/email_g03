@@ -1,9 +1,4 @@
-export type KanbanStatus =
-  | "INBOX"
-  | "TO_DO"
-  | "IN_PROGRESS"
-  | "DONE"
-  | "SNOOZED";
+export type KanbanStatus = string;
 
 export interface KanbanColumnConfig {
   id: KanbanStatus;
@@ -11,67 +6,88 @@ export interface KanbanColumnConfig {
   description: string;
   accent: string;
   softBg: string;
+  isLocked?: boolean;
 }
 
-export const KANBAN_STATUS_LABELS: KanbanStatus[] = [
-  "INBOX",
-  "TO_DO",
-  "IN_PROGRESS",
-  "DONE",
-  "SNOOZED",
-];
-
-export const KANBAN_COLUMNS: KanbanColumnConfig[] = [
-  {
-    id: "INBOX",
+const DEFAULT_COLUMN_STYLES: Record<
+  string,
+  { title: string; description: string; accent: string; softBg: string }
+> = {
+  INBOX: {
     title: "Inbox",
     description: "Fresh emails waiting for triage",
     accent: "border-blue-400 text-blue-600",
     softBg: "bg-blue-50",
   },
-  {
-    id: "TO_DO",
+  TO_DO: {
     title: "To Do",
     description: "Emails that require follow-up",
     accent: "border-amber-400 text-amber-600",
     softBg: "bg-amber-50",
   },
-  {
-    id: "IN_PROGRESS",
+  IN_PROGRESS: {
     title: "In Progress",
     description: "Actively being handled",
     accent: "border-purple-400 text-purple-600",
     softBg: "bg-purple-50",
   },
-  {
-    id: "DONE",
+  DONE: {
     title: "Done",
     description: "No further action needed",
     accent: "border-emerald-400 text-emerald-600",
     softBg: "bg-emerald-50",
   },
-  {
-    id: "SNOOZED",
+  SNOOZED: {
     title: "Snoozed",
     description: "Parked for later",
     accent: "border-slate-400 text-slate-600",
     softBg: "bg-slate-50",
   },
+};
+
+const FALLBACK_STYLES = [
+  { accent: "border-teal-400 text-teal-600", softBg: "bg-teal-50" },
+  { accent: "border-rose-400 text-rose-600", softBg: "bg-rose-50" },
+  { accent: "border-cyan-400 text-cyan-600", softBg: "bg-cyan-50" },
+  { accent: "border-lime-400 text-lime-600", softBg: "bg-lime-50" },
+  { accent: "border-orange-400 text-orange-600", softBg: "bg-orange-50" },
+  { accent: "border-indigo-400 text-indigo-600", softBg: "bg-indigo-50" },
 ];
 
+const toTitleCase = (value: string) =>
+  value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+export const buildKanbanColumns = (
+  columns: { name: string; displayName: string; isLocked?: boolean }[],
+  mailboxId?: string
+): KanbanColumnConfig[] => {
+  return columns.map((column, index) => {
+    const defaults = DEFAULT_COLUMN_STYLES[column.name];
+    const fallback = FALLBACK_STYLES[index % FALLBACK_STYLES.length];
+    const baseTitle = defaults?.title ?? toTitleCase(column.name);
+    const title =
+      column.name === "INBOX" && mailboxId ? mailboxId : column.displayName || baseTitle;
+    const description =
+      column.name === "INBOX" && mailboxId
+        ? `Mailbox: ${mailboxId}`
+        : defaults?.description || baseTitle;
+
+    return {
+      id: column.name,
+      title,
+      description,
+      accent: defaults?.accent ?? fallback.accent,
+      softBg: defaults?.softBg ?? fallback.softBg,
+      isLocked: column.isLocked,
+    };
+  });
+};
+
 export const formatStatusLabel = (status: KanbanStatus) => {
-  switch (status) {
-    case "INBOX":
-      return "Inbox";
-    case "TO_DO":
-      return "To Do";
-    case "IN_PROGRESS":
-      return "In Progress";
-    case "DONE":
-      return "Done";
-    case "SNOOZED":
-      return "Snoozed";
-    default:
-      return status;
-  }
+  const defaults = DEFAULT_COLUMN_STYLES[status];
+  if (defaults) return defaults.title;
+  return toTitleCase(status || "");
 };
