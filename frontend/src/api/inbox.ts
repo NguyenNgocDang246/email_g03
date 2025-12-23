@@ -13,6 +13,7 @@ export interface MailBoxesInfo {
 export const getMailBoxesInfo = async (): Promise<MailBoxesInfo[]> => {
   try {
     const res = await API.get("/mailboxes");
+    console.log(res.data)
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {

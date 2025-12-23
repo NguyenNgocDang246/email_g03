@@ -10,7 +10,7 @@ export const ToggleButton = ({
   onChange,
 }: ToggleButtonProps) => {
   return (
-    <div className="inline-flex rounded-full border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div className="inline-flex rounded-full bg-white shadow-sm overflow-hidden">
       {(["list", "kanban"] as const).map((option) => (
         <button
           key={option}

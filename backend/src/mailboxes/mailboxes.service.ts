@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { readdirSync, readFileSync } from 'fs';
+import { Model } from 'mongoose';
 import { join } from 'path';
+import { EmailEntity } from 'src/emails/schemas/email.schema';
+import { AuthService } from '../auth/auth.service';
+import { EmailsService } from '../emails/emails.service';
+import { GmailMapper } from '../mappers';
 import { Mailbox } from '../types';
 import { PaginationDto } from './dto';
-import { EmailsService } from '../emails/emails.service';
-import { AuthService } from '../auth/auth.service';
-import { GmailMapper } from '../mappers';
 
 @Injectable()
 export class MailboxesService {
@@ -15,6 +18,8 @@ export class MailboxesService {
   constructor(
     private authService: AuthService,
     private emailsService: EmailsService,
+    @InjectModel(EmailEntity.name)
+    private emailModel: Model<EmailEntity>,
   ) {
     const filePathMailboxes = join(__dirname, '..', 'mock', 'mailboxes.json');
     const dataMailboxes = readFileSync(filePathMailboxes, 'utf8');
@@ -50,7 +55,9 @@ export class MailboxesService {
     paginationDto: PaginationDto,
   ) {
     const gmail = await this.authService.getGmail(userId);
-    if (!gmail) return null;
+    if (!gmail) {
+      throw new UnauthorizedException();
+    }
 
     const limit = Number(paginationDto?.limit) || 10;
     const pageToken = paginationDto?.pageToken;
@@ -78,6 +85,7 @@ export class MailboxesService {
       }),
     );
 
+    await this.emailsService.saveEmailSummaries(userId, emails);
     const emailsWithStatus = await this.emailsService.mergeStatuses(
       userId,
       emails,
@@ -97,36 +105,50 @@ export class MailboxesService {
     paginationDto: PaginationDto,
     userId: string,
   ) {
-    const emails = this.emailsInMailbox.get(mailboxId);
+    const gmail = await this.authService.getGmail(userId);
 
-    if (!emails) {
-      throw new NotFoundException('No emails found for this mailbox');
+    if (!gmail) {
+      throw new UnauthorizedException();
     }
 
-    const filteredEmails = emails.filter(
-      (email) =>
-        email.subject.toLowerCase().includes(query.toLowerCase()) ||
-        email.preview.toLowerCase().includes(query.toLowerCase()),
+    const pageToken = paginationDto?.pageToken;
+    const limit = Number(paginationDto.limit) || 10;
+
+    const list = await gmail?.users.messages.list({
+      userId: 'me',
+      labelIds: [mailboxId],
+      q: query,
+      maxResults: limit,
+      pageToken,
+    });
+
+    const messages = list.data.messages ?? [];
+    const nextPageToken = list.data.nextPageToken ?? null;
+    const total = list.data.resultSizeEstimate ?? 0;
+
+    const emails = await Promise.all(
+      messages.map(async (msg) => {
+        const res = await gmail.users.messages.get({
+          userId: 'me',
+          id: msg.id as string,
+          format: 'metadata',
+          metadataHeaders: ['From', 'Subject', 'Date'],
+        });
+
+        return GmailMapper.toEmail(res.data, mailboxId);
+      }),
     );
 
-    const page = Number(paginationDto.pageToken) || 1;
-    const limit = Number(paginationDto.limit) || filteredEmails.length;
-
-    const skip = (page - 1) * limit;
-    const take = limit || filteredEmails.length;
-
-    const paginatedEmails = filteredEmails.slice(skip, skip + take);
-
-    const merged = await this.emailsService.mergeStatuses(
+    const emailsWithStatus = await this.emailsService.mergeStatuses(
       userId,
-      paginatedEmails,
+      emails,
     );
 
     return {
-      page: page,
       limit: limit,
-      total: filteredEmails.length,
-      data: merged,
+      total: total,
+      nextPageToken,
+      data: emailsWithStatus,
     };
   }
 }
