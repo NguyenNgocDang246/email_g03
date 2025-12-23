@@ -18,6 +18,7 @@ export default function InboxLayout({
     "keyword"
   );
   const [selectOnNewMail, setSelectOnNewMail] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
 
    useEffect(() => {
      if (id) {
@@ -29,7 +30,9 @@ export default function InboxLayout({
     <MailContext.Provider
       value={{
         selectOnNewMail,
-        setSelectOnNewMail
+        setSelectOnNewMail,
+        searchSuggestions,
+        setSearchSuggestions,
       }}>
       <div className="h-screen flex flex-col bg-gray-50 w-screen">
         <Header
@@ -38,6 +41,7 @@ export default function InboxLayout({
           setSearchQuery={setSearchQuery}
           searchMode={searchMode}
           setSearchMode={setSearchMode}
+          searchSuggestions={searchSuggestions}
         />
 
         <div className="flex flex-1 overflow-hidden">

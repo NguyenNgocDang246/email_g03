@@ -23,6 +23,7 @@ import { KanbanBoard } from "../../components/Kanban/KanbanBoard";
 import { ToggleButton } from "../../components/Kanban/ToggleButton";
 import { EmailDetailPanel } from "../../components/Kanban/EmailDetailPanel";
 import { KANBAN_COLUMNS, type KanbanStatus } from "../../constants/kanban";
+import { useMail } from "../../context/MailContext";
 
 export default function InboxPage() {
   const {
@@ -42,6 +43,7 @@ export default function InboxPage() {
 
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const { setSearchSuggestions } = useMail();
 
   const isLogged = !!user;
   const navigate = useNavigate();
@@ -133,6 +135,40 @@ export default function InboxPage() {
       status: (mail.status as KanbanStatus) || "INBOX",
     }));
   }, [allEmails, semanticEmails, searchMode]);
+
+  const suggestionSource = useMemo(() => {
+    const suggestionMap = new Map<string, string>();
+
+    normalizedEmails.forEach((mail) => {
+      const fromValue = mail.from?.trim();
+      if (fromValue) {
+        const key = fromValue.toLowerCase();
+        if (!suggestionMap.has(key)) {
+          suggestionMap.set(key, fromValue);
+        }
+      }
+
+      const subjectValue = mail.subject?.trim();
+      if (subjectValue) {
+        subjectValue
+          .split(/[\s,.;:!?()]+/)
+          .map((word) => word.trim())
+          .filter((word) => word.length >= 3)
+          .forEach((word) => {
+            const key = word.toLowerCase();
+            if (!suggestionMap.has(key)) {
+              suggestionMap.set(key, word);
+            }
+          });
+      }
+    });
+
+    return Array.from(suggestionMap.values()).slice(0, 50);
+  }, [normalizedEmails]);
+
+  useEffect(() => {
+    setSearchSuggestions(suggestionSource);
+  }, [setSearchSuggestions, suggestionSource]);
 
   useEffect(() => {
     setEmails(normalizedEmails);
