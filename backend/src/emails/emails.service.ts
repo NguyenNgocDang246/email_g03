@@ -53,6 +53,7 @@ export class EmailsService {
         receivedAt: emailDetailMapped.date
           ? new Date(emailDetailMapped.date)
           : new Date(),
+        labels: emailDetailMapped.labels ?? [],
         status: 'INBOX',
       });
     }
@@ -96,8 +97,8 @@ export class EmailsService {
         date: storedMap.get(id)?.receivedAt
           ? new Date(storedMap.get(id)!.receivedAt).toISOString()
           : new Date().toISOString(),
-        isRead: false,
-        labels: undefined,
+        isRead: !(storedMap.get(id)?.labels || []).includes('UNREAD'),
+        labels: storedMap.get(id)?.labels || [],
         status: (storedMap.get(id)?.status as any) || 'INBOX',
       }));
     }
@@ -284,6 +285,7 @@ export class EmailsService {
       subject: string;
       snippet: string;
       date: string;
+      labels?: string[];
     }[],
   ) {
     if (!emails.length) return;
@@ -292,13 +294,16 @@ export class EmailsService {
       updateOne: {
         filter: { userId, emailId: mail.id },
         update: {
-          $setOnInsert: {
-            emailId: mail.id,
-            userId,
+          $set: {
             sender: mail.from,
             subject: mail.subject,
             snippet: mail.snippet ?? '',
             receivedAt: mail.date ? new Date(mail.date) : new Date(),
+            labels: mail.labels ?? [],
+          },
+          $setOnInsert: {
+            emailId: mail.id,
+            userId,
             status: 'INBOX',
           },
         },
@@ -378,14 +383,37 @@ export class EmailsService {
   async getCachedSummary(emailId: string, userId: string) {
     const doc = await this.emailModel
       .findOne({ userId, emailId })
-      .select('summary fullText status')
+      .select('summary fullText status sender subject receivedAt labels')
       .lean();
     if (!doc || (!doc.summary && !doc.fullText)) return null;
     return {
       summary: doc.summary,
       fullText: doc.fullText,
       status: doc.status as EmailStatus,
+      sender: doc.sender,
+      subject: doc.subject,
+      receivedAt: doc.receivedAt,
+      labels: doc.labels ?? [],
     };
+  }
+
+  async getCachedEmailMetadata(emailId: string, userId: string) {
+    const doc = await this.emailModel
+      .findOne({ userId, emailId })
+      .select('sender subject receivedAt labels status')
+      .lean();
+    if (!doc) return null;
+    return {
+      sender: doc.sender,
+      subject: doc.subject,
+      receivedAt: doc.receivedAt,
+      labels: doc.labels ?? [],
+      status: doc.status as EmailStatus,
+    };
+  }
+
+  async refreshSnoozedStatuses(userId: string) {
+    await this.unsnoozeExpired(userId);
   }
 
   async saveSummary(

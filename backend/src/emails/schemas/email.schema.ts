@@ -22,6 +22,9 @@ export class EmailEntity {
   @Prop({ default: '' })
   snippet: string;
 
+  @Prop({ type: [String], default: [] })
+  labels?: string[];
+
   @Prop({ required: true })
   receivedAt: Date;
 

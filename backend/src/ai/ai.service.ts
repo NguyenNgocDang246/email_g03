@@ -115,26 +115,47 @@ export class AiService {
   }
 
   async summarizeEmail(emailId: string, userId: string, forceRefresh = false) {
-    const detail = await this.emailsService.getEmailDetail(emailId, userId);
-    if (!detail) return null;
-
     if (!forceRefresh) {
       const cached = await this.emailsService.getCachedSummary(emailId, userId);
-      if (cached?.summary) {
+      if (cached) {
         return {
-          summary: cached.summary,
+          summary: cached.summary || '',
           metadata: {
-            sender: detail.from,
-            senderName: (detail as any)?.fromName,
-            subject: detail.subject,
-            date: detail.date,
-            mailboxId: detail.mailboxId,
+            sender: cached.sender,
+            subject: cached.subject,
+            date: cached.receivedAt
+              ? new Date(cached.receivedAt).toISOString()
+              : undefined,
+            labels: cached.labels,
           },
-          fullText: cached.fullText,
-          status: cached.status || detail.status,
+          fullText: cached.fullText || '',
+          status: cached.status,
+        };
+      }
+
+      const cachedMeta = await this.emailsService.getCachedEmailMetadata(
+        emailId,
+        userId,
+      );
+      if (cachedMeta) {
+        return {
+          summary: '',
+          metadata: {
+            sender: cachedMeta.sender,
+            subject: cachedMeta.subject,
+            date: cachedMeta.receivedAt
+              ? new Date(cachedMeta.receivedAt).toISOString()
+              : undefined,
+            labels: cachedMeta.labels,
+          },
+          fullText: '',
+          status: cachedMeta.status,
         };
       }
     }
+
+    const detail = await this.emailsService.getEmailDetail(emailId, userId);
+    if (!detail) return null;
 
     const senderEmail = detail.from;
     const senderName = (detail as any)?.fromName;
