@@ -62,3 +62,17 @@ export const deleteKanbanColumn = async (id: string): Promise<void> => {
     throw new Error("Unexpected error");
   }
 };
+
+export const reorderKanbanColumns = async (
+  order: string[]
+): Promise<KanbanColumn[]> => {
+  try {
+    const res = await API.patch(`/kanban/columns/reorder`, { order });
+    return res.data as KanbanColumn[];
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Request error");
+    }
+    throw new Error("Unexpected error");
+  }
+};

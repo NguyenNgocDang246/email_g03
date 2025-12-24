@@ -30,6 +30,12 @@ export class KanbanController {
     });
   }
 
+  @Patch('columns/reorder')
+  async reorderColumns(@Req() req: Request, @Body() body: any) {
+    const userId = req['user']?.id;
+    return this.kanbanService.reorderColumns(userId, body?.order ?? []);
+  }
+
   @Patch('columns/:id')
   async updateColumn(
     @Req() req: Request,

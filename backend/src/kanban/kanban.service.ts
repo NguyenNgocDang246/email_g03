@@ -107,12 +107,12 @@ export class KanbanService {
       throw new BadRequestException('Column name already exists');
     }
 
-    const last = await this.columnModel
-      .findOne({ userId })
+    const lastNonSnoozed = await this.columnModel
+      .findOne({ userId, name: { $ne: SNOOZED_COLUMN_NAME } })
       .sort({ position: -1 })
       .select('position')
       .lean();
-    const position = last?.position ?? 0;
+    const position = lastNonSnoozed?.position ?? 0;
 
     const created = await this.columnModel.create({
       userId,
@@ -122,6 +122,15 @@ export class KanbanService {
       position: position + 1,
       isLocked: false,
     });
+
+    await this.columnModel.updateOne(
+      {
+        userId,
+        name: SNOOZED_COLUMN_NAME,
+        position: { $lte: created.position },
+      },
+      { $set: { position: created.position + 1 } },
+    );
 
     await this.ensureKanbanLabels(userId);
     return created;
@@ -211,6 +220,57 @@ export class KanbanService {
     );
 
     return { message: 'Column deleted' };
+  }
+
+  async reorderColumns(userId: string, order: string[]) {
+    await this.ensureDefaultColumns(userId);
+    if (!Array.isArray(order)) {
+      throw new BadRequestException('Order is required');
+    }
+
+    const columns = await this.columnModel
+      .find({ userId })
+      .select('name position')
+      .lean();
+    const columnMap = new Map(columns.map((col) => [col.name, col]));
+
+    const dedupedOrder: string[] = [];
+    const seen = new Set<string>();
+    for (const name of order) {
+      if (name === SNOOZED_COLUMN_NAME || !columnMap.has(name)) continue;
+      if (seen.has(name)) continue;
+      seen.add(name);
+      dedupedOrder.push(name);
+    }
+
+    const remaining = columns
+      .filter(
+        (col) =>
+          col.name !== SNOOZED_COLUMN_NAME && !seen.has(col.name),
+      )
+      .sort((a, b) => a.position - b.position);
+
+    const nextOrder = [
+      ...dedupedOrder,
+      ...remaining.map((col) => col.name),
+    ];
+
+    if (columnMap.has(SNOOZED_COLUMN_NAME)) {
+      nextOrder.push(SNOOZED_COLUMN_NAME);
+    }
+
+    if (nextOrder.length) {
+      await this.columnModel.bulkWrite(
+        nextOrder.map((name, index) => ({
+          updateOne: {
+            filter: { userId, name },
+            update: { $set: { position: index } },
+          },
+        })),
+      );
+    }
+
+    return this.getColumns(userId);
   }
 
   async ensureKanbanLabels(userId: string) {

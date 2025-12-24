@@ -19,6 +19,7 @@ import {
   createKanbanColumn,
   deleteKanbanColumn,
   getKanbanColumns,
+  reorderKanbanColumns,
   updateKanbanColumn,
   type KanbanColumn,
 } from "../../api/kanban";
@@ -156,6 +157,16 @@ export default function InboxPage() {
     return new Set(names);
   }, [kanbanColumnsData]);
 
+  const orderedKanbanColumnsData = useMemo(() => {
+    if (!kanbanColumnsData?.length) return [];
+    const sorted = [...kanbanColumnsData].sort(
+      (a, b) => a.position - b.position
+    );
+    const snoozed = sorted.filter((col) => col.name === "SNOOZED");
+    const rest = sorted.filter((col) => col.name !== "SNOOZED");
+    return [...rest, ...snoozed];
+  }, [kanbanColumnsData]);
+
   const normalizedEmails = useMemo(() => {
     const source = searchMode === "semantic" ? semanticEmails ?? [] : allEmails;
     return source.map((mail) => ({
@@ -172,9 +183,11 @@ export default function InboxPage() {
       { name: "DONE", displayName: "Done", description: "No further action needed" },
       { name: "SNOOZED", displayName: "Snoozed", description: "Parked for later" },
     ];
-    const columns = kanbanColumnsData?.length ? kanbanColumnsData : fallback;
+    const columns = orderedKanbanColumnsData.length
+      ? orderedKanbanColumnsData
+      : fallback;
     return buildKanbanColumns(columns, mailboxId);
-  }, [kanbanColumnsData, mailboxId]);
+  }, [orderedKanbanColumnsData, mailboxId]);
 
   useEffect(() => {
     setEmails(normalizedEmails);
@@ -287,10 +300,54 @@ export default function InboxPage() {
     },
   });
 
+  const reorderColumnMutation = useMutation({
+    mutationFn: (order: KanbanStatus[]) => reorderKanbanColumns(order),
+    onMutate: async (order) => {
+      await queryClient.cancelQueries({ queryKey: ["kanban-columns"] });
+      const previous =
+        queryClient.getQueryData<KanbanColumn[]>(["kanban-columns"]);
+      if (!previous) return { previous };
+
+      const map = new Map(previous.map((col) => [col.name, col]));
+      const seen = new Set<string>();
+      const nextOrder = order.filter((name) => {
+        if (name === "SNOOZED") return false;
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return map.has(name);
+      });
+
+      const remaining = previous
+        .filter((col) => col.name !== "SNOOZED" && !seen.has(col.name))
+        .sort((a, b) => a.position - b.position);
+      const snoozed = previous.filter((col) => col.name === "SNOOZED");
+      const merged = [
+        ...nextOrder.map((name) => map.get(name)!),
+        ...remaining,
+        ...snoozed,
+      ].map((col, index) => ({ ...col, position: index }));
+
+      queryClient.setQueryData(["kanban-columns"], merged);
+      return { previous };
+    },
+    onError: (error, _order, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["kanban-columns"], context.previous);
+      }
+      setColumnActionError(
+        error instanceof Error ? error.message : "Failed to reorder columns."
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kanban-columns"] });
+    },
+  });
+
   const isColumnMutationPending =
     createColumnMutation.isPending ||
     updateColumnMutation.isPending ||
-    deleteColumnMutation.isPending;
+    deleteColumnMutation.isPending ||
+    reorderColumnMutation.isPending;
 
   const handleEmailSelect = (email: MailInfo) => {
     setSelectedEmail(email);
@@ -550,6 +607,9 @@ export default function InboxPage() {
                   onMove={(emailId, _from, to) =>
                     handleStatusChange(emailId, to)
                   }
+                  onColumnReorder={(order) =>
+                    reorderColumnMutation.mutate(order)
+                  }
                   onCardSelect={handleEmailSelect}
                   selectedEmailId={selectedEmail?.id}
                 />
@@ -634,7 +694,7 @@ export default function InboxPage() {
               )}
 
               <div className="mt-4 max-h-[45vh] space-y-3 overflow-y-auto pr-1">
-                {(kanbanColumnsData ?? []).map((column) => {
+                {(orderedKanbanColumnsData ?? []).map((column) => {
                   const isEditing = editingColumn?._id === column._id;
                   return (
                     <div

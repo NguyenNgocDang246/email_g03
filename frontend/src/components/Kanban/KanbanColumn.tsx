@@ -1,5 +1,5 @@
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import { type MailInfo } from "../../api/inbox";
 import { type KanbanColumnConfig, type KanbanStatus } from "../../constants/kanban";
@@ -25,9 +25,25 @@ export const KanbanColumn = ({
   const [starredOnly, setStarredOnly] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("newest");
 
-  const { isOver, setNodeRef } = useDroppable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({
     id: column.id,
+    data: { type: "column", columnId: column.id },
+    disabled: column.id === "SNOOZED",
   });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+  };
 
   const filteredAndSortedItems = useMemo(() => {
     const normalizedQuery = searchText.trim().toLowerCase();
@@ -65,6 +81,7 @@ export const KanbanColumn = ({
   return (
     <section
       ref={setNodeRef}
+      style={style}
       className={`flex flex-col h-full rounded-xl border ${column.accent} bg-white`}
     >
       <header
@@ -81,6 +98,18 @@ export const KanbanColumn = ({
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={`h-8 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 ${
+              column.id === "SNOOZED" ? "cursor-not-allowed opacity-50" : "cursor-grab"
+            }`}
+            aria-label="Drag column"
+            disabled={column.id === "SNOOZED"}
+            {...attributes}
+            {...listeners}
+          >
+            Drag
+          </button>
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
