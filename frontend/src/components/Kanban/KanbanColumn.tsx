@@ -1,5 +1,5 @@
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import { type MailInfo } from "../../api/inbox";
 import { type KanbanColumnConfig, type KanbanStatus } from "../../constants/kanban";
@@ -25,9 +25,25 @@ export const KanbanColumn = ({
   const [starredOnly, setStarredOnly] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("newest");
 
-  const { isOver, setNodeRef } = useDroppable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({
     id: column.id,
+    data: { type: "column", columnId: column.id },
+    disabled: column.id === "SNOOZED",
   });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+  };
 
   const filteredAndSortedItems = useMemo(() => {
     const normalizedQuery = searchText.trim().toLowerCase();
@@ -65,6 +81,7 @@ export const KanbanColumn = ({
   return (
     <section
       ref={setNodeRef}
+      style={style}
       className={`flex flex-col h-full rounded-xl border ${column.accent} bg-white`}
     >
       <header
@@ -81,10 +98,22 @@ export const KanbanColumn = ({
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={`h-8 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 ${
+              column.id === "SNOOZED" ? "cursor-not-allowed opacity-50" : "cursor-grab"
+            }`}
+            aria-label="Drag column"
+            disabled={column.id === "SNOOZED"}
+            {...attributes}
+            {...listeners}
+          >
+            Drag
+          </button>
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Lọc theo từ khóa..."
+            placeholder="Filter by keyword..."
             className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs outline-none focus:border-blue-400 sm:w-44"
           />
 
@@ -92,12 +121,12 @@ export const KanbanColumn = ({
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as SortOption)}
             className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs outline-none focus:border-blue-400"
-            aria-label="Sắp xếp"
+            aria-label="Sort"
           >
-            <option value="newest">Mới nhất</option>
-            <option value="oldest">Cũ nhất</option>
-            <option value="fromAsc">Từ (A-Z)</option>
-            <option value="subjectAsc">Tiêu đề (A-Z)</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="fromAsc">From (A-Z)</option>
+            <option value="subjectAsc">Subject (A-Z)</option>
           </select>
 
           <label className="flex items-center gap-1 text-xs text-gray-700 select-none">
@@ -107,7 +136,7 @@ export const KanbanColumn = ({
               onChange={(e) => setUnreadOnly(e.target.checked)}
               className="h-3.5 w-3.5 accent-blue-600"
             />
-            Chưa đọc
+            Unread
           </label>
 
           <label className="flex items-center gap-1 text-xs text-gray-700 select-none">
@@ -117,7 +146,7 @@ export const KanbanColumn = ({
               onChange={(e) => setStarredOnly(e.target.checked)}
               className="h-3.5 w-3.5 accent-blue-600"
             />
-            Gắn sao
+            Starred
           </label>
         </div>
       </header>
@@ -142,7 +171,7 @@ export const KanbanColumn = ({
           ))}
           {filteredAndSortedItems.length === 0 && (
             <p className="text-xs text-gray-400 text-center py-6">
-              Không có email phù hợp
+              No matching emails
             </p>
           )}
         </div>

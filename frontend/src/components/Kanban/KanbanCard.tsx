@@ -14,7 +14,7 @@ interface KanbanCardProps {
 export const KanbanCard = ({ email, columnId, onSelect, isSelected }: KanbanCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: email.id,
-    data: { columnId },
+    data: { type: "card", columnId },
   });
 
   const style = {
