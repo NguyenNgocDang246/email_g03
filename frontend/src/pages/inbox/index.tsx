@@ -3,12 +3,7 @@ import { EmailList } from "../../components/Email/EmailList";
 import { EmailDetail } from "../../components/Email/EmailDetail";
 import { useEmailData } from "../../hooks/useEmailData";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getMailBoxesEmailListInfo,
   modifyEmail,
@@ -31,6 +26,7 @@ import { KanbanBoard } from "../../components/Kanban/KanbanBoard";
 import { ToggleButton } from "../../components/Kanban/ToggleButton";
 import { EmailDetailPanel } from "../../components/Kanban/EmailDetailPanel";
 import { buildKanbanColumns, type KanbanStatus } from "../../constants/kanban";
+import { useMail } from "../../context/MailContext";
 
 export default function InboxPage() {
   const {
@@ -50,6 +46,7 @@ export default function InboxPage() {
 
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const { setSearchSuggestions } = useMail();
 
   const isLogged = !!user;
   const navigate = useNavigate();
@@ -65,14 +62,11 @@ export default function InboxPage() {
   // Lấy query từ URL
   const searchParams = new URLSearchParams(location.search);
   const queryFromUrl = searchParams.get("query") || "";
-  const modeFromUrl =
-    searchParams.get("mode") === "semantic" ? "semantic" : "keyword";
+  const modeFromUrl = searchParams.get("mode") === "semantic" ? "semantic" : "keyword";
 
   const [debouncedQuery, setDebouncedQuery] = useState(queryFromUrl);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
-  const [searchMode, setSearchMode] = useState<"keyword" | "semantic">(
-    modeFromUrl
-  );
+  const [searchMode, setSearchMode] = useState<"keyword" | "semantic">(modeFromUrl);
   const [isDetailCollapsed, setIsDetailCollapsed] = useState(true);
   const [isManageColumnsOpen, setIsManageColumnsOpen] = useState(false);
   const [newColumnDisplayName, setNewColumnDisplayName] = useState("");
@@ -115,8 +109,7 @@ export default function InboxPage() {
     refetch,
   } = useInfiniteQuery({
     queryKey: ["emails", mailboxId, debouncedQuery, searchMode],
-    queryFn: ({ pageParam }) =>
-      getMailBoxesEmailListInfo(mailboxId!, debouncedQuery, pageParam),
+    queryFn: ({ pageParam }) => getMailBoxesEmailListInfo(mailboxId!, debouncedQuery, pageParam),
     enabled: !!mailboxId && searchMode === "keyword",
     retry: false,
     refetchOnWindowFocus: false,
@@ -159,9 +152,7 @@ export default function InboxPage() {
 
   const orderedKanbanColumnsData = useMemo(() => {
     if (!kanbanColumnsData?.length) return [];
-    const sorted = [...kanbanColumnsData].sort(
-      (a, b) => a.position - b.position
-    );
+    const sorted = [...kanbanColumnsData].sort((a, b) => a.position - b.position);
     const snoozed = sorted.filter((col) => col.name === "SNOOZED");
     const rest = sorted.filter((col) => col.name !== "SNOOZED");
     return [...rest, ...snoozed];
@@ -183,18 +174,47 @@ export default function InboxPage() {
       { name: "DONE", displayName: "Done", description: "No further action needed" },
       { name: "SNOOZED", displayName: "Snoozed", description: "Parked for later" },
     ];
-    const columns = orderedKanbanColumnsData.length
-      ? orderedKanbanColumnsData
-      : fallback;
+    const columns = orderedKanbanColumnsData.length ? orderedKanbanColumnsData : fallback;
     return buildKanbanColumns(columns, mailboxId);
   }, [orderedKanbanColumnsData, mailboxId]);
 
+  const suggestionSource = useMemo(() => {
+    const suggestionMap = new Map<string, string>();
+
+    normalizedEmails.forEach((mail) => {
+      const fromValue = mail.from?.trim();
+      if (fromValue) {
+        const key = fromValue.toLowerCase();
+        if (!suggestionMap.has(key)) {
+          suggestionMap.set(key, fromValue);
+        }
+      }
+
+      const subjectValue = mail.subject?.trim();
+      if (subjectValue) {
+        subjectValue
+          .split(/[\s,.;:!?()]+/)
+          .map((word) => word.trim())
+          .filter((word) => word.length >= 3)
+          .forEach((word) => {
+            const key = word.toLowerCase();
+            if (!suggestionMap.has(key)) {
+              suggestionMap.set(key, word);
+            }
+          });
+      }
+    });
+
+    return Array.from(suggestionMap.values()).slice(0, 50);
+  }, [normalizedEmails]);
+
+  useEffect(() => {
+    setSearchSuggestions(suggestionSource);
+  }, [setSearchSuggestions, suggestionSource]);
+
   useEffect(() => {
     setEmails(normalizedEmails);
-    if (
-      selectedEmail &&
-      !normalizedEmails.find((mail) => mail.id === selectedEmail.id)
-    ) {
+    if (selectedEmail && !normalizedEmails.find((mail) => mail.id === selectedEmail.id)) {
       setSelectedEmail(null);
     }
   }, [normalizedEmails, selectedEmail, setEmails, setSelectedEmail]);
@@ -253,13 +273,8 @@ export default function InboxPage() {
   });
 
   const createColumnMutation = useMutation({
-    mutationFn: ({
-      displayName,
-      description,
-    }: {
-      displayName: string;
-      description?: string;
-    }) => createKanbanColumn({ displayName, description }),
+    mutationFn: ({ displayName, description }: { displayName: string; description?: string }) =>
+      createKanbanColumn({ displayName, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kanban-columns"] });
     },
@@ -304,8 +319,7 @@ export default function InboxPage() {
     mutationFn: (order: KanbanStatus[]) => reorderKanbanColumns(order),
     onMutate: async (order) => {
       await queryClient.cancelQueries({ queryKey: ["kanban-columns"] });
-      const previous =
-        queryClient.getQueryData<KanbanColumn[]>(["kanban-columns"]);
+      const previous = queryClient.getQueryData<KanbanColumn[]>(["kanban-columns"]);
       if (!previous) return { previous };
 
       const map = new Map(previous.map((col) => [col.name, col]));
@@ -321,11 +335,9 @@ export default function InboxPage() {
         .filter((col) => col.name !== "SNOOZED" && !seen.has(col.name))
         .sort((a, b) => a.position - b.position);
       const snoozed = previous.filter((col) => col.name === "SNOOZED");
-      const merged = [
-        ...nextOrder.map((name) => map.get(name)!),
-        ...remaining,
-        ...snoozed,
-      ].map((col, index) => ({ ...col, position: index }));
+      const merged = [...nextOrder.map((name) => map.get(name)!), ...remaining, ...snoozed].map(
+        (col, index) => ({ ...col, position: index })
+      );
 
       queryClient.setQueryData(["kanban-columns"], merged);
       return { previous };
@@ -334,9 +346,7 @@ export default function InboxPage() {
       if (context?.previous) {
         queryClient.setQueryData(["kanban-columns"], context.previous);
       }
-      setColumnActionError(
-        error instanceof Error ? error.message : "Failed to reorder columns."
-      );
+      setColumnActionError(error instanceof Error ? error.message : "Failed to reorder columns.");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kanban-columns"] });
@@ -374,13 +384,10 @@ export default function InboxPage() {
     const snoozedUntil = isSnoozed
       ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
       : undefined;
-    const previousStatus =
-      emails.find((m) => m.id === emailId)?.status || "INBOX";
+    const previousStatus = emails.find((m) => m.id === emailId)?.status || "INBOX";
 
     setEmails((prev) =>
-      prev.map((mail) =>
-        mail.id === emailId ? { ...mail, status: nextStatus } : mail
-      )
+      prev.map((mail) => (mail.id === emailId ? { ...mail, status: nextStatus } : mail))
     );
     if (selectedEmail?.id === emailId) {
       setSelectedEmail({ ...selectedEmail, status: nextStatus } as MailInfo);
@@ -505,9 +512,7 @@ export default function InboxPage() {
         <div className="flex items-center gap-2">
           <button
             className={`px-3 py-2 text-xs border rounded-md bg-white text-gray-700 hover:bg-gray-50 cursor-pointer transition-opacity ${
-              viewMode === "kanban"
-                ? "opacity-100"
-                : "opacity-0 pointer-events-none"
+              viewMode === "kanban" ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
             onClick={() => {
               setIsManageColumnsOpen(true);
@@ -542,14 +547,11 @@ export default function InboxPage() {
 
       {currentError && (
         <div className="text-sm text-red-600 bg-white border border-red-200 rounded-md p-3">
-          {(currentError as Error)?.message ||
-            "Error loading list mail from mailboxes"}
+          {(currentError as Error)?.message || "Error loading list mail from mailboxes"}
         </div>
       )}
 
-      {isInitialLoading && (
-        <p className="text-center mt-4 text-gray-500">Loading emails...</p>
-      )}
+      {isInitialLoading && <p className="text-center mt-4 text-gray-500">Loading emails...</p>}
 
       {!isInitialLoading && (
         <div className="flex-1 overflow-hidden">
@@ -573,23 +575,17 @@ export default function InboxPage() {
                   mailBoxId={mailboxId!}
                   emailId={selectedEmail ? selectedEmail.id : null}
                   onMarkAsUnread={() =>
-                    selectedEmail
-                      ? markAsUnreadMutation.mutate(selectedEmail.id)
-                      : undefined
+                    selectedEmail ? markAsUnreadMutation.mutate(selectedEmail.id) : undefined
                   }
                   onDelete={() =>
-                    selectedEmail
-                      ? markAsDeleteMutation.mutate(selectedEmail.id)
-                      : undefined
+                    selectedEmail ? markAsDeleteMutation.mutate(selectedEmail.id) : undefined
                   }
                   onSnooze={(durationMs) =>
                     selectedEmail
                       ? updateStatusMutation.mutate({
                           emailId: selectedEmail.id,
                           status: "SNOOZED",
-                          snoozedUntil: new Date(
-                            Date.now() + durationMs
-                          ).toISOString(),
+                          snoozedUntil: new Date(Date.now() + durationMs).toISOString(),
                           previousStatus: selectedEmail.status as KanbanStatus,
                         })
                       : undefined
@@ -604,12 +600,8 @@ export default function InboxPage() {
                 <KanbanBoard
                   columns={kanbanColumns}
                   itemsByColumn={groupedEmails}
-                  onMove={(emailId, _from, to) =>
-                    handleStatusChange(emailId, to)
-                  }
-                  onColumnReorder={(order) =>
-                    reorderColumnMutation.mutate(order)
-                  }
+                  onMove={(emailId, _from, to) => handleStatusChange(emailId, to)}
+                  onColumnReorder={(order) => reorderColumnMutation.mutate(order)}
                   onCardSelect={handleEmailSelect}
                   selectedEmailId={selectedEmail?.id}
                 />
@@ -632,12 +624,10 @@ export default function InboxPage() {
                         mailboxId={mailboxId!}
                         emailId={selectedEmail?.id ?? null}
                         onMarkAsUnread={() =>
-                          selectedEmail &&
-                          markAsUnreadMutation.mutate(selectedEmail.id)
+                          selectedEmail && markAsUnreadMutation.mutate(selectedEmail.id)
                         }
                         onDelete={() =>
-                          selectedEmail &&
-                          markAsDeleteMutation.mutate(selectedEmail.id)
+                          selectedEmail && markAsDeleteMutation.mutate(selectedEmail.id)
                         }
                       />
                     </div>
@@ -661,9 +651,7 @@ export default function InboxPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-semibold text-gray-800">
-                    Kanban columns
-                  </p>
+                  <p className="text-lg font-semibold text-gray-800">Kanban columns</p>
                   <p className="text-xs text-gray-500">
                     Max 10 columns, Inbox and Snoozed cannot be deleted.
                   </p>
@@ -678,8 +666,7 @@ export default function InboxPage() {
 
               {kanbanColumnsError && (
                 <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
-                  {(kanbanColumnsError as Error)?.message ||
-                    "Error loading columns"}
+                  {(kanbanColumnsError as Error)?.message || "Error loading columns"}
                 </div>
               )}
               {columnActionError && (
