@@ -2,6 +2,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,6 +12,7 @@ import { AuthService } from '../auth/auth.service';
 import { EmailDetailMapper, GmailMapper } from '../mappers';
 import { AiService } from '../ai/ai.service';
 import { EmbeddingLevel } from './schemas/email-embedding.schema';
+import { KanbanService } from '../kanban/kanban.service';
 
 @Injectable()
 export class EmailsService {
@@ -18,6 +20,7 @@ export class EmailsService {
     private authService: AuthService,
     @Inject(forwardRef(() => AiService))
     private aiService: AiService,
+    private kanbanService: KanbanService,
     @InjectModel(EmailEntity.name)
     private emailModel: Model<EmailEntity>,
   ) {}
@@ -50,6 +53,7 @@ export class EmailsService {
         receivedAt: emailDetailMapped.date
           ? new Date(emailDetailMapped.date)
           : new Date(),
+        labels: emailDetailMapped.labels ?? [],
         status: 'INBOX',
       });
     }
@@ -93,8 +97,8 @@ export class EmailsService {
         date: storedMap.get(id)?.receivedAt
           ? new Date(storedMap.get(id)!.receivedAt).toISOString()
           : new Date().toISOString(),
-        isRead: false,
-        labels: undefined,
+        isRead: !(storedMap.get(id)?.labels || []).includes('UNREAD'),
+        labels: storedMap.get(id)?.labels || [],
         status: (storedMap.get(id)?.status as any) || 'INBOX',
       }));
     }
@@ -281,6 +285,7 @@ export class EmailsService {
       subject: string;
       snippet: string;
       date: string;
+      labels?: string[];
     }[],
   ) {
     if (!emails.length) return;
@@ -289,13 +294,16 @@ export class EmailsService {
       updateOne: {
         filter: { userId, emailId: mail.id },
         update: {
-          $setOnInsert: {
-            emailId: mail.id,
-            userId,
+          $set: {
             sender: mail.from,
             subject: mail.subject,
             snippet: mail.snippet ?? '',
             receivedAt: mail.date ? new Date(mail.date) : new Date(),
+            labels: mail.labels ?? [],
+          },
+          $setOnInsert: {
+            emailId: mail.id,
+            userId,
             status: 'INBOX',
           },
         },
@@ -375,14 +383,37 @@ export class EmailsService {
   async getCachedSummary(emailId: string, userId: string) {
     const doc = await this.emailModel
       .findOne({ userId, emailId })
-      .select('summary fullText status')
+      .select('summary fullText status sender subject receivedAt labels')
       .lean();
     if (!doc || (!doc.summary && !doc.fullText)) return null;
     return {
       summary: doc.summary,
       fullText: doc.fullText,
       status: doc.status as EmailStatus,
+      sender: doc.sender,
+      subject: doc.subject,
+      receivedAt: doc.receivedAt,
+      labels: doc.labels ?? [],
     };
+  }
+
+  async getCachedEmailMetadata(emailId: string, userId: string) {
+    const doc = await this.emailModel
+      .findOne({ userId, emailId })
+      .select('sender subject receivedAt labels status')
+      .lean();
+    if (!doc) return null;
+    return {
+      sender: doc.sender,
+      subject: doc.subject,
+      receivedAt: doc.receivedAt,
+      labels: doc.labels ?? [],
+      status: doc.status as EmailStatus,
+    };
+  }
+
+  async refreshSnoozedStatuses(userId: string) {
+    await this.unsnoozeExpired(userId);
   }
 
   async saveSummary(
@@ -421,18 +452,33 @@ export class EmailsService {
     options?: { snoozedUntil?: string | Date; previousStatus?: EmailStatus },
   ) {
     await this.unsnoozeExpired(userId);
-    if (status === 'SNOOZED') {
+    const normalizedStatus = (status || '').toString().trim().toUpperCase();
+    if (!normalizedStatus) {
+      throw new BadRequestException('Status is required');
+    }
+
+    const columns = await this.kanbanService.getColumns(userId);
+    const allowedStatuses = new Set(columns.map((col) => col.name));
+    if (!allowedStatuses.has(normalizedStatus)) {
+      throw new BadRequestException('Invalid kanban status');
+    }
+
+    if (normalizedStatus === 'SNOOZED') {
       const until = options?.snoozedUntil
         ? new Date(options.snoozedUntil)
         : new Date(Date.now() + 4 * 60 * 60 * 1000);
       const existing = await this.emailModel
         .findOne({ userId, emailId })
         .lean();
-      const prevStatus =
+      const rawPrevStatus =
         options?.previousStatus ||
         existing?.status ||
         existing?.previousStatus ||
         'INBOX';
+      const prevStatus = rawPrevStatus.toString().trim().toUpperCase();
+      const nextPreviousStatus = allowedStatuses.has(prevStatus)
+        ? prevStatus
+        : 'INBOX';
 
       await this.emailModel.updateOne(
         { userId, emailId },
@@ -440,7 +486,7 @@ export class EmailsService {
           $set: {
             status: 'SNOOZED',
             snoozedUntil: until,
-            previousStatus: prevStatus,
+            previousStatus: nextPreviousStatus,
           },
         },
         { upsert: true },
@@ -456,12 +502,12 @@ export class EmailsService {
       { userId, emailId },
       {
         $set: {
-          status,
+          status: normalizedStatus,
         },
         $unset: { snoozedUntil: '', previousStatus: '' },
       },
       { upsert: true },
     );
-    return { message: 'Status updated', status };
+    return { message: 'Status updated', status: normalizedStatus };
   }
 }
