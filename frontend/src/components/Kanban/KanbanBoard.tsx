@@ -163,7 +163,7 @@ export const KanbanBoard = ({
         strategy={horizontalListSortingStrategy}
       >
         <div
-          className="mt-2 grid grid-flow-col auto-cols-[calc((100vw-10px)/4)] gap-4 h-full overflow-x-auto pb-3 pr-2 scrollbar"
+          className="mt-2  grid grid-flow-col auto-cols-[calc((100vw-10px)/4)] gap-4 h-full overflow-x-auto pb-3 pr-2 scrollbar"
         >
           {orderedColumns.map((column) => (
             <KanbanColumn

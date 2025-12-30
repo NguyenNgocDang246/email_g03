@@ -63,7 +63,7 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
         <div className="flex items-center gap-2">
           <span
             className={`text-sm truncate ${
-              !email.isRead ? "text-gray-500" : "font-medium text-black"
+              email.isRead ? "text-gray-500" : "font-medium text-black"
             }`}
           >
             {email.from}
@@ -72,7 +72,7 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
         </div>
         <div
           className={`text-sm truncate ${
-            !email.isRead ? "text-gray-500" : "font-medium text-black"
+            email.isRead ? "text-gray-500" : "font-medium text-black"
           }`}
         >
           {email.subject}

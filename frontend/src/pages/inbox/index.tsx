@@ -19,7 +19,7 @@ import {
   type KanbanColumn,
 } from "../../api/kanban";
 import { semanticSearchEmails } from "../../api/ai";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
 import NewMessage from "../../components/Email/NewMessage";
 import { KanbanBoard } from "../../components/Kanban/KanbanBoard";
@@ -512,7 +512,9 @@ export default function InboxPage() {
         <div className="flex items-center gap-2">
           <button
             className={`px-3 py-2 text-xs border rounded-md bg-white text-gray-700 hover:bg-gray-50 cursor-pointer transition-opacity ${
-              viewMode === "kanban" ? "opacity-100" : "opacity-0 pointer-events-none"
+              viewMode === "kanban"
+                ? "opacity-100"
+                : "opacity-0 pointer-events-none"
             }`}
             onClick={() => {
               setIsManageColumnsOpen(true);
@@ -547,11 +549,14 @@ export default function InboxPage() {
 
       {currentError && (
         <div className="text-sm text-red-600 bg-white border border-red-200 rounded-md p-3">
-          {(currentError as Error)?.message || "Error loading list mail from mailboxes"}
+          {(currentError as Error)?.message ||
+            "Error loading list mail from mailboxes"}
         </div>
       )}
 
-      {isInitialLoading && <p className="text-center mt-4 text-gray-500">Loading emails...</p>}
+      {isInitialLoading && (
+        <p className="text-center mt-4 text-gray-500">Loading emails...</p>
+      )}
 
       {!isInitialLoading && (
         <div className="flex-1 overflow-hidden">
@@ -571,37 +576,50 @@ export default function InboxPage() {
                 hasNextPage={!isSemanticMode && Boolean(hasNextPage)}
               />
               <div className=" w-2/3">
-                <EmailDetail
-                  mailBoxId={mailboxId!}
-                  emailId={selectedEmail ? selectedEmail.id : null}
-                  onMarkAsUnread={() =>
-                    selectedEmail ? markAsUnreadMutation.mutate(selectedEmail.id) : undefined
-                  }
-                  onDelete={() =>
-                    selectedEmail ? markAsDeleteMutation.mutate(selectedEmail.id) : undefined
-                  }
-                  onSnooze={(durationMs) =>
-                    selectedEmail
-                      ? updateStatusMutation.mutate({
-                          emailId: selectedEmail.id,
-                          status: "SNOOZED",
-                          snoozedUntil: new Date(Date.now() + durationMs).toISOString(),
-                          previousStatus: selectedEmail.status as KanbanStatus,
-                        })
-                      : undefined
-                  }
-                />
-                <NewMessage mailboxId={mailboxId!} />
+               
+                  <EmailDetail
+                    mailBoxId={mailboxId!}
+                    emailId={selectedEmail ? selectedEmail.id : null}
+                    onMarkAsUnread={() =>
+                      selectedEmail
+                        ? markAsUnreadMutation.mutate(selectedEmail.id)
+                        : undefined
+                    }
+                    onDelete={() =>
+                      selectedEmail
+                        ? markAsDeleteMutation.mutate(selectedEmail.id)
+                        : undefined
+                    }
+                    onSnooze={(durationMs) =>
+                      selectedEmail
+                        ? updateStatusMutation.mutate({
+                            emailId: selectedEmail.id,
+                            status: "SNOOZED",
+                            snoozedUntil: new Date(
+                              Date.now() + durationMs
+                            ).toISOString(),
+                            previousStatus:
+                              selectedEmail.status as KanbanStatus,
+                          })
+                        : undefined
+                    }
+                  />
+                  <NewMessage mailboxId={mailboxId!} />
+                
               </div>
             </div>
           ) : (
             <div className="flex h-full gap-4 overflow-x-auto pb-2">
-              <div className="flex-1 overflow-hidden min-w-0">
+              <div className="flex-1  min-w-0">
                 <KanbanBoard
                   columns={kanbanColumns}
                   itemsByColumn={groupedEmails}
-                  onMove={(emailId, _from, to) => handleStatusChange(emailId, to)}
-                  onColumnReorder={(order) => reorderColumnMutation.mutate(order)}
+                  onMove={(emailId, _from, to) =>
+                    handleStatusChange(emailId, to)
+                  }
+                  onColumnReorder={(order) =>
+                    reorderColumnMutation.mutate(order)
+                  }
                   onCardSelect={handleEmailSelect}
                   selectedEmailId={selectedEmail?.id}
                 />
@@ -624,10 +642,12 @@ export default function InboxPage() {
                         mailboxId={mailboxId!}
                         emailId={selectedEmail?.id ?? null}
                         onMarkAsUnread={() =>
-                          selectedEmail && markAsUnreadMutation.mutate(selectedEmail.id)
+                          selectedEmail &&
+                          markAsUnreadMutation.mutate(selectedEmail.id)
                         }
                         onDelete={() =>
-                          selectedEmail && markAsDeleteMutation.mutate(selectedEmail.id)
+                          selectedEmail &&
+                          markAsDeleteMutation.mutate(selectedEmail.id)
                         }
                       />
                     </div>
@@ -651,7 +671,9 @@ export default function InboxPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-semibold text-gray-800">Kanban columns</p>
+                  <p className="text-lg font-semibold text-gray-800">
+                    Kanban columns
+                  </p>
                   <p className="text-xs text-gray-500">
                     Max 10 columns, Inbox and Snoozed cannot be deleted.
                   </p>
@@ -666,7 +688,8 @@ export default function InboxPage() {
 
               {kanbanColumnsError && (
                 <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
-                  {(kanbanColumnsError as Error)?.message || "Error loading columns"}
+                  {(kanbanColumnsError as Error)?.message ||
+                    "Error loading columns"}
                 </div>
               )}
               {columnActionError && (
@@ -692,13 +715,17 @@ export default function InboxPage() {
                         <>
                           <input
                             value={editingDisplayName}
-                            onChange={(e) => setEditingDisplayName(e.target.value)}
+                            onChange={(e) =>
+                              setEditingDisplayName(e.target.value)
+                            }
                             placeholder="Name"
                             className="h-9 flex-1 rounded-md border border-gray-200 px-2 text-sm"
                           />
                           <input
                             value={editingDescription}
-                            onChange={(e) => setEditingDescription(e.target.value)}
+                            onChange={(e) =>
+                              setEditingDescription(e.target.value)
+                            }
                             placeholder="Description"
                             className="h-9 w-full rounded-md border border-gray-200 px-2 text-sm"
                           />
@@ -707,7 +734,9 @@ export default function InboxPage() {
                             onClick={handleSaveEdit}
                             disabled={updateColumnMutation.isPending}
                           >
-                            {updateColumnMutation.isPending ? "Saving..." : "Save"}
+                            {updateColumnMutation.isPending
+                              ? "Saving..."
+                              : "Save"}
                           </button>
                           <button
                             className="h-9 rounded-md border border-gray-200 px-3 text-xs text-gray-600 hover:bg-gray-50 cursor-pointer"
@@ -725,7 +754,9 @@ export default function InboxPage() {
                             <p className="text-xs text-gray-500">
                               {column.description?.trim() || "custom column"}
                             </p>
-                            <p className="text-[11px] text-gray-400">{column.name}</p>
+                            <p className="text-[11px] text-gray-400">
+                              {column.name}
+                            </p>
                           </div>
                           <button
                             className="h-8 rounded-md border border-gray-200 px-3 text-xs text-gray-600 hover:bg-gray-50 cursor-pointer"
@@ -735,10 +766,14 @@ export default function InboxPage() {
                           </button>
                           <button
                             className="h-8 rounded-md border border-gray-200 px-3 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-                            onClick={() => deleteColumnMutation.mutate(column._id)}
+                            onClick={() =>
+                              deleteColumnMutation.mutate(column._id)
+                            }
                             disabled={column.isLocked}
                           >
-                            {deleteColumnMutation.isPending ? "Deleting..." : "Delete"}
+                            {deleteColumnMutation.isPending
+                              ? "Deleting..."
+                              : "Delete"}
                           </button>
                         </>
                       )}
@@ -748,7 +783,9 @@ export default function InboxPage() {
               </div>
 
               <div className="mt-4 rounded-md border border-dashed border-gray-300 p-3">
-                <p className="text-xs font-semibold text-gray-600">Add column</p>
+                <p className="text-xs font-semibold text-gray-600">
+                  Add column
+                </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <input
                     value={newColumnDisplayName}
@@ -765,7 +802,9 @@ export default function InboxPage() {
                   <button
                     className="h-9 w-full rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                     onClick={handleCreateColumn}
-                    disabled={createColumnMutation.isPending || isColumnsAtLimit}
+                    disabled={
+                      createColumnMutation.isPending || isColumnsAtLimit
+                    }
                   >
                     {createColumnMutation.isPending ? "Adding..." : "Add"}
                   </button>
