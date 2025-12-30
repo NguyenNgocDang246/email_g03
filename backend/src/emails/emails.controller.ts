@@ -8,6 +8,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
+import contentDisposition from 'content-disposition';
 import { EmailsService } from './emails.service';
 import type { Request } from 'express';
 import { EmailStatus } from './schemas/email.schema';
@@ -112,7 +113,7 @@ export class EmailsController {
     );
     const fileBuffer = Buffer.from(fileData, 'base64');
     const { mimeType, fileName } = attachment;
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Disposition', contentDisposition(fileName));
     res.setHeader('Content-Type', mimeType);
     res.setHeader('Content-Length', fileBuffer.length);
     res.send(fileBuffer);
@@ -122,6 +123,7 @@ export class EmailsController {
   async getEmailDetail(@Req() req: Request, @Param('id') id: string) {
     const data = req['user'];
     const userId = data.id;
+    console.log('Fetching email detail for ID:', id, 'User ID:', userId);
     return await this.emailsService.getEmailDetail(id, userId);
   }
 
