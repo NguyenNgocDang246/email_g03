@@ -1,21 +1,23 @@
 import { FiFile, FiImage, FiTrash2 } from "react-icons/fi";
 import { HiDocumentText } from "react-icons/hi";
-
+const backendURL = import.meta.env.VITE_BACKEND_URL;
 export interface Attachment {
   id: string;
   filename: string;
   mimeType: string;
   size: number;
-  previewUrl?: string; // optional, chỉ dùng với hình ảnh
+  previewUrl?: string;
 }
 
 interface AttachmentListProps {
   attachments: Attachment[];
+  emailId: string;
   onRemove: (id: string) => void;
 }
 
 export const AttachmentList: React.FC<AttachmentListProps> = ({
   attachments,
+  emailId,
   onRemove,
 }) => {
   const mimeMap: Record<string, string> = {
@@ -30,11 +32,17 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
     "text/plain": "TXT",
   };
 
+  const handleDownload = (index: number) => {
+    const url = `${backendURL}/emails/${emailId}/attachments/${index}/stream`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="mt-6 w-full">
       <h3 className="font-medium text-black mb-2">Attachments</h3>
+
       <ul className="flex overflow-x-auto space-x-2 py-2 scrollbar">
-        {attachments.map((att) => {
+        {attachments.map((att, index) => {
           const fileSizeKB = (att.size / 1024).toFixed(1);
           const maxLength = 25;
           const displayName =
@@ -42,7 +50,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
               ? att.filename.length > maxLength
                 ? att.filename.slice(0, maxLength - 3) + "..."
                 : att.filename
-              : "No Tittle";
+              : "No Title";
 
           const mimeType = att.mimeType.split("/")[1]?.toLowerCase() || "file";
           const displayType = mimeMap[mimeType] || mimeType.toUpperCase();
@@ -62,16 +70,28 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
 
           return (
             <li key={att.id} className="shrink-0 w-48">
-              <div className="flex justify-between items-center p-2 bg-gray-100 rounded hover:bg-gray-200 transition">
+              <div
+                className="flex justify-between items-center p-2 bg-gray-100 rounded hover:bg-gray-200 transition cursor-pointer"
+                onClick={() => handleDownload(index)}
+                title="Click để tải file"
+              >
                 <IconComponent className={`w-6 h-6 ${iconColor}`} />
+
                 <div className="flex-1 min-w-0 ml-2">
-                  <p className="font-medium text-gray-800 truncate">{displayName}</p>
+                  <p className="font-medium text-gray-800 truncate">
+                    {displayName}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {displayType} • {fileSizeKB} KB
                   </p>
                 </div>
+
+                {/* Nút xoá – stopPropagation để không trigger download */}
                 <button
-                  onClick={() => onRemove(att.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(att.id);
+                  }}
                   className="text-red-500 hover:text-red-700 ml-3 p-1"
                   title="Xóa"
                 >

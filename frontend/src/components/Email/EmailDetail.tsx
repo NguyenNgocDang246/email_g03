@@ -1,16 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, Star, RefreshCcw } from "lucide-react";
-import React, { Suspense, useRef, useState } from "react";
-import { getEmailDetail, replyEmail, type ReplyEmailPayload } from "../../api/inbox";
+import React, { Suspense, useMemo, useRef, useState } from "react";
+import {
+  getEmailDetail,
+  replyEmail,
+  type ReplyEmailPayload,
+} from "../../api/inbox";
 import { Trash } from "lucide-react";
 import { SendHorizonal } from "lucide-react";
 import { useMail } from "../../context/MailContext";
 import { AttachmentList } from "../UI/AttachmentList";
 import { summarizeEmail } from "../../api/ai";
+import DOMPurify from "dompurify";
 
 interface EmailDetailProps {
-  mailBoxId:string;
-  emailId: string|null;
+  mailBoxId: string;
+  emailId: string | null;
   onMarkAsUnread: () => void;
   onDelete: () => void;
   onSnooze?: (durationMs: number) => void;
@@ -58,6 +63,12 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
   const [message, setMessage] = useState("");
   const [isReply, setIsReply] = useState(false);
 
+  const cleanHtml = useMemo(() => {
+    return DOMPurify.sanitize(data?.bodyHtml ?? "", {
+      FORBID_TAGS: ["style", "meta", "title", "head", "html", "body", "script"],
+    });
+  }, [data?.bodyHtml]);
+
   const replyMutation = useMutation({
     mutationFn: (payload: ReplyEmailPayload) => {
       if (!emailId) {
@@ -81,8 +92,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
     },
   });
 
-
-  if (isLoading) return <p className="text-center mt-10">Loading...</p>;
+  if (isLoading) return <p className="text-center  font-bold text-gray-400 mt-10">Loading...</p>;
 
   if (error)
     return (
@@ -92,7 +102,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
   if (!emailId || !data) {
     return (
       <div
-        className={`w-full h-screen ${selectOnNewMail ? "hidden" : "block"}`}
+        className={`w-full h-screen  ${selectOnNewMail ? "hidden" : "block"}`}
       >
         <div className="h-full flex justify-center items-center text-gray-400">
           <div className="text-center">
@@ -103,8 +113,6 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
       </div>
     );
   }
-
-
 
   return (
     <Suspense
@@ -122,7 +130,9 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
         {/* HEADER */}
         <div className="bg-white m-2 rounded shadow">
           <div className="p-3">
-            <h1 className="text-xl font-semibold text-black">{data.subject}</h1>
+            <h1 className="text-xl font-semibold text-black ">
+              {data.subject}
+            </h1>
           </div>
         </div>
 
@@ -214,39 +224,58 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
           </div>
 
           <div className="pl-12 pr-3 my-4">
-            <div
-              className="prose max-w-none text-black"
-              dangerouslySetInnerHTML={{ __html: data.bodyHtml ?? "" }}
-            />
+            <div className="pl-12 pr-3 my-4 flex">
+              <div
+                className="text-black break-words"
+                dangerouslySetInnerHTML={{ __html: cleanHtml }}
+              />
+            </div>
 
             {data.attachments && data.attachments.length > 0 && (
               <AttachmentList
                 attachments={data.attachments}
+                emailId={data.id}
                 onRemove={() => {}}
               />
             )}
             {/* ACTION BUTTONS */}
-            <div className="flex items-center gap-2 mt-6">
-              <button
-                className="px-4 py-2 hover:bg-gray-200 border border-gray-300 rounded text-black"
-                onClick={onMarkAsUnread}
-              >
-                Mark as unread
-              </button>
-              <button
-                className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded"
-                onClick={() => setIsReply(true)}
-              >
-                Reply
-              </button>
-              {onSnooze && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-4 py-2 hover:bg-gray-200 border border-gray-300 rounded text-black"
+                  onClick={onMarkAsUnread}
+                >
+                  Mark as unread
+                </button>
                 <button
                   className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded"
-                  onClick={() => onSnooze(4 * 60 * 60 * 1000)}
+                  onClick={() => setIsReply(true)}
                 >
-                  Snooze 4h
+                  Reply
                 </button>
-              )}
+                {onSnooze && (
+                  <button
+                    className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded"
+                    onClick={() => onSnooze(4 * 60 * 60 * 1000)}
+                  >
+                    Snooze 4h
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!data.id) return;
+                  const url = `https://mail.google.com/mail/u/0/#${data.status?.toLowerCase()}/rfc822msgid:${encodeURIComponent(
+                    data.id
+                  )}`;
+                  console.log(url);
+                  window.open(url, "_blank");
+                }}
+                className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded"
+              >
+                Open in Gmail
+              </button>
             </div>
           </div>
         </div>
