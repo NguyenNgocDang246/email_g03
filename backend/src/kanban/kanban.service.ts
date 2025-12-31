@@ -35,6 +35,40 @@ export class KanbanService {
     return displayName.trim();
   }
 
+  private async deleteKanbanLabel(userId: string, labelName: string) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return;
+
+    const existing = await gmail.users.labels.list({ userId: 'me' });
+    const match = existing.data.labels?.find(
+      (label) => label.name?.toUpperCase() === labelName.toUpperCase(),
+    );
+    if (!match?.id) return;
+
+    await gmail.users.labels.delete({ userId: 'me', id: match.id });
+  }
+
+  private async renameKanbanLabel(
+    userId: string,
+    previousName: string,
+    nextName: string,
+  ) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return;
+
+    const existing = await gmail.users.labels.list({ userId: 'me' });
+    const match = existing.data.labels?.find(
+      (label) => label.name?.toUpperCase() === previousName.toUpperCase(),
+    );
+    if (!match?.id) return;
+
+    await gmail.users.labels.update({
+      userId: 'me',
+      id: match.id,
+      requestBody: { name: nextName },
+    });
+  }
+
   private async ensureDefaultColumns(userId: string) {
     const existing = await this.columnModel
       .find({
@@ -189,6 +223,7 @@ export class KanbanService {
         { userId, status: 'SNOOZED', previousStatus: previousName },
         { $set: { previousStatus: nextName } },
       );
+      await this.renameKanbanLabel(userId, previousName, nextName);
     }
 
     await column.save();
@@ -209,6 +244,7 @@ export class KanbanService {
       throw new BadRequestException('Cannot delete reserved column');
     }
 
+    await this.deleteKanbanLabel(userId, column.name);
     await this.columnModel.deleteOne({ _id: columnId });
     await this.emailModel.updateMany(
       { userId, status: column.name },
