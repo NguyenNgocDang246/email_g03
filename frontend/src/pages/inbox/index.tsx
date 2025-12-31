@@ -269,6 +269,7 @@ export default function InboxPage() {
     }) => updateEmailStatus(emailId, status, { snoozedUntil, previousStatus }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["emails", mailboxId] });
+      queryClient.invalidateQueries({ queryKey: ["mailDetailInfo"] });
     },
   });
 
