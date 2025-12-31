@@ -1,11 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, Star, RefreshCcw } from "lucide-react";
-import React, { Suspense, useMemo, useRef, useState } from "react";
-import {
-  getEmailDetail,
-  replyEmail,
-  type ReplyEmailPayload,
-} from "../../api/inbox";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { getEmailDetail, replyEmail, type ReplyEmailPayload } from "../../api/inbox";
 import { Trash } from "lucide-react";
 import { SendHorizonal } from "lucide-react";
 import { useMail } from "../../context/MailContext";
@@ -62,12 +58,52 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
   const { selectOnNewMail } = useMail();
   const [message, setMessage] = useState("");
   const [isReply, setIsReply] = useState(false);
+  const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
+  const [customSnoozeAt, setCustomSnoozeAt] = useState("");
+  const [snoozeError, setSnoozeError] = useState("");
+  const [snoozeNotice, setSnoozeNotice] = useState("");
+
+  useEffect(() => {
+    setIsSnoozeOpen(false);
+    setCustomSnoozeAt("");
+    setSnoozeError("");
+    setSnoozeNotice("");
+  }, [emailId]);
+
+  const applySnoozeAt = (target: Date) => {
+    if (!onSnooze) return;
+    const diff = target.getTime() - Date.now();
+    if (!Number.isFinite(diff) || diff <= 0) {
+      setSnoozeError("Please choose a future time.");
+      return;
+    }
+    onSnooze(diff);
+    setIsSnoozeOpen(false);
+    setCustomSnoozeAt("");
+    setSnoozeError("");
+    setSnoozeNotice(`Snoozed until ${target.toLocaleString()}.`);
+  };
+
+  const buildTomorrowMorning = () => {
+    const now = new Date();
+    const next = new Date(now);
+    next.setDate(now.getDate() + 1);
+    next.setHours(9, 0, 0, 0);
+    return next;
+  };
 
   const cleanHtml = useMemo(() => {
     return DOMPurify.sanitize(data?.bodyHtml ?? "", {
       FORBID_TAGS: ["style", "meta", "title", "head", "html", "body", "script"],
     });
   }, [data?.bodyHtml]);
+
+  const snoozedUntilLabel = useMemo(() => {
+    if (!data?.snoozedUntil) return "";
+    const parsed = new Date(data.snoozedUntil);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toLocaleString();
+  }, [data?.snoozedUntil]);
 
   const replyMutation = useMutation({
     mutationFn: (payload: ReplyEmailPayload) => {
@@ -94,16 +130,11 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
 
   if (isLoading) return <p className="text-center  font-bold text-gray-400 mt-10">Loading...</p>;
 
-  if (error)
-    return (
-      <p className="text-center mt-10 text-red-600">Error loading email</p>
-    );
+  if (error) return <p className="text-center mt-10 text-red-600">Error loading email</p>;
 
   if (!emailId || !data) {
     return (
-      <div
-        className={`w-full h-screen  ${selectOnNewMail ? "hidden" : "block"}`}
-      >
+      <div className={`w-full h-screen  ${selectOnNewMail ? "hidden" : "block"}`}>
         <div className="h-full flex justify-center items-center text-gray-400">
           <div className="text-center">
             <Mail className="w-24 h-24 mx-auto mb-4 opacity-20" />
@@ -122,17 +153,23 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
         </div>
       }
     >
-      <div
-        className={`scrollbar overflow-y-auto h-full ${
-          selectOnNewMail ? "hidden" : "block"
-        }`}
-      >
+      <div className={`scrollbar overflow-y-auto h-full ${selectOnNewMail ? "hidden" : "block"}`}>
         {/* HEADER */}
         <div className="bg-white m-2 rounded shadow">
-          <div className="p-3">
-            <h1 className="text-xl font-semibold text-black ">
-              {data.subject}
-            </h1>
+          <div className="p-3 flex items-start justify-between gap-3">
+            <h1 className="text-xl font-semibold text-black ">{data.subject}</h1>
+            {data.status === "SNOOZED" && (
+              <span className="text-center rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
+                {snoozedUntilLabel ? (
+                  <div>
+                    <div>Snoozed until</div>
+                    <div className="w-fit">{snoozedUntilLabel}</div>
+                  </div>
+                ) : (
+                  "Snoozed"
+                )}
+              </span>
+            )}
           </div>
         </div>
 
@@ -140,9 +177,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
           <div className="flex items-center justify-between mb-2">
             <div>
               <p className="text-sm font-semibold text-black">AI Summary</p>
-              <p className="text-xs text-gray-500">
-                Tóm tắt email và metadata liên quan
-              </p>
+              <p className="text-xs text-gray-500">Tóm tắt email và metadata liên quan</p>
             </div>
             <button
               onClick={handleRefreshSummary}
@@ -152,9 +187,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
               Làm mới
             </button>
           </div>
-          {isSummaryLoading && (
-            <p className="text-xs text-gray-500">Đang sinh tóm tắt...</p>
-          )}
+          {isSummaryLoading && <p className="text-xs text-gray-500">Đang sinh tóm tắt...</p>}
           {summaryError && (
             <p className="text-xs text-red-500">
               {(summaryError as Error)?.message || "Không lấy được summary"}
@@ -168,13 +201,8 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
               {summaryData.metadata && (
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(summaryData.metadata).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="text-[11px] text-gray-500 bg-gray-50 rounded p-2"
-                    >
-                      <span className="font-semibold text-gray-700">
-                        {key}:
-                      </span>{" "}
+                    <div key={key} className="text-[11px] text-gray-500 bg-gray-50 rounded p-2">
+                      <span className="font-semibold text-gray-700">{key}:</span>{" "}
                       <span>{String(value)}</span>
                     </div>
                   ))}
@@ -216,17 +244,13 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
               <p className="text-gray-400 text-xs">{data.date}</p>
             </div>
 
-            <Trash
-              size={18}
-              className="text-gray-500 hover:text-red-500"
-              onClick={onDelete}
-            />
+            <Trash size={18} className="text-gray-500 hover:text-red-500" onClick={onDelete} />
           </div>
 
           <div className="pl-12 pr-3 my-4">
             <div className="pl-12 pr-3 my-4 flex">
               <div
-                className="text-black break-words"
+                className="text-black wrap-break-word"
                 dangerouslySetInnerHTML={{ __html: cleanHtml }}
               />
             </div>
@@ -254,12 +278,78 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                   Reply
                 </button>
                 {onSnooze && (
-                  <button
-                    className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded"
-                    onClick={() => onSnooze(4 * 60 * 60 * 1000)}
-                  >
-                    Snooze 4h
-                  </button>
+                  <div className="relative">
+                    <button
+                      className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded"
+                      onClick={() => {
+                        setIsSnoozeOpen((prev) => !prev);
+                        setSnoozeError("");
+                      }}
+                    >
+                      Snooze
+                    </button>
+                    {isSnoozeOpen && (
+                      <div className="absolute left-0 bottom-full z-10 mb-2 w-72 rounded-md border border-gray-200 bg-white p-3 shadow-lg">
+                        <p className="text-xs text-gray-500 mb-2">Choose a snooze time</p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
+                            onClick={() => applySnoozeAt(new Date(Date.now() + 60 * 60 * 1000))}
+                          >
+                            1 hour
+                          </button>
+                          <button
+                            className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
+                            onClick={() => applySnoozeAt(new Date(Date.now() + 4 * 60 * 60 * 1000))}
+                          >
+                            4 hours
+                          </button>
+                          <button
+                            className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
+                            onClick={() => applySnoozeAt(buildTomorrowMorning())}
+                          >
+                            Tomorrow 9:00
+                          </button>
+                        </div>
+
+                        <div className="mt-3">
+                          <label className="text-xs text-gray-500">Custom time</label>
+                          <input
+                            type="datetime-local"
+                            value={customSnoozeAt}
+                            onChange={(e) => setCustomSnoozeAt(e.target.value)}
+                            className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-xs"
+                          />
+                          <div className="mt-2 flex items-center gap-2">
+                            <button
+                              className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
+                              onClick={() => {
+                                if (!customSnoozeAt) {
+                                  setSnoozeError("Pick a time first.");
+                                  return;
+                                }
+                                applySnoozeAt(new Date(customSnoozeAt));
+                              }}
+                            >
+                              Snooze
+                            </button>
+                            <button
+                              className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
+                              onClick={() => {
+                                setIsSnoozeOpen(false);
+                                setSnoozeError("");
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                          {snoozeError && (
+                            <p className="mt-2 text-xs text-red-600">{snoozeError}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -277,6 +367,16 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                 Open in Gmail
               </button>
             </div>
+            {snoozeNotice && (
+              <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
+                {snoozeNotice}
+              </div>
+            )}
+            {data.status === "SNOOZED" && snoozedUntilLabel && !snoozeNotice && (
+              <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
+                Snoozed until {snoozedUntilLabel}
+              </div>
+            )}
           </div>
         </div>
 

@@ -137,6 +137,7 @@ export interface MailDetail {
   hasAttachments?: boolean;
   labels?: string[];
   status?: KanbanStatus;
+  snoozedUntil?: string | null;
 
   attachments?: Attachment[];
 }
@@ -165,6 +166,7 @@ interface MailDetailResponse {
   hasAttachments?: boolean;
   labels?: string[];
   status?: KanbanStatus;
+  snoozedUntil?: string | null;
   attachments?: AttachmentResponse[];
 }
 
@@ -192,6 +194,7 @@ export const getEmailDetail = async (emailId: string): Promise<MailDetail> => {
       hasAttachments: data.hasAttachments,
       labels: data.labels,
       status: (data.status as KanbanStatus) || "INBOX",
+      snoozedUntil: data.snoozedUntil ?? null,
       attachments: data.attachments?.map((att) => ({
         id: att.id,
         filename: att.fileName,

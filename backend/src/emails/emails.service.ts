@@ -74,6 +74,9 @@ export class EmailsService {
     }
 
     emailDetailMapped.status = statusDoc?.status ?? 'INBOX';
+    emailDetailMapped.snoozedUntil = statusDoc?.snoozedUntil
+      ? statusDoc.snoozedUntil.toISOString()
+      : undefined;
 
     return emailDetailMapped;
   }
@@ -464,9 +467,18 @@ export class EmailsService {
     }
 
     if (normalizedStatus === 'SNOOZED') {
-      const until = options?.snoozedUntil
-        ? new Date(options.snoozedUntil)
+      const hasCustomUntil = options?.snoozedUntil !== undefined;
+      const until = hasCustomUntil
+        ? new Date(options?.snoozedUntil as string)
         : new Date(Date.now() + 4 * 60 * 60 * 1000);
+      if (hasCustomUntil) {
+        if (Number.isNaN(until.getTime())) {
+          throw new BadRequestException('Invalid snoozedUntil value');
+        }
+        if (until.getTime() <= Date.now()) {
+          throw new BadRequestException('snoozedUntil must be in the future');
+        }
+      }
       const existing = await this.emailModel
         .findOne({ userId, emailId })
         .lean();

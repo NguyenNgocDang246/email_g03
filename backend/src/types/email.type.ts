@@ -19,4 +19,5 @@ export type Email = {
   fromName?: string;
   fromAvatar?: string;
   status?: string;
+  snoozedUntil?: string | Date | null;
 };
