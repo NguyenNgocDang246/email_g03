@@ -8,15 +8,17 @@ export enum EmbeddingLevel {
   FULL = 'FULL',
 }
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+})
 export class EmailEmbeddingEntity {
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   emailId: string;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   mailboxId: string;
 
   @Prop({ required: true })
@@ -31,11 +33,18 @@ export class EmailEmbeddingEntity {
   @Prop({
     type: String,
     enum: Object.values(EmbeddingLevel),
+    required: true,
     default: EmbeddingLevel.SUMMARY,
-    index: true,
   })
   level: EmbeddingLevel;
 }
 
 export const EmailEmbeddingSchema =
   SchemaFactory.createForClass(EmailEmbeddingEntity);
+
+EmailEmbeddingSchema.index(
+  { userId: 1, emailId: 1, level: 1 },
+  { unique: true },
+);
+
+EmailEmbeddingSchema.index({ userId: 1, mailboxId: 1, level: 1 });
