@@ -1,8 +1,7 @@
-import React, { useEffect } from "react";
-import { RefreshCw, Trash2, MailOpen } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { RefreshCw, Paperclip } from "lucide-react";
 import { EmailListItem } from "./EmailListItem";
 import type { MailInfo } from "../../api/inbox";
-
 import { useInView } from "react-intersection-observer";
 
 interface EmailListProps {
@@ -15,10 +14,6 @@ interface EmailListProps {
     isStar: boolean,
     e?: React.MouseEvent<HTMLButtonElement>
   ) => void;
-  // onCheckboxChange: (
-  //   emailId: number,
-  //   e: React.ChangeEvent<HTMLInputElement>
-  // ) => void;
   onSelectAll: () => void;
   onDelete: () => void;
   onMarkAsRead: () => void;
@@ -33,15 +28,15 @@ export const EmailList: React.FC<EmailListProps> = ({
   selectedEmails,
   onEmailSelect,
   onToggleStar,
-  // onCheckboxChange,
   onSelectAll,
-  onDelete,
-  onMarkAsRead,
   onRefresh,
   fetchNextPage,
   hasNextPage,
 }) => {
   const { ref, inView } = useInView();
+
+  /** ✅ state filter attachment */
+  const [onlyWithAttachments, setOnlyWithAttachments] = useState(false);
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -49,15 +44,26 @@ export const EmailList: React.FC<EmailListProps> = ({
     }
   }, [fetchNextPage, inView, hasNextPage]);
 
+  /** ✅ filter email list */
+  const filteredEmails = useMemo(() => {
+    if (!onlyWithAttachments) return emails;
+    return emails.filter((email) => email.hasAttachments);
+  }, [emails, onlyWithAttachments]);
+
   return (
     <main className="mt-2 lg:block flex-1 lg:max-w-xl bg-white border-r border-gray-200 flex flex-col w-1/3 rounded-xl scrollbar overflow-y-auto">
+      {/* Toolbar */}
       <div className="border-b border-gray-200 py-2 px-4 flex items-center gap-2 sticky top-0 bg-white z-10">
         <input
           type="checkbox"
-          checked={selectedEmails.length === emails.length && emails.length > 0}
+          checked={
+            selectedEmails.length === filteredEmails.length &&
+            filteredEmails.length > 0
+          }
           onChange={onSelectAll}
           className="w-4 h-4 rounded"
         />
+
         <button
           className="p-2 hover:bg-gray-100 rounded"
           onClick={onRefresh}
@@ -65,34 +71,35 @@ export const EmailList: React.FC<EmailListProps> = ({
         >
           <RefreshCw className="w-4 h-4 text-gray-400" />
         </button>
+
+        {/* ✅ Filter attachment */}
         <button
-          className="p-2 hover:bg-gray-100 rounded disabled:opacity-50"
-          onClick={onDelete}
-          disabled={selectedEmails.length === 0}
-          title="Delete"
+          className={`p-2 rounded hover:bg-gray-100 ${
+            onlyWithAttachments ? "bg-gray-200" : ""
+          }`}
+          onClick={() => setOnlyWithAttachments((prev) => !prev)}
+          title="Chỉ hiển thị mail có attachment"
         >
-          <Trash2 className="w-4 h-4 text-black" />
+          <Paperclip
+            className={`w-4 h-4 ${
+              onlyWithAttachments ? "text-black" : "text-gray-400"
+            }`}
+          />
         </button>
-        <button
-          className="p-2 hover:bg-gray-100 rounded disabled:opacity-50"
-          onClick={onMarkAsRead}
-          disabled={selectedEmails.length === 0}
-          title="Mark as read"
-        >
-          <MailOpen className="w-4 h-4 text-black" />
-        </button>
+
         <span className="ml-auto text-sm text-gray-600">
-          1-{emails.length} of {emails.length}
+          {filteredEmails.length} mail
         </span>
       </div>
 
+      {/* Email list */}
       <div className="flex-1 overflow-y-auto">
-        {emails.length === 0 ? (
+        {filteredEmails.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-8 text-gray-400">
-            <p>Hiện tại không có mail</p>
+            <p>Không có mail phù hợp</p>
           </div>
         ) : (
-          emails.map((email, index) => (
+          filteredEmails.map((email, index) => (
             <EmailListItem
               key={`${email.id}-${index}`}
               email={email}
@@ -100,7 +107,6 @@ export const EmailList: React.FC<EmailListProps> = ({
               isChecked={selectedEmails.includes(email.id)}
               onSelect={onEmailSelect}
               onToggleStar={onToggleStar}
-              // onCheckboxChange={onCheckboxChange}
             />
           ))
         )}
