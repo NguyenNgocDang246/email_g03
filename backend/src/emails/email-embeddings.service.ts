@@ -14,18 +14,6 @@ export class EmailEmbeddingsService {
     private readonly model: Model<EmailEmbeddingDocument>,
   ) {}
 
-  async findByEmailId(
-    emailId: string,
-    userId: string,
-    level?: 'SUMMARY' | 'FULL',
-  ) {
-    return this.model.findOne({
-      emailId,
-      userId,
-      ...(level ? { level } : {}),
-    });
-  }
-
   async upsertEmbedding(data: EmailEmbeddingEntity) {
     return this.model.findOneAndUpdate(
       {
@@ -34,21 +22,34 @@ export class EmailEmbeddingsService {
         level: data.level,
       },
       data,
-      { upsert: true, new: true },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+      },
     );
   }
 
-  async findAllByMailbox(userId: string, mailboxId: string) {
-    return this.model.find({ userId, mailboxId }).lean();
+  async findEmbedding(emailId: string, userId: string, level: EmbeddingLevel) {
+    return this.model.findOne({ emailId, userId, level }).lean();
   }
 
-  async hasFullEmbedding(emailId: string, userId: string): Promise<boolean> {
-    const count = await this.model.countDocuments({
-      emailId,
-      userId,
-      level: EmbeddingLevel.FULL,
-    });
+  async findSummaryEmbeddingsByMailbox(userId: string, mailboxId: string) {
+    return this.model
+      .find({
+        userId,
+        mailboxId,
+        level: EmbeddingLevel.SUMMARY,
+      })
+      .select({ emailId: 1, embedding: 1 })
+      .lean();
+  }
 
-    return count > 0;
+  async deleteEmbeddingsByEmail(emailId: string, userId: string) {
+    return this.model.deleteMany({ emailId, userId });
+  }
+
+  async deleteByMailbox(userId: string, mailboxId: string) {
+    return this.model.deleteMany({ userId, mailboxId });
   }
 }

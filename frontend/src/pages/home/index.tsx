@@ -37,6 +37,7 @@ export default function Home() {
           setSearchQuery={setSearchQuery}
           searchMode={searchMode}
           setSearchMode={setSearchMode}
+          searchSuggestions={[]}
         />
       )}
       <div className="flex flex-col items-center justify-center grow px-4 text-center mt-12">

@@ -3,6 +3,8 @@ import { createContext, useContext } from "react";
 interface MailContextValue {
   selectOnNewMail: boolean;
   setSelectOnNewMail: (value: boolean) => void;
+  searchSuggestions: string[];
+  setSearchSuggestions: (value: string[]) => void;
 }
 
 export const MailContext = createContext<MailContextValue | undefined>(undefined);

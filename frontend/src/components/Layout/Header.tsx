@@ -10,6 +10,7 @@ interface HeaderProps {
   setSearchQuery: (query: string) => void;
   searchMode: SearchMode;
   setSearchMode: (mode: SearchMode) => void;
+  searchSuggestions: string[];
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   setSearchQuery,
   searchMode,
   setSearchMode,
+  searchSuggestions,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,30 +33,35 @@ export const Header: React.FC<HeaderProps> = ({
   const handleLogout = async () => {
     await logout();
   };
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-
+  const updateSearchParams = (nextQuery: string, nextMode: SearchMode) => {
     const params = new URLSearchParams(location.search);
-    if (value) {
-      params.set("query", value);
+    if (nextQuery) {
+      params.set("query", nextQuery);
     } else {
       params.delete("query");
     }
-
-    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
-  };
-  const handleSearchModeChange = (mode: SearchMode) => {
-    setSearchMode(mode);
-    const params = new URLSearchParams(location.search);
-    if (mode) {
-      params.set("mode", mode);
+    if (nextMode) {
+      params.set("mode", nextMode);
     } else {
       params.delete("mode");
     }
-    if (searchQuery) {
-      params.set("query", searchQuery);
-    }
     navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    updateSearchParams(value, searchMode);
+  };
+
+  const handleSearchSubmit = (value: string) => {
+    const trimmedValue = value.trim();
+    setSearchQuery(trimmedValue);
+    updateSearchParams(trimmedValue, searchMode);
+  };
+
+  const handleSearchModeChange = (mode: SearchMode) => {
+    setSearchMode(mode);
+    updateSearchParams(searchQuery, mode);
   };
 
   useEffect(() => {
@@ -82,6 +89,8 @@ export const Header: React.FC<HeaderProps> = ({
         <SearchBar
           value={searchQuery}
           onChange={handleSearchChange}
+          onSubmit={handleSearchSubmit}
+          suggestions={searchSuggestions}
           mode={searchMode}
           onModeChange={handleSearchModeChange}
           placeholder="Tìm kiếm mail"

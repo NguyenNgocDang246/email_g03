@@ -223,7 +223,9 @@ export const modifyEmail = async (
   payload: ModifyEmailPayload
 ): Promise<void> => {
   try {
+    // console.log("payload: ",payload);
     await API.post(`/emails/${emailId}/modify`, payload);
+    // console.log(res);
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Request error");
