@@ -48,6 +48,9 @@ export class EmailEntity {
     default: null,
   })
   previousStatus?: EmailStatus | null;
+
+  @Prop({ default: false })
+  hasAttachments: boolean;
 }
 
 export const EmailSchema = SchemaFactory.createForClass(EmailEntity);
