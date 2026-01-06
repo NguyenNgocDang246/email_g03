@@ -286,6 +286,7 @@ export class EmailsService {
       snippet: string;
       date: string;
       labels?: string[];
+      hasAttachments?: boolean;
     }[],
   ) {
     if (!emails.length) return;
@@ -300,6 +301,7 @@ export class EmailsService {
             snippet: mail.snippet ?? '',
             receivedAt: mail.date ? new Date(mail.date) : new Date(),
             labels: mail.labels ?? [],
+            hasAttachments: mail.hasAttachments,
           },
           $setOnInsert: {
             emailId: mail.id,
@@ -360,6 +362,7 @@ export class EmailsService {
               snippet: mail.snippet ?? '',
               receivedAt: mail.date ? new Date(mail.date) : new Date(),
               status: 'INBOX',
+              hasAttachments: false,
             },
           },
         });
