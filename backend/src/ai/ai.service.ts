@@ -47,16 +47,6 @@ export class AiService {
     mailboxId: string,
     level: EmbeddingLevel = EmbeddingLevel.SUMMARY,
   ) {
-    if (
-      level === EmbeddingLevel.SUMMARY &&
-      (await this.emailEmbeddingsService.hasFullEmbedding(
-        email.emailId,
-        userId,
-      ))
-    ) {
-      return;
-    }
-
     const text =
       level === EmbeddingLevel.FULL
         ? this.buildFullEmailText(email)
@@ -66,16 +56,13 @@ export class AiService {
 
     const contentHash = this.hashContent(text);
 
-    const existing = await this.emailEmbeddingsService.findByEmailId(
+    const existing = await this.emailEmbeddingsService.findEmbedding(
       email.emailId,
       userId,
+      level,
     );
 
-    if (
-      existing &&
-      existing.level === level &&
-      existing.contentHash === contentHash
-    ) {
+    if (existing && existing.contentHash === contentHash) {
       return;
     }
 
@@ -92,26 +79,73 @@ export class AiService {
     });
   }
 
-  async semanticSearch(mailboxId: string, query: string, userId: string) {
-    if (!query?.trim()) return [];
+  async semanticSearch(
+    mailboxId: string,
+    query: string,
+    userId: string,
+    options?: { limit?: number; minScore?: number },
+  ) {
+    if (!query || !query.trim()) return [];
 
-    const queryEmbedding = await this.embed(query);
+    const limit = options?.limit ?? 10;
+    const minScore = options?.minScore ?? 0.3;
 
-    const embeddings = await this.emailEmbeddingsService.findAllByMailbox(
-      userId,
-      mailboxId,
-    );
+    const queryEmbedding = await this.embed(query.trim());
 
-    const scored = embeddings.map((item) => ({
-      emailId: item.emailId,
-      score: this.cosineSimilarity(queryEmbedding, item.embedding),
-    }));
+    if (!queryEmbedding.length) return [];
+
+    const embeddings =
+      await this.emailEmbeddingsService.findSummaryEmbeddingsByMailbox(
+        userId,
+        mailboxId,
+      );
+
+    if (!embeddings.length) return [];
+
+    const scored: { emailId: string; score: number }[] = [];
+
+    for (const item of embeddings) {
+      if (!item.embedding || item.embedding.length !== queryEmbedding.length) {
+        continue;
+      }
+
+      const score = this.cosineSimilarity(queryEmbedding, item.embedding);
+
+      if (score >= minScore) {
+        scored.push({
+          emailId: item.emailId,
+          score,
+        });
+      }
+    }
+
+    if (!scored.length) return [];
 
     scored.sort((a, b) => b.score - a.score);
 
-    const topIds = scored.slice(0, 10).map((i) => i.emailId);
+    const top = scored.slice(0, limit);
 
-    return this.emailsService.findByEmailIds(userId, topIds, mailboxId);
+    const emailIds = top.map((i) => i.emailId);
+
+    const emails = await this.emailsService.findByEmailIds(
+      userId,
+      emailIds,
+      mailboxId,
+    );
+
+    const emailMap = new Map(emails.map((e) => [e.id, e]));
+
+    return top
+      .map(({ emailId, score }) => {
+        const email = emailMap.get(emailId);
+        if (!email) return null;
+
+        return {
+          ...email,
+          score,
+        };
+      })
+      .filter(Boolean);
   }
 
   async summarizeEmail(emailId: string, userId: string, forceRefresh = false) {
