@@ -35,6 +35,7 @@ export interface MailInfo {
   body: string; // API không có -> để rỗng
   labels?: string[];
   status?: KanbanStatus;
+  hasAttachments:boolean;
 }
 
 export interface MailListResponse {
@@ -54,6 +55,7 @@ interface MailListApiItem {
   labels?: string[];
   body?: string;
   status?: KanbanStatus;
+  hasAttachments:boolean;
 }
 
 interface MailListApiResponse {
@@ -78,6 +80,7 @@ export const getMailBoxesEmailListInfo = async (
     const res = await API.get(url);
 
     const { nextPageToken, total, data } = res.data as MailListApiResponse;
+    console.log("danh sahc mail",data)
 
     const mappedData: MailInfo[] = data.map((item) => ({
       id: item.id,
@@ -91,6 +94,7 @@ export const getMailBoxesEmailListInfo = async (
       body: item.body || "",
       labels: item.labels,
       status: (item.status as KanbanStatus) || "INBOX",
+      hasAttachments: item.hasAttachments,
     }));
 
     return {
