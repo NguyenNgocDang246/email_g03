@@ -15,13 +15,15 @@ const NewMessage: React.FC<NewMessageProps> = ({ mailboxId }) => {
   const [subject, setSubject] = useState<string>("");
   const [body, setBody] = useState<string>("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const { selectOnNewMail, setSelectOnNewMail } = useMail();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   // Chọn file
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const filesArray: Attachment[] = Array.from(e.target.files).map((file) => ({
+    const newFiles = Array.from(e.target.files);
+    const filesArray: Attachment[] = newFiles.map((file) => ({
       id: crypto.randomUUID(),
       filename: file.name,
       mimeType: file.type,
@@ -31,11 +33,16 @@ const NewMessage: React.FC<NewMessageProps> = ({ mailboxId }) => {
         : undefined,
     }));
     setAttachments((prev) => [...prev, ...filesArray]);
+    setFiles((prev) => [...prev, ...newFiles]);
     e.target.value = "";
   };
 
   const handleRemoveAttachment = (id: string) => {
-    setAttachments((prev) => prev.filter((att) => att.id !== id));
+    const index = attachments.findIndex((att) => att.id === id);
+    if (index !== -1) {
+      setAttachments((prev) => prev.filter((att) => att.id !== id));
+      setFiles((prev) => prev.filter((_, i) => i !== index));
+    }
   };
 
   // useMutation gửi email
@@ -48,6 +55,7 @@ const NewMessage: React.FC<NewMessageProps> = ({ mailboxId }) => {
       setSubject("");
       setBody("");
       setAttachments([]);
+      setFiles([]);
       setSelectOnNewMail(false);
       queryClient.invalidateQueries({ queryKey: ["emails", mailboxId] });
     },
@@ -67,16 +75,17 @@ const NewMessage: React.FC<NewMessageProps> = ({ mailboxId }) => {
       to,
       subject,
       html: body,
+      files: files.length > 0 ? files : undefined,
     });
   };
 
   return (
     <div
-      className={`border rounded-md bg-white shadow py-2 w-full h-full max-w-3xl mx-auto flex flex-col justify-between ${
+      className={`border rounded-md bg-white shadow py-2 w-full h-full max-w-3xl mx-auto flex flex-col ${
         selectOnNewMail ? "block" : "hidden"
       }`}
     >
-      <div>
+      <div className="flex-1 overflow-y-auto">
         {/* Send Row */}
         <div className="flex justify-between items-center px-4">
           <div className="flex items-center gap-2 mb-2">
@@ -156,14 +165,14 @@ const NewMessage: React.FC<NewMessageProps> = ({ mailboxId }) => {
             placeholder="Nhập / để chèn tệp và nội dung khác"
           ></textarea>
         </div>
-      </div>
 
-      <div className="p-4">
         {attachments.length > 0 && (
-          <AttachmentList
-            attachments={attachments}
-            onRemove={handleRemoveAttachment}
-          />
+          <div className="p-4">
+            <AttachmentList
+              attachments={attachments}
+              onRemove={handleRemoveAttachment}
+            />
+          </div>
         )}
       </div>
     </div>

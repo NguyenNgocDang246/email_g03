@@ -1,9 +1,11 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
+import { Paperclip } from "lucide-react";
 import { type MailInfo } from "../../api/inbox";
 import { type KanbanColumnConfig, type KanbanStatus } from "../../constants/kanban";
 import { KanbanCard } from "./KanbanCard";
+import { useMail } from "../../context/MailContext";
 
 interface KanbanColumnProps {
   column: KanbanColumnConfig;
@@ -24,6 +26,9 @@ export const KanbanColumn = ({
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [starredOnly, setStarredOnly] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("newest");
+
+  /** ✅ Get attachment filter from context */
+  const { onlyWithAttachments, setOnlyWithAttachments } = useMail();
 
   const {
     attributes,
@@ -51,6 +56,7 @@ export const KanbanColumn = ({
     const filtered = items.filter((email) => {
       if (unreadOnly && email.isRead) return false;
       if (starredOnly && !email.isStarred) return false;
+      if (onlyWithAttachments && !email.hasAttachments) return false;
 
       if (!normalizedQuery) return true;
 
@@ -76,7 +82,7 @@ export const KanbanColumn = ({
           return toTime(b.timestamp) - toTime(a.timestamp);
       }
     });
-  }, [items, searchText, unreadOnly, starredOnly, sortOption]);
+  }, [items, searchText, unreadOnly, starredOnly, sortOption, onlyWithAttachments]);
 
   return (
     <section
@@ -148,6 +154,19 @@ export const KanbanColumn = ({
             />
             Starred
           </label>
+
+          <button
+            type="button"
+            className={`h-8 rounded-md border px-2 transition-all ${
+              onlyWithAttachments
+                ? "bg-blue-100 border-blue-300 text-blue-700"
+                : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+            }`}
+            onClick={() => setOnlyWithAttachments(!onlyWithAttachments)}
+            title="Filter emails with attachments"
+          >
+            <Paperclip className="w-3.5 h-3.5" />
+          </button>
         </div>
       </header>
       <SortableContext

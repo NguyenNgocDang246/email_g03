@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { RefreshCw, Paperclip } from "lucide-react";
 import { EmailListItem } from "./EmailListItem";
 import type { MailInfo } from "../../api/inbox";
 import { useInView } from "react-intersection-observer";
+import { useMail } from "../../context/MailContext";
 
 interface EmailListProps {
   emails: MailInfo[];
@@ -35,8 +36,8 @@ export const EmailList: React.FC<EmailListProps> = ({
 }) => {
   const { ref, inView } = useInView();
 
-  /** ✅ state filter attachment */
-  const [onlyWithAttachments, setOnlyWithAttachments] = useState(false);
+  /** ✅ state filter attachment from context */
+  const { onlyWithAttachments, setOnlyWithAttachments } = useMail();
 
   useEffect(() => {
     if (inView && hasNextPage) {

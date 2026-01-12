@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, Star, RefreshCcw } from "lucide-react";
+import { Mail, Star, RefreshCcw, Paperclip } from "lucide-react";
 import React, { Suspense, useMemo, useRef, useState } from "react";
 import {
     getEmailDetail,
     replyEmail,
     type ReplyEmailPayload,
+    type Attachment,
 } from "../../api/inbox";
 import { Trash } from "lucide-react";
 import { SendHorizonal } from "lucide-react";
@@ -62,6 +63,9 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
     const { selectOnNewMail } = useMail();
     const [message, setMessage] = useState("");
     const [isReply, setIsReply] = useState(false);
+    const [replyAttachments, setReplyAttachments] = useState<Attachment[]>([]);
+    const [replyFiles, setReplyFiles] = useState<File[]>([]);
+    const replyFileInputRef = useRef<HTMLInputElement>(null);
 
     const cleanHtml = useMemo(() => {
         return DOMPurify.sanitize(data?.bodyHtml ?? "", {
@@ -77,6 +81,31 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
         });
     }, [data?.bodyHtml]);
 
+    const handleReplyFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const newFiles = Array.from(e.target.files);
+        const filesArray: Attachment[] = newFiles.map((file) => ({
+            id: crypto.randomUUID(),
+            filename: file.name,
+            mimeType: file.type,
+            size: file.size,
+            previewUrl: file.type.startsWith("image/")
+                ? URL.createObjectURL(file)
+                : undefined,
+        }));
+        setReplyAttachments((prev) => [...prev, ...filesArray]);
+        setReplyFiles((prev) => [...prev, ...newFiles]);
+        e.target.value = "";
+    };
+
+    const handleRemoveReplyAttachment = (id: string) => {
+        const index = replyAttachments.findIndex((att) => att.id === id);
+        if (index !== -1) {
+            setReplyAttachments((prev) => prev.filter((att) => att.id !== id));
+            setReplyFiles((prev) => prev.filter((_, i) => i !== index));
+        }
+    };
+
     const replyMutation = useMutation({
         mutationFn: (payload: ReplyEmailPayload) => {
             if (!emailId) {
@@ -90,6 +119,8 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
 
             setMessage("");
             setIsReply(false);
+            setReplyAttachments([]);
+            setReplyFiles([]);
             queryClient.invalidateQueries({
                 queryKey: ["mailDetailInfo", emailId],
             });
@@ -325,6 +356,16 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                             className="w-full min-h-[150px] border border-gray-300 rounded p-3 text-black focus:outline-none focus:border-blue-500"
                         />
 
+                        {replyAttachments.length > 0 && (
+                            <div className="mt-3">
+                                <AttachmentList
+                                    attachments={replyAttachments}
+                                    emailId=""
+                                    onRemove={handleRemoveReplyAttachment}
+                                />
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-2 mt-6">
                             {/* SEND BUTTON */}
                             <button
@@ -338,6 +379,7 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                                         to: data.recipients[0]?.email ?? "",
                                         subject: `Re: ${data.subject}`,
                                         html: message,
+                                        files: replyFiles.length > 0 ? replyFiles : undefined,
                                     });
                                 }}
                             >
@@ -351,18 +393,37 @@ export const EmailDetail: React.FC<EmailDetailProps> = ({
                                 )}
                             </button>
 
+                            {/* ATTACH FILE BUTTON */}
+                            <button
+                                className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded flex items-center gap-2"
+                                onClick={() => replyFileInputRef.current?.click()}
+                            >
+                                <Paperclip size={18} />
+                                Attach
+                            </button>
+
                             {/* DELETE / CANCEL BUTTON */}
                             <button
                                 className="px-4 py-2 text-black hover:bg-gray-200 border border-gray-300 rounded flex items-center gap-2"
                                 onClick={() => {
                                     setIsReply(false);
                                     setMessage("");
+                                    setReplyAttachments([]);
+                                    setReplyFiles([]);
                                 }}
                             >
                                 <Trash size={18} />
                                 Delete
                             </button>
                         </div>
+
+                        <input
+                            type="file"
+                            multiple
+                            ref={replyFileInputRef}
+                            className="hidden"
+                            onChange={handleReplyFileChange}
+                        />
                     </div>
                 )}
             </div>

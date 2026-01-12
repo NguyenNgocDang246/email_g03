@@ -126,16 +126,54 @@ export class EmailsService {
     }));
   }
 
-  buildMimeEmail(to: string, subject: string, html: string) {
-    const mime = [
+  buildMimeEmail(to: string, subject: string, html: string, files: any[] = []) {
+    if (!files || files.length === 0) {
+      // Simple email without attachments
+      const mime = [
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        '',
+        html,
+      ].join('\n');
+
+      return Buffer.from(mime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // Multipart email with attachments
+    const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36)}`;
+    const mimeParts = [
       `To: ${to}`,
       `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
       'Content-Type: text/html; charset="UTF-8"',
       '',
       html,
-    ].join('\n');
+    ];
 
-    // Base64 → chuẩn base64url
+    // Add attachments
+    files.forEach((file) => {
+      const fileContent = file.buffer.toString('base64');
+      mimeParts.push(
+        `--${boundary}`,
+        `Content-Type: ${file.mimetype}; name="${file.originalname}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-Disposition: attachment; filename="${file.originalname}"`,
+        '',
+        fileContent,
+      );
+    });
+
+    mimeParts.push(`--${boundary}--`);
+
+    const mime = mimeParts.join('\n');
     return Buffer.from(mime)
       .toString('base64')
       .replace(/\+/g, '-')
@@ -143,8 +181,8 @@ export class EmailsService {
       .replace(/=+$/, '');
   }
 
-  async sendEmail(userId: string, { to, subject, html }) {
-    const raw = this.buildMimeEmail(to, subject, html);
+  async sendEmail(userId: string, { to, subject, html }, files: any[] = []) {
+    const raw = this.buildMimeEmail(to, subject, html, files);
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
     const res = await gmail.users.messages.send({
@@ -158,29 +196,68 @@ export class EmailsService {
     };
   }
 
-  buildReplyMime({ to, subject, html, messageIdHeader, referencesHeader }) {
+  buildReplyMime({ to, subject, html, messageIdHeader, referencesHeader, files = [] }: { to: string; subject: string; html: string; messageIdHeader: string; referencesHeader?: string; files?: any[] }) {
     let references = messageIdHeader;
     if (referencesHeader && referencesHeader.trim().length) {
       references = referencesHeader.trim() + ' ' + messageIdHeader;
     }
 
-    const mime = [
+    if (!files || files.length === 0) {
+      // Simple reply without attachments
+      const mime = [
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        `In-Reply-To: ${messageIdHeader}`,
+        `References: ${references}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        '',
+        html,
+      ].join('\n');
+
+      return Buffer.from(mime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // Multipart reply with attachments
+    const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36)}`;
+    const mimeParts = [
       `To: ${to}`,
       `Subject: ${subject}`,
       `In-Reply-To: ${messageIdHeader}`,
       `References: ${references}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
       'Content-Type: text/html; charset="UTF-8"',
       '',
       html,
-    ].join('\n');
+    ];
 
-    const raw = Buffer.from(mime)
+    // Add attachments
+    files.forEach((file) => {
+      const fileContent = file.buffer.toString('base64');
+      mimeParts.push(
+        `--${boundary}`,
+        `Content-Type: ${file.mimetype}; name="${file.originalname}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-Disposition: attachment; filename="${file.originalname}"`,
+        '',
+        fileContent,
+      );
+    });
+
+    mimeParts.push(`--${boundary}--`);
+
+    const mime = mimeParts.join('\n');
+    return Buffer.from(mime)
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
-
-    return raw;
   }
 
   async replyEmail(
@@ -189,6 +266,7 @@ export class EmailsService {
     threadId: string,
     messageIdHeader: string,
     referencesHeader?: string,
+    files: any[] = [],
   ) {
     const raw = this.buildReplyMime({
       to,
@@ -196,6 +274,7 @@ export class EmailsService {
       html,
       messageIdHeader,
       referencesHeader,
+      files,
     });
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
@@ -340,6 +419,7 @@ export class EmailsService {
       subject: string;
       snippet: string;
       date: string;
+      hasAttachments?: boolean;
     }[],
   ) {
     await this.unsnoozeExpired(userId);
@@ -362,7 +442,7 @@ export class EmailsService {
               snippet: mail.snippet ?? '',
               receivedAt: mail.date ? new Date(mail.date) : new Date(),
               status: 'INBOX',
-              hasAttachments: false,
+              hasAttachments: mail.hasAttachments || false,
             },
           },
         });

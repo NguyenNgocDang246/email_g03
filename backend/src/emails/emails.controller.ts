@@ -7,7 +7,10 @@ import {
   Post,
   Req,
   Res,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import contentDisposition from 'content-disposition';
 import { EmailsService } from './emails.service';
 import type { Request } from 'express';
@@ -18,7 +21,13 @@ export class EmailsController {
   constructor(private emailsService: EmailsService) {}
 
   @Post(':id/reply')
-  async reply(@Body() body, @Req() req: Request, @Param('id') id: string) {
+  @UseInterceptors(FilesInterceptor('attachments', 10))
+  async reply(
+    @Body() body: any,
+    @Req() req: Request,
+    @Param('id') id: string,
+    @UploadedFiles() files?: any[],
+  ) {
     const data = req['user'];
     const userId = data.id;
     // const userId = '6929c1a4f090673ab256f767';
@@ -41,6 +50,7 @@ export class EmailsController {
       threadId,
       messageIdHeader,
       referencesHeader,
+      files || [],
     );
   }
 
@@ -128,7 +138,12 @@ export class EmailsController {
   }
 
   @Post('send')
-  async send(@Body() body, @Req() req: Request) {
+  @UseInterceptors(FilesInterceptor('attachments', 10))
+  async send(
+    @Body() body: any,
+    @Req() req: Request,
+    @UploadedFiles() files?: any[],
+  ) {
     const data = req['user'];
     const userId = data.id;
     // const userId = '6929c1a4f090673ab256f767';
@@ -138,6 +153,6 @@ export class EmailsController {
     if (!body.subject) {
       body.subject = '';
     }
-    return this.emailsService.sendEmail(userId, body);
+    return this.emailsService.sendEmail(userId, body, files || []);
   }
 }

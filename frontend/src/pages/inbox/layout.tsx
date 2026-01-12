@@ -19,6 +19,7 @@ export default function InboxLayout({
   );
   const [selectOnNewMail, setSelectOnNewMail] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [onlyWithAttachments, setOnlyWithAttachments] = useState(false);
 
    useEffect(() => {
      if (id) {
@@ -33,6 +34,8 @@ export default function InboxLayout({
         setSelectOnNewMail,
         searchSuggestions,
         setSearchSuggestions,
+        onlyWithAttachments,
+        setOnlyWithAttachments,
       }}>
       <div className="h-screen flex flex-col bg-gray-50 w-screen">
         <Header
