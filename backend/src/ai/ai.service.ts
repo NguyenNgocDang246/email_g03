@@ -88,19 +88,30 @@ export class AiService {
     if (!query || !query.trim()) return [];
 
     const limit = options?.limit ?? 10;
-    const minScore = options?.minScore ?? 0.3;
+    const minScore = options?.minScore ?? 0.2;
+
+    this.logger.log(`Semantic search: query="${query}", mailboxId="${mailboxId}", userId="${userId}"`);
 
     const queryEmbedding = await this.embed(query.trim());
 
-    if (!queryEmbedding.length) return [];
+    if (!queryEmbedding.length) {
+      this.logger.warn('Query embedding is empty');
+      return [];
+    }
 
-    const embeddings =
-      await this.emailEmbeddingsService.findSummaryEmbeddingsByMailbox(
-        userId,
-        mailboxId,
-      );
+    const embeddings = mailboxId
+      ? await this.emailEmbeddingsService.findSummaryEmbeddingsByMailbox(
+          userId,
+          mailboxId,
+        )
+      : [];
 
-    if (!embeddings.length) return [];
+    this.logger.log(`Found ${embeddings.length} embeddings in DB for mailbox ${mailboxId}`);
+
+    if (!embeddings.length) {
+      this.logger.log(`No embeddings found in mailbox ${mailboxId}, returning empty results`);
+      return [];
+    }
 
     const scored: { emailId: string; score: number }[] = [];
 
@@ -119,6 +130,8 @@ export class AiService {
       }
     }
 
+    this.logger.log(`Scored ${scored.length} emails above threshold ${minScore}`);
+
     if (!scored.length) return [];
 
     scored.sort((a, b) => b.score - a.score);
@@ -135,10 +148,16 @@ export class AiService {
 
     const emailMap = new Map(emails.map((e) => [e.id, e]));
 
-    return top
+    const results = top
       .map(({ emailId, score }) => {
         const email = emailMap.get(emailId);
         if (!email) return null;
+
+        // Only return emails that belong to the requested mailbox
+        if (mailboxId && email.labels && !email.labels.includes(mailboxId)) {
+          this.logger.log(`Skipping email ${emailId} - not in mailbox ${mailboxId}`);
+          return null;
+        }
 
         return {
           ...email,
@@ -146,6 +165,10 @@ export class AiService {
         };
       })
       .filter(Boolean);
+
+    this.logger.log(`Returning ${results.length} emails from mailbox ${mailboxId}`);
+
+    return results;
   }
 
   async summarizeEmail(emailId: string, userId: string, forceRefresh = false) {

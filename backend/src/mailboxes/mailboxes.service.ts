@@ -174,7 +174,7 @@ export class MailboxesService {
       }),
     );
 
-    await this.emailsService.saveEmailSummaries(userId, emails);
+    await this.emailsService.saveEmailSummaries(userId, emails, mailboxId);
   }
 
   async searchEmailsInMailbox(

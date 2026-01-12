@@ -368,7 +368,9 @@ export class EmailsService {
       date: string;
       labels?: string[];
       hasAttachments?: boolean;
+      mailboxId?: string;
     }[],
+    mailboxId?: string,
   ) {
     if (!emails.length) return;
 
@@ -406,7 +408,7 @@ export class EmailsService {
             from: mail.from,
           },
           userId,
-          'INBOX',
+          mailboxId || mail.mailboxId || 'INBOX',
           EmbeddingLevel.SUMMARY,
         ),
       ),

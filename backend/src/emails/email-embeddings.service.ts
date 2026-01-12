@@ -45,6 +45,16 @@ export class EmailEmbeddingsService {
       .lean();
   }
 
+  async findAllSummaryEmbeddingsByUser(userId: string) {
+    return this.model
+      .find({
+        userId,
+        level: EmbeddingLevel.SUMMARY,
+      })
+      .select({ emailId: 1, embedding: 1 })
+      .lean();
+  }
+
   async deleteEmbeddingsByEmail(emailId: string, userId: string) {
     return this.model.deleteMany({ emailId, userId });
   }
