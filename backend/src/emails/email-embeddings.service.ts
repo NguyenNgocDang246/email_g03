@@ -62,4 +62,15 @@ export class EmailEmbeddingsService {
   async deleteByMailbox(userId: string, mailboxId: string) {
     return this.model.deleteMany({ userId, mailboxId });
   }
+
+  async updateMailboxIdForEmail(
+    emailId: string,
+    userId: string,
+    newMailboxId: string,
+  ) {
+    return this.model.updateMany(
+      { emailId, userId },
+      { $set: { mailboxId: newMailboxId } },
+    );
+  }
 }

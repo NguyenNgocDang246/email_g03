@@ -155,4 +155,12 @@ export class EmailsController {
     }
     return this.emailsService.sendEmail(userId, body, files || []);
   }
+
+  @Post(':id/sync-labels')
+  async syncLabels(@Req() req: Request, @Param('id') id: string) {
+    const data = req['user'];
+    const userId = data.id;
+    await this.emailsService.syncEmailLabelsToDb(userId, id);
+    return { message: 'Labels synced successfully' };
+  }
 }

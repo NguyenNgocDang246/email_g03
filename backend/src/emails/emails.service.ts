@@ -25,6 +25,11 @@ export class EmailsService {
     private emailModel: Model<EmailEntity>,
   ) {}
 
+  private getPrimaryMailboxId(labels: string[] = []): string {
+    const systemLabels = ['INBOX', 'SENT', 'DRAFT', 'SPAM', 'TRASH'];
+    return labels.find((label) => systemLabels.includes(label)) || 'INBOX';
+  }
+
   async getEmailDetail(id: string, userId: string) {
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
@@ -59,6 +64,10 @@ export class EmailsService {
     }
 
     if (emailDetailMapped?.bodyText || emailDetailMapped?.snippet) {
+      const primaryMailboxId = this.getPrimaryMailboxId(
+        emailDetailMapped.labels,
+      );
+
       await this.aiService.embedEmailIfNeeded(
         {
           emailId: id,
@@ -68,7 +77,7 @@ export class EmailsService {
           from: emailDetailMapped.from,
         },
         userId,
-        'INBOX',
+        primaryMailboxId,
         EmbeddingLevel.FULL,
       );
     }
@@ -310,6 +319,49 @@ export class EmailsService {
         removeLabelIds: removeLabels,
       },
     });
+
+    // Sync labels to database after modification
+    await this.syncEmailLabelsToDb(userId, messageId);
+
+    return res;
+  }
+
+  async syncEmailLabelsToDb(userId: string, emailId: string) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return;
+
+    try {
+      // Fetch latest email data from Gmail to get updated labels
+      const emailData = await gmail.users.messages.get({
+        userId: 'me',
+        id: emailId,
+        format: 'metadata',
+        metadataHeaders: ['From', 'Subject'],
+      });
+
+      const labels = emailData.data.labelIds || [];
+
+      // Update EmailEntity labels in database
+      await this.emailModel.updateOne(
+        { userId, emailId },
+        { $set: { labels } },
+      );
+
+      // Determine primary mailboxId and update embeddings
+      const primaryMailboxId = this.getPrimaryMailboxId(labels);
+
+      // Update mailboxId in EmailEmbeddingEntity
+      await this.aiService.updateEmbeddingMailboxId(
+        emailId,
+        userId,
+        primaryMailboxId,
+      );
+    } catch (error) {
+      console.error(
+        `Failed to sync labels for email ${emailId}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   }
 
   async streamAttachment(

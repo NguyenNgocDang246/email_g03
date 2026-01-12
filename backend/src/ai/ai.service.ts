@@ -291,6 +291,18 @@ export class AiService {
       'No content available to summarize for this email.'
     );
   }
+  async updateEmbeddingMailboxId(
+    emailId: string,
+    userId: string,
+    newMailboxId: string,
+  ) {
+    return this.emailEmbeddingsService.updateMailboxIdForEmail(
+      emailId,
+      userId,
+      newMailboxId,
+    );
+  }
+
   private buildSummaryEmailText(email: any): string {
     return [
       email.from && `From: ${email.from}`,
