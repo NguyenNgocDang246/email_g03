@@ -67,14 +67,16 @@ interface MailListApiResponse {
 export const getMailBoxesEmailListInfo = async (
   mailboxId: string,
   query?: string,
-  pageToken?: string
+  pageToken?: string,
+  refresh?: boolean
 ): Promise<MailListResponse> => {
   try {
+    const refreshParam = refresh ? "&refresh=true" : "";
     const url = query
       ? `/mailboxes/${mailboxId}/emails/search?query=${encodeURIComponent(
           query
-        )}&limit=10&pageToken=${pageToken || ""}`
-      : `/mailboxes/${mailboxId}/emails?limit=10&pageToken=${pageToken || ""}`;
+        )}&limit=10&pageToken=${pageToken || ""}${refreshParam}`
+      : `/mailboxes/${mailboxId}/emails?limit=10&pageToken=${pageToken || ""}${refreshParam}`;
 
 
     const res = await API.get(url);

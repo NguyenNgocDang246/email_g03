@@ -68,6 +68,7 @@ export default function InboxPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [searchMode, setSearchMode] = useState<"keyword" | "semantic">(modeFromUrl);
   const [isDetailCollapsed, setIsDetailCollapsed] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isManageColumnsOpen, setIsManageColumnsOpen] = useState(false);
   const [newColumnDisplayName, setNewColumnDisplayName] = useState("");
   const [newColumnDescription, setNewColumnDescription] = useState("");
@@ -106,10 +107,14 @@ export default function InboxPage() {
     error,
     fetchNextPage,
     hasNextPage,
-    refetch,
   } = useInfiniteQuery({
-    queryKey: ["emails", mailboxId, debouncedQuery, searchMode],
-    queryFn: ({ pageParam }) => getMailBoxesEmailListInfo(mailboxId!, debouncedQuery, pageParam),
+    queryKey: ["emails", mailboxId, debouncedQuery, searchMode, refreshTrigger],
+    queryFn: ({ pageParam }) => {
+      // Option 3: Auto refresh from Gmail when loading first page (no pageToken)
+      // Option 1: Force refresh when refreshTrigger changes
+      const shouldRefresh = !pageParam || refreshTrigger > 0;
+      return getMailBoxesEmailListInfo(mailboxId!, debouncedQuery, pageParam, shouldRefresh);
+    },
     enabled: !!mailboxId && searchMode === "keyword",
     retry: false,
     refetchOnWindowFocus: false,
@@ -401,10 +406,14 @@ export default function InboxPage() {
   };
 
   const isSemanticMode = searchMode === "semantic";
-  const displayEmails = useMemo(
-    () => (isSemanticMode ? semanticEmails ?? [] : emails),
-    [emails, isSemanticMode, semanticEmails]
-  );
+  const displayEmails = useMemo(() => {
+    // If semantic mode but no query, show all keyword emails
+    if (isSemanticMode && !debouncedQuery) {
+      return emails;
+    }
+    // Otherwise, show semantic or keyword results
+    return isSemanticMode ? semanticEmails ?? [] : emails;
+  }, [emails, isSemanticMode, semanticEmails, debouncedQuery]);
 
   const groupedEmails = useMemo(() => {
     const base = kanbanColumns.reduce(
@@ -435,14 +444,14 @@ export default function InboxPage() {
         queryKey: ["semantic-emails", mailboxId, debouncedQuery],
       });
     } else {
-      refetch();
+      // Option 1: Trigger force refresh from Gmail API
+      setRefreshTrigger(prev => prev + 1);
     }
   };
 
   const currentError = isSemanticMode ? semanticError : error;
   const isLoadingState = isSemanticMode ? isSemanticFetching : isLoading;
   const isInitialLoading = isLoadingState && displayEmails.length === 0;
-  const isEmptySemanticQuery = isSemanticMode && !debouncedQuery;
 
   const isColumnsAtLimit = (kanbanColumnsData?.length ?? 0) >= 10;
   const handleCreateColumn = () => {
@@ -540,12 +549,6 @@ export default function InboxPage() {
           <ToggleButton mode={viewMode} onChange={setViewMode} />
         </div>
       </div>
-
-      {isEmptySemanticQuery && (
-        <div className="text-sm text-gray-600 bg-white border rounded-md p-3">
-          Nhập từ khóa để chạy semantic search.
-        </div>
-      )}
 
       {currentError && (
         <div className="text-sm text-red-600 bg-white border border-red-200 rounded-md p-3">
