@@ -100,6 +100,7 @@ export class EmailsService {
         isRead: !(storedMap.get(id)?.labels || []).includes('UNREAD'),
         labels: storedMap.get(id)?.labels || [],
         status: (storedMap.get(id)?.status as any) || 'INBOX',
+        hasAttachments: storedMap.get(id)?.hasAttachments || false,
       }));
     }
 
@@ -123,6 +124,7 @@ export class EmailsService {
       isRead: m.isRead,
       labels: m.labels,
       status: (storedMap.get(m.id)?.status as any) || 'INBOX',
+      hasAttachments: m.hasAttachments || false,
     }));
   }
 
@@ -455,12 +457,18 @@ export class EmailsService {
     const refreshed = await this.emailModel
       .find({ userId, emailId: { $in: ids } })
       .lean();
-    const refreshedMap = new Map(refreshed.map((e) => [e.emailId, e.status]));
+    const refreshedMap = new Map(
+      refreshed.map((e) => [e.emailId, { status: e.status, hasAttachments: e.hasAttachments }]),
+    );
 
-    return emails.map((mail) => ({
-      ...mail,
-      status: refreshedMap.get(mail.id) || 'INBOX',
-    }));
+    return emails.map((mail) => {
+      const stored = refreshedMap.get(mail.id);
+      return {
+        ...mail,
+        status: stored?.status || 'INBOX',
+        hasAttachments: mail.hasAttachments ?? stored?.hasAttachments ?? false,
+      };
+    });
   }
 
   async getCachedSummary(emailId: string, userId: string) {
