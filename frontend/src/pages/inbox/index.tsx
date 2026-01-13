@@ -19,7 +19,7 @@ import {
   type KanbanColumn,
 } from "../../api/kanban";
 import { semanticSearchEmails } from "../../api/ai";
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
 import NewMessage from "../../components/Email/NewMessage";
 import { KanbanBoard } from "../../components/Kanban/KanbanBoard";
@@ -47,6 +47,7 @@ export default function InboxPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { setSearchSuggestions } = useMail();
+  const cachedSuggestionsRef = useRef<string[]>([]);
 
   const isLogged = !!user;
   const navigate = useNavigate();
@@ -184,37 +185,88 @@ export default function InboxPage() {
   }, [orderedKanbanColumnsData, mailboxId]);
 
   const suggestionSource = useMemo(() => {
-    const suggestionMap = new Map<string, string>();
+    // If no emails, return null to keep cached suggestions
+    if (normalizedEmails.length === 0) {
+      return null;
+    }
 
-    normalizedEmails.forEach((mail) => {
+    const suggestionMap = new Map<string, { value: string; count: number }>();
+    const MAX_SUGGESTIONS = 50;
+    const MAX_EMAILS_TO_PROCESS = 500;
+    const MIN_WORD_LENGTH = 4;
+
+    // Common words to exclude
+    const commonWords = new Set([
+      'that', 'this', 'with', 'from', 'have', 'been', 'were', 'their', 'there',
+      'would', 'could', 'about', 'which', 'these', 'those', 'when', 'where',
+      'your', 'mail', 'email', 'message', 'notification', 'update', 'information'
+    ]);
+
+    const emailsToProcess = normalizedEmails.slice(0, MAX_EMAILS_TO_PROCESS);
+
+    emailsToProcess.forEach((mail) => {
+      // Extract sender name
       const fromValue = mail.from?.trim();
       if (fromValue) {
-        const key = fromValue.toLowerCase();
-        if (!suggestionMap.has(key)) {
-          suggestionMap.set(key, fromValue);
+        const nameMatch = fromValue.match(/^([^<]+)</);
+        const senderName = nameMatch ? nameMatch[1].trim() : fromValue.split('@')[0];
+
+        if (senderName && senderName.length >= 3) {
+          const key = senderName.toLowerCase();
+          if (!suggestionMap.has(key)) {
+            suggestionMap.set(key, { value: senderName, count: 1 });
+          } else {
+            suggestionMap.get(key)!.count++;
+          }
         }
       }
 
+      // Extract meaningful words from subject
       const subjectValue = mail.subject?.trim();
       if (subjectValue) {
-        subjectValue
-          .split(/[\s,.;:!?()]+/)
+        const words = subjectValue
+          .split(/[\s,.;:!?()[\]{}]+/)
           .map((word) => word.trim())
-          .filter((word) => word.length >= 3)
-          .forEach((word) => {
-            const key = word.toLowerCase();
-            if (!suggestionMap.has(key)) {
-              suggestionMap.set(key, word);
-            }
+          .filter((word) => {
+            const lowerWord = word.toLowerCase();
+            return (
+              word.length >= MIN_WORD_LENGTH &&
+              !commonWords.has(lowerWord) &&
+              !/^\d+$/.test(word) &&
+              !/^[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF]+$/.test(word)
+            );
           });
+
+        words.forEach((word) => {
+          const key = word.toLowerCase();
+          if (!suggestionMap.has(key)) {
+            suggestionMap.set(key, { value: word, count: 1 });
+          } else {
+            suggestionMap.get(key)!.count++;
+          }
+        });
+      }
+
+      if (suggestionMap.size >= MAX_SUGGESTIONS * 3) {
+        return;
       }
     });
 
-    return Array.from(suggestionMap.values()).slice(0, 50);
+    return Array.from(suggestionMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, MAX_SUGGESTIONS)
+      .map((item) => item.value);
   }, [normalizedEmails]);
 
   useEffect(() => {
-    setSearchSuggestions(suggestionSource);
+    // Only update if we have new suggestions
+    if (suggestionSource !== null) {
+      cachedSuggestionsRef.current = suggestionSource;
+      setSearchSuggestions(suggestionSource);
+    } else if (cachedSuggestionsRef.current.length > 0) {
+      // Keep showing cached suggestions when no emails
+      setSearchSuggestions(cachedSuggestionsRef.current);
+    }
   }, [setSearchSuggestions, suggestionSource]);
 
   useEffect(() => {
