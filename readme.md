@@ -202,19 +202,19 @@ The application uses **three types of tokens**:
 
 We chose **HttpOnly cookies** over localStorage for token storage because:
 
-✅ **Much safer than localStorage**
+**Much safer than localStorage**
 - Cookies cannot be accessed via JavaScript → **protected from XSS attacks**
 - Browsers automatically send cookies with requests
 - Backend has full control over token lifecycle
 
-✅ **Security Best Practices**
+**Security Best Practices**
 - `HttpOnly` flag prevents JavaScript access
 - `Secure` flag ensures HTTPS-only transmission (production)
 - `SameSite` policy prevents CSRF attacks:
   - Development: `lax` - allows same-site navigation
   - Production: `none` + `Secure` - allows cross-origin
 
-❌ **Why NOT localStorage?**
+**Why NOT localStorage?**
 - Vulnerable to XSS attacks (malicious scripts can steal tokens)
 - No built-in expiry mechanism
 - Requires manual management in every request
@@ -467,18 +467,3 @@ https://email-g03-backend.vercel.app/auth/google/callback
 - Wait 24 hours or request quota increase
 
 For more troubleshooting, see [Backend README - Troubleshooting](backend/README.md#troubleshooting).
-
-## License
-
-This project is licensed under the UNLICENSED license - proprietary software for academic purposes.
-
-## Team
-
-- **Group**: g03
-- **Project**: Email Management System
-- **Academic Year**: 2025-2026, HK1
-- **Course**: Advanced Web Development
-
----
-
-**Built with ❤️ by Team g03**
