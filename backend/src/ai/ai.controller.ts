@@ -19,7 +19,7 @@ export class AiController {
       mailboxId,
       query,
       userId,
-      limit,
+      { limit },
     );
 
     return { data: results };

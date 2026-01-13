@@ -45,11 +45,32 @@ export class EmailEmbeddingsService {
       .lean();
   }
 
+  async findAllSummaryEmbeddingsByUser(userId: string) {
+    return this.model
+      .find({
+        userId,
+        level: EmbeddingLevel.SUMMARY,
+      })
+      .select({ emailId: 1, embedding: 1 })
+      .lean();
+  }
+
   async deleteEmbeddingsByEmail(emailId: string, userId: string) {
     return this.model.deleteMany({ emailId, userId });
   }
 
   async deleteByMailbox(userId: string, mailboxId: string) {
     return this.model.deleteMany({ userId, mailboxId });
+  }
+
+  async updateMailboxIdForEmail(
+    emailId: string,
+    userId: string,
+    newMailboxId: string,
+  ) {
+    return this.model.updateMany(
+      { emailId, userId },
+      { $set: { mailboxId: newMailboxId } },
+    );
   }
 }

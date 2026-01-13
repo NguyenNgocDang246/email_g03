@@ -25,6 +25,11 @@ export class EmailsService {
     private emailModel: Model<EmailEntity>,
   ) {}
 
+  private getPrimaryMailboxId(labels: string[] = []): string {
+    const systemLabels = ['INBOX', 'SENT', 'DRAFT', 'SPAM', 'TRASH'];
+    return labels.find((label) => systemLabels.includes(label)) || 'INBOX';
+  }
+
   async getEmailDetail(id: string, userId: string) {
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
@@ -59,6 +64,10 @@ export class EmailsService {
     }
 
     if (emailDetailMapped?.bodyText || emailDetailMapped?.snippet) {
+      const primaryMailboxId = this.getPrimaryMailboxId(
+        emailDetailMapped.labels,
+      );
+
       await this.aiService.embedEmailIfNeeded(
         {
           emailId: id,
@@ -68,7 +77,7 @@ export class EmailsService {
           from: emailDetailMapped.from,
         },
         userId,
-        'INBOX',
+        primaryMailboxId,
         EmbeddingLevel.FULL,
       );
     }
@@ -100,6 +109,7 @@ export class EmailsService {
         isRead: !(storedMap.get(id)?.labels || []).includes('UNREAD'),
         labels: storedMap.get(id)?.labels || [],
         status: (storedMap.get(id)?.status as any) || 'INBOX',
+        hasAttachments: storedMap.get(id)?.hasAttachments || false,
       }));
     }
 
@@ -123,19 +133,58 @@ export class EmailsService {
       isRead: m.isRead,
       labels: m.labels,
       status: (storedMap.get(m.id)?.status as any) || 'INBOX',
+      hasAttachments: m.hasAttachments || false,
     }));
   }
 
-  buildMimeEmail(to: string, subject: string, html: string) {
-    const mime = [
+  buildMimeEmail(to: string, subject: string, html: string, files: any[] = []) {
+    if (!files || files.length === 0) {
+      // Simple email without attachments
+      const mime = [
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        '',
+        html,
+      ].join('\n');
+
+      return Buffer.from(mime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // Multipart email with attachments
+    const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36)}`;
+    const mimeParts = [
       `To: ${to}`,
       `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
       'Content-Type: text/html; charset="UTF-8"',
       '',
       html,
-    ].join('\n');
+    ];
 
-    // Base64 → chuẩn base64url
+    // Add attachments
+    files.forEach((file) => {
+      const fileContent = file.buffer.toString('base64');
+      mimeParts.push(
+        `--${boundary}`,
+        `Content-Type: ${file.mimetype}; name="${file.originalname}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-Disposition: attachment; filename="${file.originalname}"`,
+        '',
+        fileContent,
+      );
+    });
+
+    mimeParts.push(`--${boundary}--`);
+
+    const mime = mimeParts.join('\n');
     return Buffer.from(mime)
       .toString('base64')
       .replace(/\+/g, '-')
@@ -143,8 +192,8 @@ export class EmailsService {
       .replace(/=+$/, '');
   }
 
-  async sendEmail(userId: string, { to, subject, html }) {
-    const raw = this.buildMimeEmail(to, subject, html);
+  async sendEmail(userId: string, { to, subject, html }, files: any[] = []) {
+    const raw = this.buildMimeEmail(to, subject, html, files);
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
     const res = await gmail.users.messages.send({
@@ -158,29 +207,68 @@ export class EmailsService {
     };
   }
 
-  buildReplyMime({ to, subject, html, messageIdHeader, referencesHeader }) {
+  buildReplyMime({ to, subject, html, messageIdHeader, referencesHeader, files = [] }: { to: string; subject: string; html: string; messageIdHeader: string; referencesHeader?: string; files?: any[] }) {
     let references = messageIdHeader;
     if (referencesHeader && referencesHeader.trim().length) {
       references = referencesHeader.trim() + ' ' + messageIdHeader;
     }
 
-    const mime = [
+    if (!files || files.length === 0) {
+      // Simple reply without attachments
+      const mime = [
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        `In-Reply-To: ${messageIdHeader}`,
+        `References: ${references}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        '',
+        html,
+      ].join('\n');
+
+      return Buffer.from(mime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // Multipart reply with attachments
+    const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36)}`;
+    const mimeParts = [
       `To: ${to}`,
       `Subject: ${subject}`,
       `In-Reply-To: ${messageIdHeader}`,
       `References: ${references}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
       'Content-Type: text/html; charset="UTF-8"',
       '',
       html,
-    ].join('\n');
+    ];
 
-    const raw = Buffer.from(mime)
+    // Add attachments
+    files.forEach((file) => {
+      const fileContent = file.buffer.toString('base64');
+      mimeParts.push(
+        `--${boundary}`,
+        `Content-Type: ${file.mimetype}; name="${file.originalname}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-Disposition: attachment; filename="${file.originalname}"`,
+        '',
+        fileContent,
+      );
+    });
+
+    mimeParts.push(`--${boundary}--`);
+
+    const mime = mimeParts.join('\n');
+    return Buffer.from(mime)
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
-
-    return raw;
   }
 
   async replyEmail(
@@ -189,6 +277,7 @@ export class EmailsService {
     threadId: string,
     messageIdHeader: string,
     referencesHeader?: string,
+    files: any[] = [],
   ) {
     const raw = this.buildReplyMime({
       to,
@@ -196,6 +285,7 @@ export class EmailsService {
       html,
       messageIdHeader,
       referencesHeader,
+      files,
     });
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
@@ -229,6 +319,49 @@ export class EmailsService {
         removeLabelIds: removeLabels,
       },
     });
+
+    // Sync labels to database after modification
+    await this.syncEmailLabelsToDb(userId, messageId);
+
+    return res;
+  }
+
+  async syncEmailLabelsToDb(userId: string, emailId: string) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return;
+
+    try {
+      // Fetch latest email data from Gmail to get updated labels
+      const emailData = await gmail.users.messages.get({
+        userId: 'me',
+        id: emailId,
+        format: 'metadata',
+        metadataHeaders: ['From', 'Subject'],
+      });
+
+      const labels = emailData.data.labelIds || [];
+
+      // Update EmailEntity labels in database
+      await this.emailModel.updateOne(
+        { userId, emailId },
+        { $set: { labels } },
+      );
+
+      // Determine primary mailboxId and update embeddings
+      const primaryMailboxId = this.getPrimaryMailboxId(labels);
+
+      // Update mailboxId in EmailEmbeddingEntity
+      await this.aiService.updateEmbeddingMailboxId(
+        emailId,
+        userId,
+        primaryMailboxId,
+      );
+    } catch (error) {
+      console.error(
+        `Failed to sync labels for email ${emailId}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   }
 
   async streamAttachment(
@@ -287,7 +420,9 @@ export class EmailsService {
       date: string;
       labels?: string[];
       hasAttachments?: boolean;
+      mailboxId?: string;
     }[],
+    mailboxId?: string,
   ) {
     if (!emails.length) return;
 
@@ -325,7 +460,7 @@ export class EmailsService {
             from: mail.from,
           },
           userId,
-          'INBOX',
+          mailboxId || mail.mailboxId || 'INBOX',
           EmbeddingLevel.SUMMARY,
         ),
       ),
@@ -340,6 +475,7 @@ export class EmailsService {
       subject: string;
       snippet: string;
       date: string;
+      hasAttachments?: boolean;
     }[],
   ) {
     await this.unsnoozeExpired(userId);
@@ -362,7 +498,7 @@ export class EmailsService {
               snippet: mail.snippet ?? '',
               receivedAt: mail.date ? new Date(mail.date) : new Date(),
               status: 'INBOX',
-              hasAttachments: false,
+              hasAttachments: mail.hasAttachments || false,
             },
           },
         });
@@ -375,12 +511,18 @@ export class EmailsService {
     const refreshed = await this.emailModel
       .find({ userId, emailId: { $in: ids } })
       .lean();
-    const refreshedMap = new Map(refreshed.map((e) => [e.emailId, e.status]));
+    const refreshedMap = new Map(
+      refreshed.map((e) => [e.emailId, { status: e.status, hasAttachments: e.hasAttachments }]),
+    );
 
-    return emails.map((mail) => ({
-      ...mail,
-      status: refreshedMap.get(mail.id) || 'INBOX',
-    }));
+    return emails.map((mail) => {
+      const stored = refreshedMap.get(mail.id);
+      return {
+        ...mail,
+        status: stored?.status || 'INBOX',
+        hasAttachments: mail.hasAttachments ?? stored?.hasAttachments ?? false,
+      };
+    });
   }
 
   async getCachedSummary(emailId: string, userId: string) {

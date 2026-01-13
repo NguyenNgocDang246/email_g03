@@ -132,6 +132,7 @@ export class MailboxesService {
         isRead: !(doc.labels || []).includes('UNREAD'),
         labels: doc.labels || [],
         status: (doc.status as any) || 'INBOX',
+        hasAttachments: doc.hasAttachments || false,
       })),
     };
   }
@@ -173,7 +174,7 @@ export class MailboxesService {
       }),
     );
 
-    await this.emailsService.saveEmailSummaries(userId, emails);
+    await this.emailsService.saveEmailSummaries(userId, emails, mailboxId);
   }
 
   async searchEmailsInMailbox(
@@ -208,8 +209,7 @@ export class MailboxesService {
         const res = await gmail.users.messages.get({
           userId: 'me',
           id: msg.id as string,
-          format: 'metadata',
-          metadataHeaders: ['From', 'Subject', 'Date'],
+          format: 'full',
         });
 
         return GmailMapper.toEmail(res.data, mailboxId);

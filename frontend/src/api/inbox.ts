@@ -67,14 +67,16 @@ interface MailListApiResponse {
 export const getMailBoxesEmailListInfo = async (
   mailboxId: string,
   query?: string,
-  pageToken?: string
+  pageToken?: string,
+  refresh?: boolean
 ): Promise<MailListResponse> => {
   try {
+    const refreshParam = refresh ? "&refresh=true" : "";
     const url = query
       ? `/mailboxes/${mailboxId}/emails/search?query=${encodeURIComponent(
           query
-        )}&limit=10&pageToken=${pageToken || ""}`
-      : `/mailboxes/${mailboxId}/emails?limit=10&pageToken=${pageToken || ""}`;
+        )}&limit=10&pageToken=${pageToken || ""}${refreshParam}`
+      : `/mailboxes/${mailboxId}/emails?limit=10&pageToken=${pageToken || ""}${refreshParam}`;
 
 
     const res = await API.get(url);
@@ -247,14 +249,15 @@ export const updateEmailStatus = async (
 };
 
 export interface SendEmailPayload {
-  to: string; 
-  subject: string; 
-  html: string; 
+  to: string;
+  subject: string;
+  html: string;
+  files?: File[];
 }
 
 export interface SendEmailResponse {
   message: string;
-  id: string; 
+  id: string;
 }
 
 
@@ -262,7 +265,22 @@ export const sendEmail = async (
   payload: SendEmailPayload
 ): Promise<SendEmailResponse> => {
   try {
-    const res = await API.post("/emails/send", payload);
+    const formData = new FormData();
+    formData.append('to', payload.to);
+    formData.append('subject', payload.subject);
+    formData.append('html', payload.html);
+
+    if (payload.files && payload.files.length > 0) {
+      payload.files.forEach((file) => {
+        formData.append('attachments', file);
+      });
+    }
+
+    const res = await API.post("/emails/send", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -273,14 +291,15 @@ export const sendEmail = async (
 };
 
 export interface ReplyEmailPayload {
-  to: string; 
+  to: string;
   subject?: string;
   html: string;
+  files?: File[];
 }
 
 export interface ReplyEmailResponse {
-  message: string; 
-  id: string; 
+  message: string;
+  id: string;
 }
 
 export const replyEmail = async (
@@ -288,7 +307,24 @@ export const replyEmail = async (
   payload: ReplyEmailPayload
 ): Promise<ReplyEmailResponse> => {
   try {
-    const res = await API.post(`/emails/${emailId}/reply`, payload);
+    const formData = new FormData();
+    formData.append('to', payload.to);
+    if (payload.subject) {
+      formData.append('subject', payload.subject);
+    }
+    formData.append('html', payload.html);
+
+    if (payload.files && payload.files.length > 0) {
+      payload.files.forEach((file) => {
+        formData.append('attachments', file);
+      });
+    }
+
+    const res = await API.post(`/emails/${emailId}/reply`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return res.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
