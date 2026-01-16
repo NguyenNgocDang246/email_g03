@@ -1,14 +1,15 @@
 import {
   DndContext,
   PointerSensor,
-  // closestCorners,
-  pointerWithin, // <-- Thêm cái này (Khuyên dùng)
+  pointerWithin,
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
   useSensor,
   useSensors,
   type UniqueIdentifier,
+  TouchSensor, // Thêm TouchSensor cho mobile mượt hơn
+  MouseSensor,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -48,28 +49,20 @@ export const KanbanBoard = ({
     setOrderedColumns(columns);
   }, [columns]);
 
-  // Helper tìm Column ID dựa trên ID của đối tượng (Card hoặc Column) được kéo/thả
   const findColumn = useCallback(
     (id: UniqueIdentifier | undefined): KanbanStatus | undefined => {
       if (!id) return undefined;
-
-      // 1. Check xem id đó có phải là ID của một Column không (khi thả vào vùng trống của cột)
-      // FIX: Dùng mảng columns prop để check thay vì itemsByColumn để đảm bảo nhận diện được cả cột rỗng
       if (orderedColumns.some((col) => col.id === id)) {
         return id as KanbanStatus;
       }
-
-      // 2. Nếu không phải Column, tìm xem Card đó đang thuộc Column nào
       const columnEntry = Object.entries(itemsByColumn).find(([_, items]) =>
         items.some((item) => item.id === id)
       );
-
       return columnEntry ? (columnEntry[0] as KanbanStatus) : undefined;
     },
     [orderedColumns, itemsByColumn]
   );
 
-  // Tạo danh sách phẳng để tìm activeItem cho DragOverlay
   const flatItems = useMemo(
     () => Object.values(itemsByColumn).flatMap((list) => list),
     [itemsByColumn]
@@ -80,9 +73,13 @@ export const KanbanBoard = ({
     [activeId, flatItems]
   );
 
+  // Cấu hình Sensor riêng biệt cho Mouse và Touch để trải nghiệm tốt nhất
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 }, // Tăng độ nhạy một chút (5px)
+    useSensor(MouseSensor, {
+      activationConstraint: { distance: 5 }, // Chuột: Kéo 5px mới bắt đầu drag
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 }, // Touch: Giữ 150ms mới drag (tránh nhầm với vuốt cuộn trang)
     })
   );
 
@@ -93,11 +90,8 @@ export const KanbanBoard = ({
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
-
-      // Reset state active
       setActiveId(null);
 
-      // Nếu không thả vào đâu hoặc thả vào chính nó -> return
       if (!over || active.id === over.id) {
         return;
       }
@@ -117,7 +111,9 @@ export const KanbanBoard = ({
         const reorderable = orderedColumns.filter(
           (column) => column.id !== "SNOOZED"
         );
-        const snoozed = orderedColumns.find((column) => column.id === "SNOOZED");
+        const snoozed = orderedColumns.find(
+          (column) => column.id === "SNOOZED"
+        );
         const activeIndex = reorderable.findIndex(
           (column) => column.id === active.id
         );
@@ -140,9 +136,6 @@ export const KanbanBoard = ({
       const activeColumn = findColumn(active.id);
       const overColumn = findColumn(over.id);
 
-      // Chỉ thực hiện move nếu:
-      // 1. Xác định được cả 2 cột
-      // 2. Cột đích KHÁC cột nguồn
       if (activeColumn && overColumn && activeColumn !== overColumn && onMove) {
         onMove(active.id as string, activeColumn, overColumn);
       }
@@ -153,7 +146,6 @@ export const KanbanBoard = ({
   return (
     <DndContext
       sensors={sensors}
-      // collisionDetection={closestCorners}
       collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -162,24 +154,34 @@ export const KanbanBoard = ({
         items={orderedColumns.map((column) => column.id)}
         strategy={horizontalListSortingStrategy}
       >
+        {/* RESPONSIVE GRID LAYOUT */}
         <div
-          className="mt-2  grid grid-flow-col auto-cols-[calc((100vw-10px)/4)] gap-4 h-full overflow-x-auto pb-3 pr-2 scrollbar"
+          className="
+            mt-2 grid grid-flow-col h-full overflow-x-auto pb-3 pr-2 scrollbar
+            gap-3 md:gap-4 
+            auto-cols-[85vw] md:auto-cols-[320px] 
+            snap-x snap-mandatory md:snap-none // Snap effect trên mobile để lướt từng cột
+          "
         >
           {orderedColumns.map((column) => (
-            <KanbanColumn
-              key={column.id}
-              column={column}
-              items={itemsByColumn[column.id] ?? []}
-              onCardSelect={onCardSelect}
-              selectedEmailId={selectedEmailId}
-            />
+            <div key={column.id} className="snap-center h-full">
+              {" "}
+              {/* Snap align center */}
+              <KanbanColumn
+                column={column}
+                items={itemsByColumn[column.id] ?? []}
+                onCardSelect={onCardSelect}
+                selectedEmailId={selectedEmailId}
+              />
+            </div>
           ))}
         </div>
       </SortableContext>
 
       <DragOverlay adjustScale={false} dropAnimation={null}>
         {activeItem ? (
-          <div className="cursor-grabbing w-[320px] opacity-80 rotate-2">
+          // Responsive width cho item đang kéo
+          <div className="cursor-grabbing w-[85vw] md:w-[320px] opacity-90 rotate-2 shadow-2xl">
             <KanbanCard
               email={activeItem}
               columnId={activeItem.status as KanbanStatus}

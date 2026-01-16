@@ -21,11 +21,16 @@ export default function InboxLayout({
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [onlyWithAttachments, setOnlyWithAttachments] = useState(false);
 
-   useEffect(() => {
-     if (id) {
-       setSelectedMailbox(id);
-     }
-   }, [id]);
+  useEffect(() => {
+    if (id) {
+      setSelectedMailbox(id);
+    }
+  }, [id]);
+
+  // Đóng mobile menu khi id thay đổi (người dùng đã chọn xong)
+  useEffect(() => {
+    setShowMobileMenu(false);
+  }, [id]);
 
   return (
     <MailContext.Provider
@@ -36,8 +41,10 @@ export default function InboxLayout({
         setSearchSuggestions,
         onlyWithAttachments,
         setOnlyWithAttachments,
-      }}>
-      <div className="h-screen flex flex-col bg-gray-50 w-screen">
+      }}
+    >
+      <div className="h-[100dvh] w-full flex flex-col bg-gray-50 overflow-hidden">
+        {/* Header */}
         <Header
           onMenuToggle={() => setShowMobileMenu(!showMobileMenu)}
           searchQuery={searchQuery}
@@ -47,15 +54,43 @@ export default function InboxLayout({
           searchSuggestions={searchSuggestions}
         />
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="hidden md:block w-1/5 bg-gray-100 ">
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* --- DESKTOP SIDEBAR --- */}
+          {/* Ẩn trên mobile, hiện trên desktop với độ rộng cố định w-64 (thay vì 1/5) */}
+          <div className="hidden md:block w-64 bg-white border-r border-gray-200 flex-shrink-0">
             <Sidebar
               selectedMailbox={selectedMailbox}
               setSelectedMailbox={setSelectedMailbox}
             />
           </div>
 
-          <main className="flex w-4/5">{children}</main>
+          {/* --- MOBILE SIDEBAR (DRAWER) --- */}
+          {/* Chỉ hiện khi showMobileMenu = true */}
+          {showMobileMenu && (
+            <div
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden transition-opacity"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              <div
+                className="w-3/4 max-w-[300px] h-full bg-white shadow-xl animate-in slide-in-from-left duration-300"
+                onClick={(e) => e.stopPropagation()} // Ngăn click vào sidebar làm đóng menu
+              >
+                <Sidebar
+                  selectedMailbox={selectedMailbox}
+                  setSelectedMailbox={(mailboxId) => {
+                    setSelectedMailbox(mailboxId);
+                    setShowMobileMenu(false); // Đóng menu sau khi chọn
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* --- MAIN CONTENT --- */}
+          {/* flex-1 để chiếm hết không gian còn lại, w-full để đảm bảo rộng 100% trên mobile */}
+          <main className="flex-1 w-full flex flex-col overflow-hidden bg-white">
+            {children}
+          </main>
         </div>
       </div>
     </MailContext.Provider>

@@ -37,41 +37,47 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1628] flex items-center">
-      {/* Left image */}
-      <div className="w-3/5 flex flex-col justify-center items-center p-6">
+    <div className="min-h-screen bg-[#0a1628] flex items-center justify-center md:justify-start">
+      {/* ================= LEFT (HIDDEN ON MOBILE) ================= */}
+      <div className="hidden md:flex md:w-3/5 flex-col justify-center items-center md:p-4">
         <MailIcon
-          className="w-48 h-48 text-gray-400 hover:text-white"
+          className="md:w-36 md:h-36 xl:w-48 xl:h-48 2xl:w-96 2xl:h-96 text-gray-400 hover:text-white cursor-pointer"
           onClick={() => navigate("/")}
         />
-        <div>
-          <h1 className="text-gray-400 font-bold text-6xl">Mail Manage</h1>
-        </div>
+        <h1 className="text-gray-400 font-bold md:text-4xl xl:text-6xl 2xl:text-9xl mt-4">
+          Mail Manage
+        </h1>
       </div>
 
-      {/* Right form */}
-      <div className="w-2/5 flex justify-center">
-        <div className="w-full max-w-md">
-          <h1 className="text-6xl text-white font-bold mb-3">Login</h1>
-          <h2 className="text-2xl font-medium text-white mb-10">
+      {/* ================= RIGHT FORM ================= */}
+      <div className="w-full md:w-2/5 flex justify-center px-6 md:px-0 md:mr-16 xl:mr-24 2xl:mr-48">
+        <div className="w-full max-w-md md:max-w-none">
+          <h1 className="text-3xl md:text-4xl xl:text-6xl 2xl:text-9xl mb-3 2xl:mb-9 text-white font-bold">
+            Login
+          </h1>
+
+          <h2 className="text-base md:text-xl xl:text-2xl 2xl:text-4xl font-medium text-white mb-10">
             Welcome back! Please login to your account.
           </h2>
 
           {/* Google Login */}
           <button
-            className="border cursor-pointer hover:bg-blue-900 text-white w-full mt-4 py-2.5 rounded-lg transition disabled:opacity-70"
             onClick={() => loginGoogle()}
+            className="border cursor-pointer hover:bg-blue-900 text-white w-full mt-4 py-2.5 2xl:mt-8 2xl:py-5 2xl:text-4xl rounded-lg transition disabled:opacity-70"
           >
             Login With Google
           </button>
-          <div>
-            <h1 className="text-xl text-white text-center my-5">OR</h1>
-          </div>
+
+          <h1 className="text-base md:text-lg xl:text-xl 2xl:text-4xl text-white text-center my-5">
+            OR
+          </h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-sm text-white font-medium mb-2">Email address</label>
+              <label className="block text-sm 2xl:text-4xl text-white font-medium mb-2 2xl:mb-8">
+                Email address
+              </label>
               <input
                 type="email"
                 {...register("email", {
@@ -81,26 +87,34 @@ export default function Login() {
                     message: "Invalid email address",
                   },
                 })}
-                className="w-full px-4 py-3 bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500"
+                className="w-full px-4 py-3 2xl:py-6 2xl:text-4xl bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500"
                 placeholder="you@example.com"
               />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-white mb-2">Password</label>
+              <label className="block text-sm 2xl:text-4xl text-white font-medium mb-2 2xl:mb-8">
+                Password
+              </label>
               <input
                 type="password"
                 {...register("password", {
                   required: "Password is required",
                   minLength: { value: 6, message: "At least 6 characters" },
                 })}
-                className="w-full px-4 py-3 bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500"
+                className="w-full px-4 py-3 2xl:py-6 2xl:text-4xl bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500"
                 placeholder="••••••••"
               />
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-500 text-sm 2xl:text-4xl mt-1">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -108,17 +122,23 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-blue-900 hover:bg-blue-600 text-white font-medium rounded-xl"
+              className="w-full py-3 2xl:py-6 2xl:text-4xl bg-blue-900 hover:bg-blue-600 text-white font-medium rounded-xl transition disabled:opacity-70"
             >
               {isLoading ? "Logging in..." : "Sign in"}
             </button>
 
             {/* Links */}
             <div className="flex justify-between">
-              <Link to="/signup" className="text-sm text-white hover:text-purple-300">
+              <Link
+                to="/signup"
+                className="text-sm 2xl:text-4xl text-white hover:text-purple-300"
+              >
                 Don't have account
               </Link>
-              <Link to="/forgot-password" className="text-sm text-white hover:text-purple-300">
+              <Link
+                to="/forgot-password"
+                className="text-sm 2xl:text-4xl text-white hover:text-purple-300"
+              >
                 Forgot Password
               </Link>
             </div>
@@ -126,8 +146,10 @@ export default function Login() {
             {/* Message */}
             {message && (
               <p
-                className={`mt-4 text-center font-medium ${
-                  message.startsWith("Error") ? "text-red-600" : "text-green-600"
+                className={`mt-4 text-center font-medium 2xl:text-4xl ${
+                  message.startsWith("Error")
+                    ? "text-red-600"
+                    : "text-green-600"
                 }`}
               >
                 {message}

@@ -1,9 +1,16 @@
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
-import { Paperclip } from "lucide-react";
+import { Paperclip, GripVertical } from "lucide-react"; // Dùng icon Grip cho nút Drag đẹp hơn
 import { type MailInfo } from "../../api/inbox";
-import { type KanbanColumnConfig, type KanbanStatus } from "../../constants/kanban";
+import {
+  type KanbanColumnConfig,
+  type KanbanStatus,
+} from "../../constants/kanban";
 import { KanbanCard } from "./KanbanCard";
 import { useMail } from "../../context/MailContext";
 
@@ -47,7 +54,7 @@ export const KanbanColumn = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.7 : 1,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   const filteredAndSortedItems = useMemo(() => {
@@ -60,7 +67,9 @@ export const KanbanColumn = ({
 
       if (!normalizedQuery) return true;
 
-      const haystack = `${email.from ?? ""} ${email.subject ?? ""} ${email.preview ?? ""}`.toLowerCase();
+      const haystack = `${email.from ?? ""} ${email.subject ?? ""} ${
+        email.preview ?? ""
+      }`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
 
@@ -82,119 +91,162 @@ export const KanbanColumn = ({
           return toTime(b.timestamp) - toTime(a.timestamp);
       }
     });
-  }, [items, searchText, unreadOnly, starredOnly, sortOption, onlyWithAttachments]);
+  }, [
+    items,
+    searchText,
+    unreadOnly,
+    starredOnly,
+    sortOption,
+    onlyWithAttachments,
+  ]);
 
   return (
     <section
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col h-full rounded-xl border ${column.accent} bg-white`}
+      // h-full để cột chiếm hết chiều cao của board
+      className={`flex flex-col h-full rounded-xl border ${column.accent} bg-white shadow-sm overflow-hidden`}
     >
+      {/* HEADER */}
       <header
-        className={`p-3 border-b ${column.accent} ${column.softBg} rounded-t-xl`}
+        className={`p-3 border-b flex-none ${column.accent} ${column.softBg}`}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold">{column.title}</p>
-            <p className="text-xs text-gray-500">{column.description}</p>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-gray-800 truncate">
+              {column.title}
+            </p>
+            <p className="text-[10px] sm:text-xs text-gray-500 line-clamp-1">
+              {column.description}
+            </p>
           </div>
-          <span className="text-xs font-medium text-gray-500">
-            {filteredAndSortedItems.length}/{items.length} mails
+          <span className="text-[10px] font-bold px-2 py-0.5 bg-white/60 rounded-full text-gray-600 shrink-0">
+            {filteredAndSortedItems.length}/{items.length}
           </span>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className={`h-8 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 ${
-              column.id === "SNOOZED" ? "cursor-not-allowed opacity-50" : "cursor-grab"
-            }`}
-            aria-label="Drag column"
-            disabled={column.id === "SNOOZED"}
-            {...attributes}
-            {...listeners}
-          >
-            Drag
-          </button>
-          <input
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Filter by keyword..."
-            className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs outline-none focus:border-blue-400 sm:w-44"
-          />
+        {/* FILTERS & TOOLS */}
+        <div className="mt-3 flex flex-col gap-2">
+          {/* Row 1: Drag Handle + Search + Sort */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={`h-8 w-8 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 active:cursor-grabbing shrink-0 ${
+                column.id === "SNOOZED"
+                  ? "cursor-not-allowed opacity-50"
+                  : "cursor-grab"
+              }`}
+              title="Drag Column"
+              disabled={column.id === "SNOOZED"}
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical size={14} />
+            </button>
 
-          <select
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value as SortOption)}
-            className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs outline-none focus:border-blue-400"
-            aria-label="Sort"
-          >
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="fromAsc">From (A-Z)</option>
-            <option value="subjectAsc">Subject (A-Z)</option>
-          </select>
-
-          <label className="flex items-center gap-1 text-xs text-gray-700 select-none">
             <input
-              type="checkbox"
-              checked={unreadOnly}
-              onChange={(e) => setUnreadOnly(e.target.checked)}
-              className="h-3.5 w-3.5 accent-blue-600"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search..."
+              className="h-8 min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
             />
-            Unread
-          </label>
+          </div>
 
-          <label className="flex items-center gap-1 text-xs text-gray-700 select-none">
-            <input
-              type="checkbox"
-              checked={starredOnly}
-              onChange={(e) => setStarredOnly(e.target.checked)}
-              className="h-3.5 w-3.5 accent-blue-600"
-            />
-            Starred
-          </label>
+          {/* Row 2: Sort + Checkboxes + Attachment */}
+          <div className="flex items-center justify-between gap-2">
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as SortOption)}
+              className="h-8 flex-1 w-full max-w-[110px] rounded-md border border-gray-200 bg-white px-1 text-[11px] outline-none focus:border-blue-400"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="fromAsc">From (A-Z)</option>
+              <option value="subjectAsc">Subject (A-Z)</option>
+            </select>
 
-          <button
-            type="button"
-            className={`h-8 rounded-md border px-2 transition-all ${
-              onlyWithAttachments
-                ? "bg-blue-100 border-blue-300 text-blue-700"
-                : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
-            }`}
-            onClick={() => setOnlyWithAttachments(!onlyWithAttachments)}
-            title="Filter emails with attachments"
-          >
-            <Paperclip className="w-3.5 h-3.5" />
-          </button>
+            <div className="flex items-center gap-2">
+              {/* Unread Checkbox */}
+              <label
+                className="flex items-center gap-1 cursor-pointer p-1 rounded hover:bg-black/5"
+                title="Unread only"
+              >
+                <input
+                  type="checkbox"
+                  checked={unreadOnly}
+                  onChange={(e) => setUnreadOnly(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-blue-600 rounded cursor-pointer"
+                />
+                {/* Ẩn chữ trên mobile bé quá, hoặc dùng icon mail kín */}
+                <span className="text-[10px] font-medium text-gray-600">
+                  Unread
+                </span>
+              </label>
+
+              {/* Starred Checkbox */}
+              <label
+                className="flex items-center gap-1 cursor-pointer p-1 rounded hover:bg-black/5"
+                title="Starred only"
+              >
+                <input
+                  type="checkbox"
+                  checked={starredOnly}
+                  onChange={(e) => setStarredOnly(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-blue-600 rounded cursor-pointer"
+                />
+                <span className="text-[10px] font-medium text-gray-600">
+                  Star
+                </span>
+              </label>
+
+              {/* Attachment Toggle */}
+              <button
+                type="button"
+                className={`h-7 w-7 flex items-center justify-center rounded-md border transition-all ${
+                  onlyWithAttachments
+                    ? "bg-blue-100 border-blue-300 text-blue-700"
+                    : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                }`}
+                onClick={() => setOnlyWithAttachments(!onlyWithAttachments)}
+                title="Has attachments"
+              >
+                <Paperclip className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       </header>
-      <SortableContext
-        id={column.id}
-        items={filteredAndSortedItems.map((item) => item.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div
-          className={`flex-1 p-3 space-y-3 rounded-xl ${
-            isOver ? "bg-blue-50/60" : "bg-gray-50"
-          }`}
+
+      {/* BODY - SCROLLABLE AREA */}
+      {/* flex-1 min-h-0 là trick để scroll hoạt động trong flex container */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar p-2 bg-gray-50/50">
+        <SortableContext
+          id={column.id}
+          items={filteredAndSortedItems.map((item) => item.id)}
+          strategy={verticalListSortingStrategy}
         >
-          {filteredAndSortedItems.map((email) => (
-            <KanbanCard
-              key={email.id}
-              email={email}
-              columnId={column.id as KanbanStatus}
-              onSelect={onCardSelect}
-              isSelected={selectedEmailId === email.id}
-            />
-          ))}
-          {filteredAndSortedItems.length === 0 && (
-            <p className="text-xs text-gray-400 text-center py-6">
-              No matching emails
-            </p>
-          )}
-        </div>
-      </SortableContext>
+          <div
+            className={`space-y-2 pb-2 h-full ${
+              isOver ? "bg-blue-50/30 rounded-lg transition-colors" : ""
+            }`}
+          >
+            {filteredAndSortedItems.map((email) => (
+              <KanbanCard
+                key={email.id}
+                email={email}
+                columnId={column.id as KanbanStatus}
+                onSelect={onCardSelect}
+                isSelected={selectedEmailId === email.id}
+              />
+            ))}
+            {filteredAndSortedItems.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-400 opacity-60">
+                <p className="text-xs italic">No matching emails</p>
+              </div>
+            )}
+          </div>
+        </SortableContext>
+      </div>
     </section>
   );
 };
