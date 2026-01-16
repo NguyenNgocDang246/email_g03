@@ -1,6 +1,9 @@
+import React from "react";
 import { FiFile, FiImage, FiTrash2 } from "react-icons/fi";
 import { HiDocumentText } from "react-icons/hi";
+
 const backendURL = import.meta.env.VITE_BACKEND_URL;
+
 export interface Attachment {
   id: string;
   filename: string;
@@ -38,10 +41,13 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
   };
 
   return (
-    <div className="mt-6 w-full">
-      <h3 className="font-medium text-black mb-2">Attachments</h3>
+    <div className="mt-4 sm:mt-6 w-full">
+      <h3 className="font-medium text-black mb-2 text-sm sm:text-base">
+        Attachments ({attachments.length})
+      </h3>
 
-      <ul className="flex overflow-x-auto space-x-2 py-2 scrollbar">
+      {/* Responsive: overflow-x-auto allows horizontal scrolling on mobile */}
+      <ul className="flex overflow-x-auto space-x-3 py-2 scrollbar pb-4 sm:pb-2">
         {attachments.map((att, index) => {
           const fileSizeKB = (att.size / 1024).toFixed(1);
           const maxLength = 25;
@@ -69,34 +75,37 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
           }
 
           return (
-            <li key={att.id} className="shrink-0 w-48">
+            <li key={att.id} className="shrink-0 w-40 sm:w-48">
               <div
-                className="flex justify-between items-center p-2 bg-gray-100 rounded hover:bg-gray-200 transition cursor-pointer"
+                className="group relative flex flex-col justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition cursor-pointer h-full"
                 onClick={() => handleDownload(index)}
-                title="Click để tải file"
+                title="Click to download"
               >
-                <IconComponent className={`w-6 h-6 ${iconColor}`} />
+                <div className="flex items-start justify-between mb-2">
+                  <IconComponent
+                    className={`w-6 h-6 sm:w-8 sm:h-8 ${iconColor}`}
+                  />
+                  {/* Remove Button - Larger touch area */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(att.id);
+                    }}
+                    className="text-gray-400 hover:text-red-500 p-1 -mr-2 -mt-2 rounded-full hover:bg-red-50 transition-colors"
+                    title="Remove"
+                  >
+                    <FiTrash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                </div>
 
-                <div className="flex-1 min-w-0 ml-2">
-                  <p className="font-medium text-gray-800 truncate">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-800 text-xs sm:text-sm truncate break-words">
                     {displayName}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                     {displayType} • {fileSizeKB} KB
                   </p>
                 </div>
-
-                {/* Nút xoá – stopPropagation để không trigger download */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(att.id);
-                  }}
-                  className="text-red-500 hover:text-red-700 ml-3 p-1"
-                  title="Xóa"
-                >
-                  <FiTrash2 className="w-5 h-5" />
-                </button>
               </div>
             </li>
           );

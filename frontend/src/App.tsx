@@ -18,23 +18,28 @@ export default function App() {
 
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/user-info" element={<UserInfo />} />
-      {/* redirect /inbox sang /mailbox/inbox */}
-      <Route path="/mailbox" element={<Navigate to="/mailbox/SENT" replace />} />
+   
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/user-info" element={<UserInfo />} />
+        {/* redirect /inbox sang /mailbox/inbox */}
+        <Route
+          path="/mailbox"
+          element={<Navigate to="/mailbox/SENT" replace />}
+        />
 
-      {/* mailbox route */}
-      <Route
-        path="/mailbox/:id"
-        element={
-          <InboxLayout>
-            <InboxPage />
-          </InboxLayout>
-        }
-      />
-    </Routes>
+        {/* mailbox route */}
+        <Route
+          path="/mailbox/:id"
+          element={
+            <InboxLayout>
+              <InboxPage />
+            </InboxLayout>
+          }
+        />
+      </Routes>
+   
   );
 }
