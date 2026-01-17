@@ -54,3 +54,9 @@ export class EmailEntity {
 }
 
 export const EmailSchema = SchemaFactory.createForClass(EmailEntity);
+
+EmailSchema.index({
+  subject: 'text',
+  snippet: 'text',
+  sender: 'text',
+});

@@ -183,49 +183,63 @@ export class MailboxesService {
     paginationDto: PaginationDto,
     userId: string,
   ) {
-    const gmail = await this.authService.getGmail(userId);
+    const limit = Number(paginationDto.limit) || 10;
+    const offset = this.parseCachePageToken(paginationDto.pageToken);
 
-    if (!gmail) {
-      throw new UnauthorizedException();
+    const textResult = await this.emailModel
+      .find(
+        {
+          userId,
+          labels: mailboxId,
+          $text: { $search: query },
+        },
+        { score: { $meta: 'textScore' } },
+      )
+      .sort({
+        score: { $meta: 'textScore' },
+        receivedAt: -1,
+      })
+      .skip(offset)
+      .limit(limit)
+      .lean();
+
+    if (textResult.length > 0) {
+      return this.buildSearchResponse(textResult, limit, offset);
     }
 
-    const pageToken = paginationDto?.pageToken;
-    const limit = Number(paginationDto.limit) || 10;
+    const regex = new RegExp(query.split('').join('.*'), 'i');
 
-    const list = await gmail?.users.messages.list({
-      userId: 'me',
-      labelIds: [mailboxId],
-      q: query,
-      maxResults: limit,
-      pageToken,
-    });
+    const fuzzyResult = await this.emailModel
+      .find({
+        userId,
+        labels: mailboxId,
+        $or: [{ subject: regex }, { snippet: regex }, { sender: regex }],
+      })
+      .sort({ receivedAt: -1 })
+      .skip(offset)
+      .limit(limit)
+      .lean();
 
-    const messages = list.data.messages ?? [];
-    const nextPageToken = list.data.nextPageToken ?? null;
-    const total = list.data.resultSizeEstimate ?? 0;
+    return this.buildSearchResponse(fuzzyResult, limit, offset);
+  }
 
-    const emails = await Promise.all(
-      messages.map(async (msg) => {
-        const res = await gmail.users.messages.get({
-          userId: 'me',
-          id: msg.id as string,
-          format: 'full',
-        });
-
-        return GmailMapper.toEmail(res.data, mailboxId);
-      }),
-    );
-
-    const emailsWithStatus = await this.emailsService.mergeStatuses(
-      userId,
-      emails,
-    );
-
+  private buildSearchResponse(docs: any[], limit: number, offset: number) {
     return {
-      limit: limit,
-      total: total,
-      nextPageToken,
-      data: emailsWithStatus,
+      limit,
+      total: docs.length,
+      nextPageToken: docs.length === limit ? offset + limit : null,
+      data: docs.map((doc) => ({
+        id: doc.emailId,
+        mailboxId: doc.mailboxId,
+        from: doc.sender,
+        subject: doc.subject ?? '',
+        snippet: doc.snippet ?? '',
+        date: doc.receivedAt?.toISOString(),
+        isRead: !(doc.labels || []).includes('UNREAD'),
+        labels: doc.labels ?? [],
+        status: doc.status,
+        hasAttachments: doc.hasAttachments ?? false,
+      })),
     };
   }
 }
