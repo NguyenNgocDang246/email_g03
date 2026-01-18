@@ -141,7 +141,6 @@ export default function InboxPage() {
 
   const {
     data: kanbanColumnsData,
-    isLoading: isKanbanColumnsLoading,
     error: kanbanColumnsError,
   } = useQuery({
     queryKey: ["kanban-columns"],
