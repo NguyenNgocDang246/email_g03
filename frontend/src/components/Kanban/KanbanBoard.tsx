@@ -1,6 +1,5 @@
 import {
   DndContext,
-  PointerSensor,
   pointerWithin,
   type DragEndEvent,
   DragOverlay,

@@ -96,7 +96,7 @@ export const EmailList: React.FC<EmailListProps> = ({
           className={`p-2 rounded-full sm:rounded hover:bg-gray-100 transition-colors ${
             onlyWithAttachments ? "bg-blue-50 text-blue-600" : ""
           }`}
-          onClick={() => setOnlyWithAttachments((prev) => !prev)}
+          onClick={() => setOnlyWithAttachments(!onlyWithAttachments)}
           title="Chỉ hiển thị mail có attachment"
         >
           <Paperclip
