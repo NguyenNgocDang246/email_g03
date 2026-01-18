@@ -15,6 +15,7 @@ export class MailboxesService {
   private readonly logger = new Logger(MailboxesService.name);
   private mailboxes: Mailbox[];
   private emailsInMailbox = new Map();
+  private gmailPageTokens = new Map<string, string | null>();
 
   constructor(
     private authService: AuthService,
@@ -58,7 +59,7 @@ export class MailboxesService {
   ) {
     const shouldRefresh = options?.refresh === true;
     if (shouldRefresh && !paginationDto?.pageToken) {
-      await this.refreshMailboxCache(mailboxId, userId, paginationDto);
+      await this.refreshMailboxCache(mailboxId, userId);
       return this.getCachedEmailsInMailbox(mailboxId, userId, paginationDto);
     }
 
@@ -69,13 +70,11 @@ export class MailboxesService {
     );
 
     if (!paginationDto?.pageToken) {
-      void this.refreshMailboxCache(mailboxId, userId, paginationDto).catch(
-        (error) => {
-          this.logger.warn(
-            `Failed to refresh mailbox cache: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        },
-      );
+      void this.refreshMailboxCache(mailboxId, userId).catch((error) => {
+        this.logger.warn(
+          `Failed to refresh mailbox cache: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
     }
 
     return cached;
@@ -95,6 +94,10 @@ export class MailboxesService {
     return `db:${offset}`;
   }
 
+  private getGmailTokenKey(userId: string, mailboxId: string) {
+    return `${userId}:${mailboxId}`;
+  }
+
   private async getCachedEmailsInMailbox(
     mailboxId: string,
     userId: string,
@@ -104,8 +107,8 @@ export class MailboxesService {
     const limit = Number(paginationDto?.limit) || 10;
     const offset = this.parseCachePageToken(paginationDto?.pageToken);
     const filter = { userId, labels: mailboxId };
-    const total = await this.emailModel.countDocuments(filter);
-    const docs = await this.emailModel
+    let total = await this.emailModel.countDocuments(filter);
+    let docs = await this.emailModel
       .find(filter)
       .sort({ receivedAt: -1 })
       .skip(offset)
@@ -113,12 +116,33 @@ export class MailboxesService {
       .lean();
 
     const nextOffset = offset + docs.length;
-    const nextPageToken =
-      nextOffset < total ? this.buildCachePageToken(nextOffset) : null;
+    let nextPageToken: string | null = null;
+
+    if (nextOffset < total) {
+      nextPageToken = this.buildCachePageToken(nextOffset);
+    } else {
+      // DB hết, kiểm tra Gmail còn không
+      const tokenKey = this.getGmailTokenKey(userId, mailboxId);
+      const gmailToken = this.gmailPageTokens.get(tokenKey);
+
+      if (gmailToken !== null) {
+        const fetched = await this.fetchMoreFromGmail(
+          mailboxId,
+          userId,
+          gmailToken,
+        );
+        if (fetched > 0) {
+          total = await this.emailModel.countDocuments(filter);
+          if (nextOffset < total) {
+            nextPageToken = this.buildCachePageToken(nextOffset);
+          }
+        }
+      }
+    }
 
     return {
-      limit: limit,
-      total: total,
+      limit,
+      total,
       nextPageToken,
       data: docs.map((doc) => ({
         id: doc.emailId,
@@ -137,30 +161,70 @@ export class MailboxesService {
     };
   }
 
-  private async refreshMailboxCache(
+  private async fetchMoreFromGmail(
     mailboxId: string,
     userId: string,
-    paginationDto: PaginationDto,
-  ) {
+    pageToken?: string,
+  ): Promise<number> {
+    try {
+      const gmail = await this.authService.getGmail(userId);
+      if (!gmail) return 0;
+
+      const list = await gmail.users.messages.list({
+        userId: 'me',
+        labelIds: [mailboxId],
+        maxResults: 20,
+        pageToken: pageToken || undefined,
+      });
+
+      const messages = list.data.messages ?? [];
+      if (messages.length === 0) {
+        this.gmailPageTokens.set(
+          this.getGmailTokenKey(userId, mailboxId),
+          null,
+        );
+        return 0;
+      }
+
+      const emails = await Promise.all(
+        messages.map(async (msg) => {
+          const res = await gmail.users.messages.get({
+            userId: 'me',
+            id: msg.id as string,
+            format: 'full',
+          });
+          return GmailMapper.toEmail(res.data, mailboxId);
+        }),
+      );
+
+      await this.emailsService.saveEmailSummaries(userId, emails, mailboxId);
+
+      this.gmailPageTokens.set(
+        this.getGmailTokenKey(userId, mailboxId),
+        list.data.nextPageToken ?? null,
+      );
+
+      return emails.length;
+    } catch (error) {
+      this.logger.warn(`Failed to fetch more from Gmail: ${error}`);
+      return 0;
+    }
+  }
+
+  private async refreshMailboxCache(mailboxId: string, userId: string) {
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) {
       throw new UnauthorizedException();
     }
 
-    const limit = Number(paginationDto?.limit) || 10;
-    const pageToken =
-      paginationDto?.pageToken && !paginationDto.pageToken.startsWith('db:')
-        ? paginationDto.pageToken
-        : undefined;
-
     const list = await gmail.users.messages.list({
       userId: 'me',
       labelIds: [mailboxId],
-      maxResults: limit,
-      pageToken,
+      maxResults: 20,
     });
 
     const messages = list.data.messages ?? [];
+    if (messages.length === 0) return;
 
     const emails = await Promise.all(
       messages.map(async (msg) => {
@@ -169,12 +233,16 @@ export class MailboxesService {
           id: msg.id as string,
           format: 'full',
         });
-
         return GmailMapper.toEmail(res.data, mailboxId);
       }),
     );
 
     await this.emailsService.saveEmailSummaries(userId, emails, mailboxId);
+
+    this.gmailPageTokens.set(
+      this.getGmailTokenKey(userId, mailboxId),
+      list.data.nextPageToken ?? null,
+    );
   }
 
   async searchEmailsInMailbox(
@@ -186,48 +254,62 @@ export class MailboxesService {
     const limit = Number(paginationDto.limit) || 10;
     const offset = this.parseCachePageToken(paginationDto.pageToken);
 
-    const textResult = await this.emailModel
-      .find(
-        {
-          userId,
-          labels: mailboxId,
-          $text: { $search: query },
-        },
-        { score: { $meta: 'textScore' } },
-      )
-      .sort({
-        score: { $meta: 'textScore' },
-        receivedAt: -1,
-      })
-      .skip(offset)
-      .limit(limit)
-      .lean();
+    const textFilter = {
+      userId,
+      labels: mailboxId,
+      $text: { $search: query },
+    };
 
-    if (textResult.length > 0) {
-      return this.buildSearchResponse(textResult, limit, offset);
+    const textTotal = await this.emailModel.countDocuments(textFilter);
+
+    if (textTotal > 0) {
+      const textResult = await this.emailModel
+        .find(textFilter, { score: { $meta: 'textScore' } })
+        .sort({
+          score: { $meta: 'textScore' },
+          receivedAt: -1,
+        })
+        .skip(offset)
+        .limit(limit)
+        .lean();
+
+      return this.buildSearchResponse(textResult, limit, offset, textTotal);
     }
 
     const regex = new RegExp(query.split('').join('.*'), 'i');
 
+    const fuzzyFilter = {
+      userId,
+      labels: mailboxId,
+      $or: [{ subject: regex }, { snippet: regex }, { sender: regex }],
+    };
+
+    const fuzzyTotal = await this.emailModel.countDocuments(fuzzyFilter);
+
     const fuzzyResult = await this.emailModel
-      .find({
-        userId,
-        labels: mailboxId,
-        $or: [{ subject: regex }, { snippet: regex }, { sender: regex }],
-      })
+      .find(fuzzyFilter)
       .sort({ receivedAt: -1 })
       .skip(offset)
       .limit(limit)
       .lean();
 
-    return this.buildSearchResponse(fuzzyResult, limit, offset);
+    return this.buildSearchResponse(fuzzyResult, limit, offset, fuzzyTotal);
   }
 
-  private buildSearchResponse(docs: any[], limit: number, offset: number) {
+  private buildSearchResponse(
+    docs: any[],
+    limit: number,
+    offset: number,
+    total: number,
+  ) {
+    const nextOffset = offset + docs.length;
+    const nextPageToken =
+      nextOffset < total ? this.buildCachePageToken(nextOffset) : null;
+
     return {
       limit,
-      total: docs.length,
-      nextPageToken: docs.length === limit ? offset + limit : null,
+      total,
+      nextPageToken,
       data: docs.map((doc) => ({
         id: doc.emailId,
         mailboxId: doc.mailboxId,
