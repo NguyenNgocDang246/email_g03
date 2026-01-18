@@ -19,10 +19,14 @@ export class MailboxesController {
     @Req() req: Request,
     @Param('id') id: string,
     @Query() paginationDto: PaginationDto,
+    @Query('refresh') refresh?: string,
   ) {
     const data = req['user'];
     const userId = data.id;
-    return this.mailboxesService.getEmailsInMailbox(id, userId, paginationDto);
+    const shouldRefresh = refresh === 'true' || refresh === '1';
+    return this.mailboxesService.getEmailsInMailbox(id, userId, paginationDto, {
+      refresh: shouldRefresh,
+    });
   }
 
   @Get(':id/emails/search')

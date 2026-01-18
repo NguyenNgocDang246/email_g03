@@ -32,7 +32,7 @@ export default function Register() {
     handleSubmit,
     formState: { errors, isValid, isSubmitting },
   } = useForm<RegisterFormValues>({
-    mode: "onChange", // validate ngay khi người dùng nhập
+    mode: "onChange",
     defaultValues: { email: "", password: "" },
   });
 
@@ -42,30 +42,33 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1628] flex items-center">
-      {/* Left icon */}
-      <div className="w-3/5 flex flex-col justify-center items-center p-6">
+    <div className="min-h-screen bg-[#0a1628] flex items-center justify-center md:justify-start">
+      {/* ================= LEFT (HIDDEN ON MOBILE) ================= */}
+      <div className="hidden md:flex md:w-3/5 flex-col justify-center items-center md:p-4">
         <MailIcon
-          className="w-48 h-48 text-gray-400 hover:text-white"
+          className="md:w-36 md:h-36 xl:w-48 xl:h-48 2xl:w-96 2xl:h-96 text-gray-400 hover:text-white cursor-pointer"
           onClick={() => navigate("/")}
         />
-        <div>
-          <h1 className="text-gray-400 font-bold text-6xl">Mail Manage</h1>
-        </div>
+        <h1 className="text-gray-400 font-bold md:text-4xl xl:text-6xl 2xl:text-9xl mt-4">
+          Mail Manage
+        </h1>
       </div>
 
-      {/* Right form */}
-      <div className="w-2/5 flex justify-center">
-        <div className="w-full max-w-md">
-          <h1 className="text-6xl text-white font-bold mb-3">Sign Up</h1>
-          <h2 className="text-2xl font-medium text-white mb-10">
+      {/* ================= RIGHT FORM ================= */}
+      <div className="w-full md:w-2/5 flex justify-center px-6 md:px-0 md:mr-16 xl:mr-24 2xl:mr-48">
+        <div className="w-full max-w-md md:max-w-none">
+          <h1 className="text-3xl md:text-4xl xl:text-6xl 2xl:text-9xl mb-3 2xl:mb-9 text-white font-bold">
+            Sign Up
+          </h1>
+
+          <h2 className="text-base md:text-xl xl:text-2xl 2xl:text-4xl font-medium text-white mb-10">
             Create your account to get started.
           </h2>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-sm text-white font-medium mb-2">
+              <label className="block text-sm 2xl:text-4xl text-white font-medium mb-2">
                 Email address
               </label>
               <input
@@ -77,7 +80,7 @@ export default function Register() {
                     message: "Invalid email address",
                   },
                 })}
-                className="w-full px-4 py-3 bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500"
+                className="w-full px-4 py-3 2xl:py-6 2xl:text-4xl bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500"
                 placeholder="you@example.com"
               />
               {errors.email && (
@@ -89,7 +92,7 @@ export default function Register() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm text-white font-medium mb-2">
+              <label className="block text-sm 2xl:text-4xl text-white font-medium mb-2">
                 Password
               </label>
               <input
@@ -98,11 +101,11 @@ export default function Register() {
                   required: "Password is required",
                   minLength: { value: 6, message: "At least 6 characters" },
                 })}
-                className="w-full px-4 py-3 bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500"
+                className="w-full px-4 py-3 2xl:py-6 2xl:text-4xl bg-[#1e293b] text-white rounded-xl border border-[#334155] focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500"
                 placeholder="••••••••"
               />
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="text-red-500 text-sm 2xl:text-4xl mt-1">
                   {errors.password.message}
                 </p>
               )}
@@ -111,8 +114,8 @@ export default function Register() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!isValid || isSubmitting || mutation.isPending} // disable nếu form chưa hợp lệ
-              className="w-full py-3 bg-blue-900 hover:bg-blue-600 text-white font-medium rounded-xl transition disabled:opacity-70"
+              disabled={!isValid || isSubmitting || mutation.isPending}
+              className="w-full py-3 2xl:py-6 2xl:text-4xl bg-blue-900 hover:bg-blue-600 text-white font-medium rounded-xl transition disabled:opacity-70"
             >
               {mutation.isPending ? "Registering..." : "Sign Up"}
             </button>
@@ -121,13 +124,13 @@ export default function Register() {
             <div className="flex justify-between">
               <Link
                 to="/login"
-                className="text-sm text-white hover:text-purple-300"
+                className="text-sm 2xl:text-4xl text-white hover:text-purple-300"
               >
                 Already have account
               </Link>
               <button
                 onClick={() => navigate("/")}
-                className="text-sm text-white hover:text-purple-300 underline"
+                className="text-sm 2xl:text-4xl text-white hover:text-purple-300 underline"
                 type="button"
               >
                 ← Back to Home
@@ -137,7 +140,7 @@ export default function Register() {
             {/* Message */}
             {message && (
               <p
-                className={`mt-4 text-center font-medium ${
+                className={`mt-4 text-center font-medium 2xl:text-4xl ${
                   message.startsWith("Error")
                     ? "text-red-600"
                     : "text-green-600"

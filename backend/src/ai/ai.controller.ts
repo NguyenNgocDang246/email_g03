@@ -8,15 +8,21 @@ export class AiController {
 
   @Post('search')
   async semanticSearch(@Body() body, @Req() req: Request) {
-    const { query, mailboxId } = body || {};
-    const data = req['user'];
-    const userId = data?.id;
+    const { query, mailboxId, limit } = body || {};
+    const userId = req['user']?.id;
+
+    if (!userId || !query || !query.trim()) {
+      return { data: [] };
+    }
+
     const results = await this.aiService.semanticSearch(
       mailboxId,
       query,
       userId,
+      { limit },
     );
-    return { data: results, userId };
+
+    return { data: results };
   }
 
   @Post('emails/:id/summarize')

@@ -2,6 +2,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,6 +12,7 @@ import { AuthService } from '../auth/auth.service';
 import { EmailDetailMapper, GmailMapper } from '../mappers';
 import { AiService } from '../ai/ai.service';
 import { EmbeddingLevel } from './schemas/email-embedding.schema';
+import { KanbanService } from '../kanban/kanban.service';
 
 @Injectable()
 export class EmailsService {
@@ -18,9 +20,15 @@ export class EmailsService {
     private authService: AuthService,
     @Inject(forwardRef(() => AiService))
     private aiService: AiService,
+    private kanbanService: KanbanService,
     @InjectModel(EmailEntity.name)
     private emailModel: Model<EmailEntity>,
   ) {}
+
+  private getPrimaryMailboxId(labels: string[] = []): string {
+    const systemLabels = ['INBOX', 'SENT', 'DRAFT', 'SPAM', 'TRASH'];
+    return labels.find((label) => systemLabels.includes(label)) || 'INBOX';
+  }
 
   async getEmailDetail(id: string, userId: string) {
     const gmail = await this.authService.getGmail(userId);
@@ -50,11 +58,16 @@ export class EmailsService {
         receivedAt: emailDetailMapped.date
           ? new Date(emailDetailMapped.date)
           : new Date(),
+        labels: emailDetailMapped.labels ?? [],
         status: 'INBOX',
       });
     }
 
     if (emailDetailMapped?.bodyText || emailDetailMapped?.snippet) {
+      const primaryMailboxId = this.getPrimaryMailboxId(
+        emailDetailMapped.labels,
+      );
+
       await this.aiService.embedEmailIfNeeded(
         {
           emailId: id,
@@ -64,7 +77,7 @@ export class EmailsService {
           from: emailDetailMapped.from,
         },
         userId,
-        'INBOX',
+        primaryMailboxId,
         EmbeddingLevel.FULL,
       );
     }
@@ -93,9 +106,10 @@ export class EmailsService {
         date: storedMap.get(id)?.receivedAt
           ? new Date(storedMap.get(id)!.receivedAt).toISOString()
           : new Date().toISOString(),
-        isRead: false,
-        labels: undefined,
+        isRead: !(storedMap.get(id)?.labels || []).includes('UNREAD'),
+        labels: storedMap.get(id)?.labels || [],
         status: (storedMap.get(id)?.status as any) || 'INBOX',
+        hasAttachments: storedMap.get(id)?.hasAttachments || false,
       }));
     }
 
@@ -119,19 +133,58 @@ export class EmailsService {
       isRead: m.isRead,
       labels: m.labels,
       status: (storedMap.get(m.id)?.status as any) || 'INBOX',
+      hasAttachments: m.hasAttachments || false,
     }));
   }
 
-  buildMimeEmail(to: string, subject: string, html: string) {
-    const mime = [
+  buildMimeEmail(to: string, subject: string, html: string, files: any[] = []) {
+    if (!files || files.length === 0) {
+      // Simple email without attachments
+      const mime = [
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        '',
+        html,
+      ].join('\n');
+
+      return Buffer.from(mime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // Multipart email with attachments
+    const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36)}`;
+    const mimeParts = [
       `To: ${to}`,
       `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
       'Content-Type: text/html; charset="UTF-8"',
       '',
       html,
-    ].join('\n');
+    ];
 
-    // Base64 → chuẩn base64url
+    // Add attachments
+    files.forEach((file) => {
+      const fileContent = file.buffer.toString('base64');
+      mimeParts.push(
+        `--${boundary}`,
+        `Content-Type: ${file.mimetype}; name="${file.originalname}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-Disposition: attachment; filename="${file.originalname}"`,
+        '',
+        fileContent,
+      );
+    });
+
+    mimeParts.push(`--${boundary}--`);
+
+    const mime = mimeParts.join('\n');
     return Buffer.from(mime)
       .toString('base64')
       .replace(/\+/g, '-')
@@ -139,8 +192,8 @@ export class EmailsService {
       .replace(/=+$/, '');
   }
 
-  async sendEmail(userId: string, { to, subject, html }) {
-    const raw = this.buildMimeEmail(to, subject, html);
+  async sendEmail(userId: string, { to, subject, html }, files: any[] = []) {
+    const raw = this.buildMimeEmail(to, subject, html, files);
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
     const res = await gmail.users.messages.send({
@@ -154,29 +207,68 @@ export class EmailsService {
     };
   }
 
-  buildReplyMime({ to, subject, html, messageIdHeader, referencesHeader }) {
+  buildReplyMime({ to, subject, html, messageIdHeader, referencesHeader, files = [] }: { to: string; subject: string; html: string; messageIdHeader: string; referencesHeader?: string; files?: any[] }) {
     let references = messageIdHeader;
     if (referencesHeader && referencesHeader.trim().length) {
       references = referencesHeader.trim() + ' ' + messageIdHeader;
     }
 
-    const mime = [
+    if (!files || files.length === 0) {
+      // Simple reply without attachments
+      const mime = [
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        `In-Reply-To: ${messageIdHeader}`,
+        `References: ${references}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        '',
+        html,
+      ].join('\n');
+
+      return Buffer.from(mime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // Multipart reply with attachments
+    const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36)}`;
+    const mimeParts = [
       `To: ${to}`,
       `Subject: ${subject}`,
       `In-Reply-To: ${messageIdHeader}`,
       `References: ${references}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
       'Content-Type: text/html; charset="UTF-8"',
       '',
       html,
-    ].join('\n');
+    ];
 
-    const raw = Buffer.from(mime)
+    // Add attachments
+    files.forEach((file) => {
+      const fileContent = file.buffer.toString('base64');
+      mimeParts.push(
+        `--${boundary}`,
+        `Content-Type: ${file.mimetype}; name="${file.originalname}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-Disposition: attachment; filename="${file.originalname}"`,
+        '',
+        fileContent,
+      );
+    });
+
+    mimeParts.push(`--${boundary}--`);
+
+    const mime = mimeParts.join('\n');
+    return Buffer.from(mime)
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
-
-    return raw;
   }
 
   async replyEmail(
@@ -185,6 +277,7 @@ export class EmailsService {
     threadId: string,
     messageIdHeader: string,
     referencesHeader?: string,
+    files: any[] = [],
   ) {
     const raw = this.buildReplyMime({
       to,
@@ -192,6 +285,7 @@ export class EmailsService {
       html,
       messageIdHeader,
       referencesHeader,
+      files,
     });
     const gmail = await this.authService.getGmail(userId);
     if (!gmail) return null;
@@ -225,6 +319,49 @@ export class EmailsService {
         removeLabelIds: removeLabels,
       },
     });
+
+    // Sync labels to database after modification
+    await this.syncEmailLabelsToDb(userId, messageId);
+
+    return res;
+  }
+
+  async syncEmailLabelsToDb(userId: string, emailId: string) {
+    const gmail = await this.authService.getGmail(userId);
+    if (!gmail) return;
+
+    try {
+      // Fetch latest email data from Gmail to get updated labels
+      const emailData = await gmail.users.messages.get({
+        userId: 'me',
+        id: emailId,
+        format: 'metadata',
+        metadataHeaders: ['From', 'Subject'],
+      });
+
+      const labels = emailData.data.labelIds || [];
+
+      // Update EmailEntity labels in database
+      await this.emailModel.updateOne(
+        { userId, emailId },
+        { $set: { labels } },
+      );
+
+      // Determine primary mailboxId and update embeddings
+      const primaryMailboxId = this.getPrimaryMailboxId(labels);
+
+      // Update mailboxId in EmailEmbeddingEntity
+      await this.aiService.updateEmbeddingMailboxId(
+        emailId,
+        userId,
+        primaryMailboxId,
+      );
+    } catch (error) {
+      console.error(
+        `Failed to sync labels for email ${emailId}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   }
 
   async streamAttachment(
@@ -281,7 +418,11 @@ export class EmailsService {
       subject: string;
       snippet: string;
       date: string;
+      labels?: string[];
+      hasAttachments?: boolean;
+      mailboxId?: string;
     }[],
+    mailboxId?: string,
   ) {
     if (!emails.length) return;
 
@@ -289,13 +430,17 @@ export class EmailsService {
       updateOne: {
         filter: { userId, emailId: mail.id },
         update: {
-          $setOnInsert: {
-            emailId: mail.id,
-            userId,
+          $set: {
             sender: mail.from,
             subject: mail.subject,
             snippet: mail.snippet ?? '',
             receivedAt: mail.date ? new Date(mail.date) : new Date(),
+            labels: mail.labels ?? [],
+            hasAttachments: mail.hasAttachments,
+          },
+          $setOnInsert: {
+            emailId: mail.id,
+            userId,
             status: 'INBOX',
           },
         },
@@ -315,7 +460,7 @@ export class EmailsService {
             from: mail.from,
           },
           userId,
-          'INBOX',
+          mailboxId || mail.mailboxId || 'INBOX',
           EmbeddingLevel.SUMMARY,
         ),
       ),
@@ -330,6 +475,7 @@ export class EmailsService {
       subject: string;
       snippet: string;
       date: string;
+      hasAttachments?: boolean;
     }[],
   ) {
     await this.unsnoozeExpired(userId);
@@ -352,6 +498,7 @@ export class EmailsService {
               snippet: mail.snippet ?? '',
               receivedAt: mail.date ? new Date(mail.date) : new Date(),
               status: 'INBOX',
+              hasAttachments: mail.hasAttachments || false,
             },
           },
         });
@@ -364,25 +511,54 @@ export class EmailsService {
     const refreshed = await this.emailModel
       .find({ userId, emailId: { $in: ids } })
       .lean();
-    const refreshedMap = new Map(refreshed.map((e) => [e.emailId, e.status]));
+    const refreshedMap = new Map(
+      refreshed.map((e) => [e.emailId, { status: e.status, hasAttachments: e.hasAttachments }]),
+    );
 
-    return emails.map((mail) => ({
-      ...mail,
-      status: refreshedMap.get(mail.id) || 'INBOX',
-    }));
+    return emails.map((mail) => {
+      const stored = refreshedMap.get(mail.id);
+      return {
+        ...mail,
+        status: stored?.status || 'INBOX',
+        hasAttachments: mail.hasAttachments ?? stored?.hasAttachments ?? false,
+      };
+    });
   }
 
   async getCachedSummary(emailId: string, userId: string) {
     const doc = await this.emailModel
       .findOne({ userId, emailId })
-      .select('summary fullText status')
+      .select('summary fullText status sender subject receivedAt labels')
       .lean();
     if (!doc || (!doc.summary && !doc.fullText)) return null;
     return {
       summary: doc.summary,
       fullText: doc.fullText,
       status: doc.status as EmailStatus,
+      sender: doc.sender,
+      subject: doc.subject,
+      receivedAt: doc.receivedAt,
+      labels: doc.labels ?? [],
     };
+  }
+
+  async getCachedEmailMetadata(emailId: string, userId: string) {
+    const doc = await this.emailModel
+      .findOne({ userId, emailId })
+      .select('sender subject receivedAt labels status')
+      .lean();
+    if (!doc) return null;
+    return {
+      sender: doc.sender,
+      subject: doc.subject,
+      receivedAt: doc.receivedAt,
+      labels: doc.labels ?? [],
+      status: doc.status as EmailStatus,
+    };
+  }
+
+  async refreshSnoozedStatuses(userId: string) {
+    await this.unsnoozeExpired(userId);
   }
 
   async saveSummary(
@@ -421,18 +597,33 @@ export class EmailsService {
     options?: { snoozedUntil?: string | Date; previousStatus?: EmailStatus },
   ) {
     await this.unsnoozeExpired(userId);
-    if (status === 'SNOOZED') {
+    const normalizedStatus = (status || '').toString().trim().toUpperCase();
+    if (!normalizedStatus) {
+      throw new BadRequestException('Status is required');
+    }
+
+    const columns = await this.kanbanService.getColumns(userId);
+    const allowedStatuses = new Set(columns.map((col) => col.name));
+    if (!allowedStatuses.has(normalizedStatus)) {
+      throw new BadRequestException('Invalid kanban status');
+    }
+
+    if (normalizedStatus === 'SNOOZED') {
       const until = options?.snoozedUntil
         ? new Date(options.snoozedUntil)
         : new Date(Date.now() + 4 * 60 * 60 * 1000);
       const existing = await this.emailModel
         .findOne({ userId, emailId })
         .lean();
-      const prevStatus =
+      const rawPrevStatus =
         options?.previousStatus ||
         existing?.status ||
         existing?.previousStatus ||
         'INBOX';
+      const prevStatus = rawPrevStatus.toString().trim().toUpperCase();
+      const nextPreviousStatus = allowedStatuses.has(prevStatus)
+        ? prevStatus
+        : 'INBOX';
 
       await this.emailModel.updateOne(
         { userId, emailId },
@@ -440,7 +631,7 @@ export class EmailsService {
           $set: {
             status: 'SNOOZED',
             snoozedUntil: until,
-            previousStatus: prevStatus,
+            previousStatus: nextPreviousStatus,
           },
         },
         { upsert: true },
@@ -456,12 +647,12 @@ export class EmailsService {
       { userId, emailId },
       {
         $set: {
-          status,
+          status: normalizedStatus,
         },
         $unset: { snoozedUntil: '', previousStatus: '' },
       },
       { upsert: true },
     );
-    return { message: 'Status updated', status };
+    return { message: 'Status updated', status: normalizedStatus };
   }
 }

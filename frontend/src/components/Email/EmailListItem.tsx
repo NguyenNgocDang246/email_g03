@@ -9,14 +9,10 @@ interface EmailListItemProps {
   isChecked: boolean;
   onSelect: (email: MailInfo) => void;
   onToggleStar: (
-    emailId:string,
-    isStar:boolean,
+    emailId: string,
+    isStar: boolean,
     e?: React.MouseEvent<HTMLButtonElement>
   ) => void;
-  // onCheckboxChange: (
-  //   emailId: number,
-  //   e: React.ChangeEvent<HTMLInputElement>
-  // ) => void;
 }
 
 export const EmailListItem: React.FC<EmailListItemProps> = ({
@@ -25,59 +21,91 @@ export const EmailListItem: React.FC<EmailListItemProps> = ({
   isChecked,
   onSelect,
   onToggleStar,
-  // onCheckboxChange,
 }) => {
+  const { setSelectOnNewMail } = useMail();
 
-  const {setSelectOnNewMail}=useMail()
-  
   return (
     <div
       onClick={() => {
         setSelectOnNewMail(false);
         onSelect(email);
       }}
-      className={`flex items-center gap-3 px-4 py-3 border border-gray-100 cursor-pointer hover:shadow-md transition-shadow ${
-        isSelected ? "bg-blue-50" : ""
-      } ${!email.isRead ? "bg-white" : "bg-gray-50"}`}
+      className={`
+        group flex items-start sm:items-center 
+        gap-2 sm:gap-3 
+        p-3 sm:px-4 sm:py-3 
+        border-b border-gray-100 cursor-pointer 
+        hover:shadow-md transition-all
+        ${
+          isSelected
+            ? "bg-blue-50 border-l-4 border-l-blue-600"
+            : "border-l-4 border-l-transparent"
+        }
+        ${!email.isRead ? "bg-white font-semibold" : "bg-gray-50/50"}
+      `}
     >
-      <input
-        type="checkbox"
-        checked={isChecked}
-        onChange={(e) => e.stopPropagation()}
-        className="w-4 h-4 rounded"
+      {/* Checkbox: Ẩn trên mobile để tiết kiệm chỗ, hiện trên desktop */}
+      <div
+        className="hidden sm:flex items-center"
         onClick={(e) => e.stopPropagation()}
-      />
+      >
+        <input
+          type="checkbox"
+          checked={isChecked}
+          onChange={() => {}} // Controlled by parent usually
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+      </div>
+
+      {/* Star Button */}
       <button
         onClick={(e) => {
           onToggleStar(email.id, email.isStarred, e);
         }}
-        className="p-1 hover:bg-gray-200 rounded"
+        className="mt-0.5 sm:mt-0 p-1 hover:bg-gray-200 rounded-full transition-colors shrink-0"
       >
         <Star
-          className={`w-4 h-4 ${
-            email.isStarred ? "fill-yellow-400 text-yellow-400" : "text-gray-400"
+          className={`w-4 h-4 sm:w-5 sm:h-5 ${
+            email.isStarred
+              ? "fill-yellow-400 text-yellow-400"
+              : "text-gray-300 group-hover:text-gray-400"
           }`}
         />
       </button>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        {/* Row 1: Sender & Time */}
+        <div className="flex items-center justify-between gap-2">
           <span
-            className={`text-sm truncate ${
-              !email.isRead ? "text-gray-500" : "font-medium text-black"
+            className={`text-sm sm:text-base truncate ${
+              email.isRead ? "text-gray-600" : "text-black"
             }`}
           >
             {email.from}
           </span>
-          <span className="ml-auto text-xs text-gray-500 whitespace-nowrap">{email.timestamp}</span>
+          <span
+            className={`text-[10px] sm:text-xs whitespace-nowrap ${
+              !email.isRead ? "text-blue-600 font-bold" : "text-gray-400"
+            }`}
+          >
+            {email.timestamp}
+          </span>
         </div>
+
+        {/* Row 2: Subject */}
         <div
-          className={`text-sm truncate ${
-            !email.isRead ? "text-gray-500" : "font-medium text-black"
+          className={`text-sm truncate leading-tight ${
+            email.isRead ? "text-gray-500" : "text-gray-800"
           }`}
         >
           {email.subject}
         </div>
-        <div className="text-xs text-gray-500 truncate ">{email.preview}</div>
+
+        {/* Row 3: Preview */}
+        <div className="text-xs text-gray-400 truncate leading-tight">
+          {email.preview}
+        </div>
       </div>
     </div>
   );

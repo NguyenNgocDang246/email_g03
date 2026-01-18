@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { MongooseModule } from '@nestjs/mongoose';
-import { AppService } from './app.service';
-import { UsersModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
-import { TokenModule } from './token/token.module';
-import { EmailsModule } from './emails/emails.module';
-import { MailboxesModule } from './mailboxes/mailboxes.module';
-import { AuthModule } from './auth/auth.module';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AiModule } from './ai/ai.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { EmailsModule } from './emails/emails.module';
 import { KanbanModule } from './kanban/kanban.module';
+import { MailboxesModule } from './mailboxes/mailboxes.module';
+import { TokenModule } from './token/token.module';
+import { UsersModule } from './user/user.module';
 
 @Module({
   imports: [

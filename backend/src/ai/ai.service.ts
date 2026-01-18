@@ -47,16 +47,6 @@ export class AiService {
     mailboxId: string,
     level: EmbeddingLevel = EmbeddingLevel.SUMMARY,
   ) {
-    if (
-      level === EmbeddingLevel.SUMMARY &&
-      (await this.emailEmbeddingsService.hasFullEmbedding(
-        email.emailId,
-        userId,
-      ))
-    ) {
-      return;
-    }
-
     const text =
       level === EmbeddingLevel.FULL
         ? this.buildFullEmailText(email)
@@ -66,16 +56,13 @@ export class AiService {
 
     const contentHash = this.hashContent(text);
 
-    const existing = await this.emailEmbeddingsService.findByEmailId(
+    const existing = await this.emailEmbeddingsService.findEmbedding(
       email.emailId,
       userId,
+      level,
     );
 
-    if (
-      existing &&
-      existing.level === level &&
-      existing.contentHash === contentHash
-    ) {
+    if (existing && existing.contentHash === contentHash) {
       return;
     }
 
@@ -92,49 +79,140 @@ export class AiService {
     });
   }
 
-  async semanticSearch(mailboxId: string, query: string, userId: string) {
-    if (!query?.trim()) return [];
+  async semanticSearch(
+    mailboxId: string,
+    query: string,
+    userId: string,
+    options?: { limit?: number; minScore?: number },
+  ) {
+    if (!query || !query.trim()) return [];
 
-    const queryEmbedding = await this.embed(query);
+    const limit = options?.limit ?? 10;
+    const minScore = options?.minScore ?? 0.2;
 
-    const embeddings = await this.emailEmbeddingsService.findAllByMailbox(
-      userId,
-      mailboxId,
-    );
+    this.logger.log(`Semantic search: query="${query}", mailboxId="${mailboxId}", userId="${userId}"`);
 
-    const scored = embeddings.map((item) => ({
-      emailId: item.emailId,
-      score: this.cosineSimilarity(queryEmbedding, item.embedding),
-    }));
+    const queryEmbedding = await this.embed(query.trim());
+
+    if (!queryEmbedding.length) {
+      this.logger.warn('Query embedding is empty');
+      return [];
+    }
+
+    const embeddings = mailboxId
+      ? await this.emailEmbeddingsService.findSummaryEmbeddingsByMailbox(
+          userId,
+          mailboxId,
+        )
+      : [];
+
+    this.logger.log(`Found ${embeddings.length} embeddings in DB for mailbox ${mailboxId}`);
+
+    if (!embeddings.length) {
+      this.logger.log(`No embeddings found in mailbox ${mailboxId}, returning empty results`);
+      return [];
+    }
+
+    const scored: { emailId: string; score: number }[] = [];
+
+    for (const item of embeddings) {
+      if (!item.embedding || item.embedding.length !== queryEmbedding.length) {
+        continue;
+      }
+
+      const score = this.cosineSimilarity(queryEmbedding, item.embedding);
+
+      if (score >= minScore) {
+        scored.push({
+          emailId: item.emailId,
+          score,
+        });
+      }
+    }
+
+    this.logger.log(`Scored ${scored.length} emails above threshold ${minScore}`);
+
+    if (!scored.length) return [];
 
     scored.sort((a, b) => b.score - a.score);
 
-    const topIds = scored.slice(0, 10).map((i) => i.emailId);
+    const top = scored.slice(0, limit);
 
-    return this.emailsService.findByEmailIds(userId, topIds, mailboxId);
+    const emailIds = top.map((i) => i.emailId);
+
+    const emails = await this.emailsService.findByEmailIds(
+      userId,
+      emailIds,
+      mailboxId,
+    );
+
+    const emailMap = new Map(emails.map((e) => [e.id, e]));
+
+    const results = top
+      .map(({ emailId, score }) => {
+        const email = emailMap.get(emailId);
+        if (!email) return null;
+
+        // Only return emails that belong to the requested mailbox
+        if (mailboxId && email.labels && !email.labels.includes(mailboxId)) {
+          this.logger.log(`Skipping email ${emailId} - not in mailbox ${mailboxId}`);
+          return null;
+        }
+
+        return {
+          ...email,
+          score,
+        };
+      })
+      .filter(Boolean);
+
+    this.logger.log(`Returning ${results.length} emails from mailbox ${mailboxId}`);
+
+    return results;
   }
 
   async summarizeEmail(emailId: string, userId: string, forceRefresh = false) {
-    const detail = await this.emailsService.getEmailDetail(emailId, userId);
-    if (!detail) return null;
-
     if (!forceRefresh) {
       const cached = await this.emailsService.getCachedSummary(emailId, userId);
-      if (cached?.summary) {
+      if (cached) {
         return {
-          summary: cached.summary,
+          summary: cached.summary || '',
           metadata: {
-            sender: detail.from,
-            senderName: (detail as any)?.fromName,
-            subject: detail.subject,
-            date: detail.date,
-            mailboxId: detail.mailboxId,
+            sender: cached.sender,
+            subject: cached.subject,
+            date: cached.receivedAt
+              ? new Date(cached.receivedAt).toISOString()
+              : undefined,
+            labels: cached.labels,
           },
-          fullText: cached.fullText,
-          status: cached.status || detail.status,
+          fullText: cached.fullText || '',
+          status: cached.status,
+        };
+      }
+
+      const cachedMeta = await this.emailsService.getCachedEmailMetadata(
+        emailId,
+        userId,
+      );
+      if (cachedMeta) {
+        return {
+          summary: '',
+          metadata: {
+            sender: cachedMeta.sender,
+            subject: cachedMeta.subject,
+            date: cachedMeta.receivedAt
+              ? new Date(cachedMeta.receivedAt).toISOString()
+              : undefined,
+            labels: cachedMeta.labels,
+          },
+          fullText: '',
+          status: cachedMeta.status,
         };
       }
     }
+
+    const detail = await this.emailsService.getEmailDetail(emailId, userId);
+    if (!detail) return null;
 
     const senderEmail = detail.from;
     const senderName = (detail as any)?.fromName;
@@ -213,6 +291,18 @@ export class AiService {
       'No content available to summarize for this email.'
     );
   }
+  async updateEmbeddingMailboxId(
+    emailId: string,
+    userId: string,
+    newMailboxId: string,
+  ) {
+    return this.emailEmbeddingsService.updateMailboxIdForEmail(
+      emailId,
+      userId,
+      newMailboxId,
+    );
+  }
+
   private buildSummaryEmailText(email: any): string {
     return [
       email.from && `From: ${email.from}`,

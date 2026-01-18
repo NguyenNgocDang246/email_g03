@@ -3,6 +3,10 @@ import { createContext, useContext } from "react";
 interface MailContextValue {
   selectOnNewMail: boolean;
   setSelectOnNewMail: (value: boolean) => void;
+  searchSuggestions: string[];
+  setSearchSuggestions: (value: string[]) => void;
+  onlyWithAttachments: boolean;
+  setOnlyWithAttachments: (value: boolean) => void;
 }
 
 export const MailContext = createContext<MailContextValue | undefined>(undefined);
